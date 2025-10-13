@@ -9,6 +9,7 @@ using AgnosticReservation.Infrastructure.Persistence;
 using AgnosticReservation.Infrastructure.Persistence.Repositories;
 using AgnosticReservation.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AgnosticReservation.Api.Modules;
 
