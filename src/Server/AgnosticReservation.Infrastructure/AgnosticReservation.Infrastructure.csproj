@@ -7,11 +7,13 @@
   <ItemGroup>
     <ProjectReference Include="../AgnosticReservation.Application/AgnosticReservation.Application.csproj" />
     <ProjectReference Include="../AgnosticReservation.Domain/AgnosticReservation.Domain.csproj" />
-    <ProjectReference Include="../AgnosticReservation.Application/AgnosticReservation.Application.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
   </ItemGroup>
 </Project>
