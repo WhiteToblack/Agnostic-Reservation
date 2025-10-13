@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../AgnosticReservation.Application/AgnosticReservation.Application.csproj" />
     <ProjectReference Include="../AgnosticReservation.Domain/AgnosticReservation.Domain.csproj" />
     <ProjectReference Include="../AgnosticReservation.Application/AgnosticReservation.Application.csproj" />
   </ItemGroup>
