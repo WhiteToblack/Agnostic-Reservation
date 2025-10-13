@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using AgnosticReservation.Application.Abstractions;
 using AgnosticReservation.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AgnosticReservation.Infrastructure.Persistence.Repositories;
 
