@@ -19,7 +19,7 @@ This monorepo delivers a macro-service starter kit that pairs a modular .NET 8 b
 
 * **Architecture**: Domain-driven layering (Api, Application, Domain, Infrastructure) with repository pattern and EF Core (`AppDbContext`).
 * **Modules**: Auth, Reservations, Dashboard, Admin (parameters/cache/documents), Notifications. Each module is exposed through dedicated controllers.
-* **Persistence**: EF Core InMemory provider for local development. Replace with SQL provider by updating `Program.cs`.
+* **Persistence**: EF Core supports SQL Server via the provided connection string (see `appsettings.json`). Falls back to the InMemory provider when no connection string is configured.
 * **Caching**: `ICacheService` abstraction with in-memory implementation and Redis adapter extension point.
 * **Notifications**: `INotificationService` interface ready for Push/SMS/Email adapters.
 * **Documents**: `IDocumentService` interface storing files in-memory; swap with S3/MinIO adapter.
@@ -62,6 +62,12 @@ dotnet test src/Tests/AgnosticReservation.Tests/AgnosticReservation.Tests.csproj
 ```
 
 React Native component tests can be added with Jest and React Native Testing Library (scaffolding left ready in `package.json`).
+
+## Database
+
+* **Schema**: Run `docs/sql/agnostic_reservation_mssql.sql` on your SQL Server instance to create all tables, foreign keys, and indexes that map to the domain entities.
+* **Configuration**: Set `Database:Provider` to `SqlServer` and provide the credentials in `Database:ConnectionString` (or `ConnectionStrings:DefaultConnection`) inside `src/Server/AgnosticReservation.Api/appsettings.json`, user secrets, or environment variables. Optional flag `Database:EnableSensitiveLogging` surfaces EF Core parameter values for local troubleshooting.
+* **Local development**: Switch `Database:Provider` to `InMemory` or omit the connection string to automatically fall back to the EF Core InMemory provider for lightweight testing.
 
 ## Extension Points
 
