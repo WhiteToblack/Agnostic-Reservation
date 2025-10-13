@@ -1,6 +1,5 @@
 using AgnosticReservation.Api.Modules;
 using AgnosticReservation.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
