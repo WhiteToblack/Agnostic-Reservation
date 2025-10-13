@@ -66,8 +66,8 @@ React Native component tests can be added with Jest and React Native Testing Lib
 ## Database
 
 * **Schema**: Run `docs/sql/agnostic_reservation_mssql.sql` on your SQL Server instance to create all tables, foreign keys, and indexes that map to the domain entities.
-* **Configuration**: Set `Database:Provider` to `SqlServer` and provide the credentials in `Database:ConnectionString` (or `ConnectionStrings:DefaultConnection`) inside `src/Server/AgnosticReservation.Api/appsettings.json`, user secrets, or environment variables. Optional flag `Database:EnableSensitiveLogging` surfaces EF Core parameter values for local troubleshooting.
-* **Local development**: Switch `Database:Provider` to `InMemory` or omit the connection string to automatically fall back to the EF Core InMemory provider for lightweight testing.
+* **Connection string**: Update `ConnectionStrings:DefaultConnection` in `src/Server/AgnosticReservation.Api/appsettings.json` (or user secrets/environment variables) with your SQL Server credentials.
+* **Local development**: If the connection string is omitted, the API will automatically fall back to the EF Core InMemory provider for lightweight testing.
 
 ## Extension Points
 
