@@ -1,0 +1,16 @@
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\bin\Debug\net8.0\AgnosticReservation.Application.deps.json
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\bin\Debug\net8.0\AgnosticReservation.Application.dll
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\bin\Debug\net8.0\AgnosticReservation.Application.pdb
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\bin\Debug\net8.0\AgnosticReservation.Domain.dll
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\bin\Debug\net8.0\AgnosticReservation.Domain.pdb
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\obj\Debug\net8.0\AgnosticReservation.Application.csproj.AssemblyReference.cache
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\obj\Debug\net8.0\AgnosticReservation.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\obj\Debug\net8.0\AgnosticReservation.Application.AssemblyInfoInputs.cache
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\obj\Debug\net8.0\AgnosticReservation.Application.AssemblyInfo.cs
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\obj\Debug\net8.0\AgnosticReservation.Application.csproj.CoreCompileInputs.cache
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\obj\Debug\net8.0\AgnosticReservation.Application.sourcelink.json
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\obj\Debug\net8.0\Agnostic.73220C53.Up2Date
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\obj\Debug\net8.0\AgnosticReservation.Application.dll
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\obj\Debug\net8.0\refint\AgnosticReservation.Application.dll
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\obj\Debug\net8.0\AgnosticReservation.Application.pdb
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Application\obj\Debug\net8.0\ref\AgnosticReservation.Application.dll
