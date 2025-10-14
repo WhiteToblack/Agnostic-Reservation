@@ -116,14 +116,14 @@ DECLARE @UserShopStaff UNIQUEIDENTIFIER = NEWID();
 DECLARE @UserAccounting UNIQUEIDENTIFIER = NEWID();
 DECLARE @UserCustomer UNIQUEIDENTIFIER = NEWID();
 
-INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
+INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
 VALUES
-    (@UserSuper, @TenantWellness, @RoleSuperUser, 'super@platform.io', 'yq87SQNKtzrmQSYFaF825g9jh3iHNNmPRlLOtEZuees=', 'inherit', 1, @Now),
-    (@UserTenantAdmin, @TenantWellness, @RoleTenantAdmin, 'admin@wellness.example.com', 'rrp5x3D4Qc+7+Z7oS4HyPpd7iozYz93Xy27olxVrLFk=', 'wellness-dark', 1, @Now),
-    (@UserShopAdmin, @TenantWellness, @RoleShopAdmin, 'studio@wellness.example.com', '8GfC5GvuMdi0GG8gGskrvFonWFrU6Eyk4O9fk7gmfIc=', 'wellness-dark', 0, @Now),
-    (@UserShopStaff, @TenantWellness, @RoleShopStaff, 'trainer@wellness.example.com', 'ZfGL/sOSHGX2KLoXIzJtl/OCQXvGw5+04vkWxNzbmRI=', 'inherit', 0, @Now),
-    (@UserAccounting, @TenantCowork, @RoleAccounting, 'finance@cowork.example.com', 'aOjniB/G0zOwsJKNBIhzWZuMXMmp4Qs+BC7ito5zA1g=', 'cowork-light', 0, @Now),
-    (@UserCustomer, @TenantCowork, @RoleCustomer, 'member@cowork.example.com', 'mOxlSo3yj48PjwIiBIPUaRa4UBfeC3TY7HVcKMuFOag=', 'inherit', 0, @Now);
+    (@UserSuper, @TenantWellness, @RoleSuperUser, 'super@platform.io', 'yq87SQNKtzrmQSYFaF825g9jh3iHNNmPRlLOtEZuees=', N'Super Admin', 'inherit', 1, @Now),
+    (@UserTenantAdmin, @TenantWellness, @RoleTenantAdmin, 'admin@wellness.example.com', 'rrp5x3D4Qc+7+Z7oS4HyPpd7iozYz93Xy27olxVrLFk=', N'Sarah Bloom', 'wellness-dark', 1, @Now),
+    (@UserShopAdmin, @TenantWellness, @RoleShopAdmin, 'studio@wellness.example.com', '8GfC5GvuMdi0GG8gGskrvFonWFrU6Eyk4O9fk7gmfIc=', N'Liam Porter', 'wellness-dark', 0, @Now),
+    (@UserShopStaff, @TenantWellness, @RoleShopStaff, 'trainer@wellness.example.com', 'ZfGL/sOSHGX2KLoXIzJtl/OCQXvGw5+04vkWxNzbmRI=', N'Nova Chen', 'inherit', 0, @Now),
+    (@UserAccounting, @TenantCowork, @RoleAccounting, 'finance@cowork.example.com', 'aOjniB/G0zOwsJKNBIhzWZuMXMmp4Qs+BC7ito5zA1g=', N'Priya Singh', 'cowork-light', 0, @Now),
+    (@UserCustomer, @TenantCowork, @RoleCustomer, 'member@cowork.example.com', 'mOxlSo3yj48PjwIiBIPUaRa4UBfeC3TY7HVcKMuFOag=', N'Jordan Miles', 'inherit', 0, @Now);
 
 INSERT INTO dbo.NotificationPreferences (Id, UserId, PushEnabled, EmailEnabled, SmsEnabled, PreferredChannel, CreatedAt)
 VALUES
