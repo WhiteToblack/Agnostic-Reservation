@@ -9,7 +9,7 @@ using MongoDB.Driver;
 
 namespace AgnosticReservation.Infrastructure.Logging;
 
-public class MongoRequestLogService : IRequestLogService
+public class MongoRequestLogService : IRequestLogService, IRequestLogReader
 {
     private readonly IMongoCollection<GeneralRequestLogDocument>? _generalLogs;
     private readonly IMongoCollection<AccountingRequestLogDocument>? _accountingLogs;
@@ -35,7 +35,25 @@ public class MongoRequestLogService : IRequestLogService
 
         try
         {
-            var client = new MongoClient(settings.ConnectionString);
+            var mongoUrlBuilder = new MongoUrlBuilder(settings.ConnectionString);
+
+            if (string.IsNullOrWhiteSpace(mongoUrlBuilder.Username) && !string.IsNullOrWhiteSpace(settings.Username))
+            {
+                mongoUrlBuilder.Username = settings.Username;
+            }
+
+            if (string.IsNullOrWhiteSpace(mongoUrlBuilder.Password) && !string.IsNullOrWhiteSpace(settings.Password))
+            {
+                mongoUrlBuilder.Password = settings.Password;
+            }
+
+            if (!string.IsNullOrWhiteSpace(settings.AuthenticationDatabase))
+            {
+                mongoUrlBuilder.AuthenticationSource = settings.AuthenticationDatabase;
+            }
+
+            var clientSettings = MongoClientSettings.FromUrl(mongoUrlBuilder.ToMongoUrl());
+            var client = new MongoClient(clientSettings);
             var database = client.GetDatabase(settings.DatabaseName);
             _generalLogs = database.GetCollection<GeneralRequestLogDocument>(settings.GeneralCollectionName);
             _accountingLogs = database.GetCollection<AccountingRequestLogDocument>(settings.AccountingCollectionName);
@@ -44,6 +62,14 @@ public class MongoRequestLogService : IRequestLogService
         catch (MongoConfigurationException exception)
         {
             _logger.LogError(exception, "Failed to initialize MongoDB logging due to invalid configuration.");
+        }
+        catch (MongoException exception)
+        {
+            _logger.LogError(exception, "Failed to initialize MongoDB logging due to a MongoDB error.");
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Unexpected error while initializing MongoDB logging.");
         }
     }
 
@@ -68,6 +94,13 @@ public class MongoRequestLogService : IRequestLogService
                 Headers = context.Headers.ToDictionary(pair => pair.Key, pair => pair.Value),
                 IsAccountingOperation = context.IsAccountingOperation,
                 CorrelationId = context.CorrelationId,
+                EndpointDisplayName = context.EndpointDisplayName,
+                UiComponent = context.UiComponent,
+                HasError = context.ErrorContext is not null,
+                ErrorType = context.ErrorContext?.ExceptionType,
+                ErrorMessage = context.ErrorContext?.Message,
+                ErrorStackTrace = context.ErrorContext?.StackTrace,
+                ErrorAt = context.ErrorContext?.OccurredAt,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -108,6 +141,85 @@ public class MongoRequestLogService : IRequestLogService
         }
     }
 
+    public async Task<RequestLogPage> QueryAsync(RequestLogQuery query, CancellationToken cancellationToken = default)
+    {
+        if (!_isEnabled || _generalLogs is null)
+        {
+            return new RequestLogPage(Array.Empty<RequestLogEntry>(), 0, query.Page, query.PageSize);
+        }
+
+        try
+        {
+            var filterBuilder = Builders<GeneralRequestLogDocument>.Filter;
+            var filters = new List<FilterDefinition<GeneralRequestLogDocument>>();
+
+            if (query.TenantId.HasValue)
+            {
+                filters.Add(filterBuilder.Eq(document => document.TenantId, query.TenantId));
+            }
+
+            if (query.ErrorsOnly.HasValue)
+            {
+                filters.Add(filterBuilder.Eq(document => document.HasError, query.ErrorsOnly.Value));
+            }
+
+            var filter = filters.Count > 0
+                ? filterBuilder.And(filters)
+                : filterBuilder.Empty;
+
+            var total = await _generalLogs.CountDocumentsAsync(filter, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (total == 0)
+            {
+                return new RequestLogPage(Array.Empty<RequestLogEntry>(), 0, query.Page, query.PageSize);
+            }
+
+            var skip = Math.Max(0, (query.Page - 1) * query.PageSize);
+
+            var documents = await _generalLogs
+                .Find(filter)
+                .SortByDescending(document => document.CreatedAt)
+                .Skip(skip)
+                .Limit(query.PageSize)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            var items = documents
+                .Select(document => new RequestLogEntry(
+                    document.Id.ToString(),
+                    document.TenantId,
+                    document.UserId,
+                    document.Method,
+                    document.Path,
+                    document.Query,
+                    document.StatusCode,
+                    document.DurationMilliseconds,
+                    new Dictionary<string, string?>(document.Headers ?? new Dictionary<string, string?>()),
+                    document.IsAccountingOperation,
+                    document.CorrelationId,
+                    document.EndpointDisplayName,
+                    document.UiComponent,
+                    document.HasError,
+                    document.ErrorType,
+                    document.ErrorMessage,
+                    document.ErrorStackTrace,
+                    document.CreatedAt,
+                    document.ErrorAt))
+                .ToList();
+
+            return new RequestLogPage(items, total, query.Page, query.PageSize);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Failed to query request logs from MongoDB.");
+            return new RequestLogPage(Array.Empty<RequestLogEntry>(), 0, query.Page, query.PageSize);
+        }
+    }
+
     private sealed class GeneralRequestLogDocument
     {
         [BsonId]
@@ -132,6 +244,20 @@ public class MongoRequestLogService : IRequestLogService
         public bool IsAccountingOperation { get; set; }
 
         public string? CorrelationId { get; set; }
+
+        public string? EndpointDisplayName { get; set; }
+
+        public string? UiComponent { get; set; }
+
+        public bool HasError { get; set; }
+
+        public string? ErrorType { get; set; }
+
+        public string? ErrorMessage { get; set; }
+
+        public string? ErrorStackTrace { get; set; }
+
+        public DateTime? ErrorAt { get; set; }
 
         public DateTime CreatedAt { get; set; }
     }
