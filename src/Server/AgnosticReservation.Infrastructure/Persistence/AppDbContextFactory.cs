@@ -51,10 +51,8 @@ public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
         var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
 
         var infrastructureDirectory = Directory.GetCurrentDirectory();
-        var serverDirectory = Directory.GetParent(infrastructureDirectory)?.FullName
-            ?? throw new InvalidOperationException("Unable to locate the server directory when creating the design-time DbContext.");
-
-        var apiProjectDirectory = Path.Combine(serverDirectory, "AgnosticReservation.Api");
+        var apiProjectDirectory = FindApiProjectDirectory(infrastructureDirectory)
+            ?? throw new InvalidOperationException("Unable to locate the API project directory when creating the design-time DbContext.");
 
         return new ConfigurationBuilder()
             .SetBasePath(apiProjectDirectory)
@@ -62,6 +60,25 @@ public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
             .AddJsonFile($"appsettings.{environment}.json", optional: true)
             .AddEnvironmentVariables()
             .Build();
+    }
+
+    private static string? FindApiProjectDirectory(string startDirectory)
+    {
+        var directory = new DirectoryInfo(startDirectory);
+
+        while (directory is not null)
+        {
+            var candidate = Path.Combine(directory.FullName, "AgnosticReservation.Api");
+
+            if (Directory.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            directory = directory.Parent;
+        }
+
+        return null;
     }
 
     private static bool ShouldUseInMemory(string provider, string? connectionString)
