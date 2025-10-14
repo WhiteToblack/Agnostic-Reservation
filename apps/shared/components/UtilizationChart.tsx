@@ -1,15 +1,17 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useLocalization } from '../localization';
 
 interface UtilizationChartProps {
   utilization: Array<{ label: string; value: number }>;
 }
 
 export const UtilizationChart: React.FC<UtilizationChartProps> = ({ utilization }) => {
+  const { t } = useLocalization();
   const max = Math.max(...utilization.map((item) => item.value), 1);
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Utilization</Text>
+      <Text style={styles.header}>{t('dashboard.utilizationChart.title', 'Utilization')}</Text>
       {utilization.map((item) => (
         <View key={item.label} style={styles.row}>
           <Text style={styles.label}>{item.label}</Text>

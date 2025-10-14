@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useLocalization } from '../localization';
 
 interface StockAlert {
   sku: string;
@@ -13,10 +14,11 @@ interface StockAlertsProps {
 }
 
 export const StockAlerts: React.FC<StockAlertsProps> = ({ alerts }) => {
+  const { t } = useLocalization();
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Stock Alerts</Text>
-      {alerts.length === 0 ? <Text style={styles.empty}>No alerts 🎉</Text> : null}
+      <Text style={styles.header}>{t('dashboard.stockAlerts.title', 'Stock Alerts')}</Text>
+      {alerts.length === 0 ? <Text style={styles.empty}>{t('dashboard.stockAlerts.empty', 'No alerts 🎉')}</Text> : null}
       {alerts.map((alert) => (
         <View key={alert.sku} style={styles.alert}>
           <View>

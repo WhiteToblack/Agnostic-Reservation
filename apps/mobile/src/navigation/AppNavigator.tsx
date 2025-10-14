@@ -8,17 +8,42 @@ import DashboardScreen from '../screens/Dashboard/DashboardScreen';
 import AgendaScreen from '../screens/Reservations/AgendaScreen';
 import AdminScreen from '../screens/Admin/AdminScreen';
 import { useTheme } from '../theme/ThemeProvider';
+import { useLocalization } from '../../../shared/localization';
 
 const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
 
-const AppTabs = () => (
-  <Tab.Navigator>
-    <Tab.Screen name="Dashboard" component={DashboardScreen} />
-    <Tab.Screen name="Reservations" component={AgendaScreen} />
-    <Tab.Screen name="Admin" component={AdminScreen} />
-  </Tab.Navigator>
-);
+const AppTabs: React.FC = () => {
+  const { t } = useLocalization();
+  return (
+    <Tab.Navigator>
+      <Tab.Screen
+        name="Dashboard"
+        component={DashboardScreen}
+        options={{
+          title: t('navigation.tab.dashboard', 'Dashboard'),
+          tabBarLabel: t('navigation.tab.dashboard', 'Dashboard'),
+        }}
+      />
+      <Tab.Screen
+        name="Reservations"
+        component={AgendaScreen}
+        options={{
+          title: t('navigation.tab.reservations', 'Reservations'),
+          tabBarLabel: t('navigation.tab.reservations', 'Reservations'),
+        }}
+      />
+      <Tab.Screen
+        name="Admin"
+        component={AdminScreen}
+        options={{
+          title: t('navigation.tab.admin', 'Admin'),
+          tabBarLabel: t('navigation.tab.admin', 'Admin'),
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
 
 const AppNavigator: React.FC = () => {
   const { mode } = useTheme();

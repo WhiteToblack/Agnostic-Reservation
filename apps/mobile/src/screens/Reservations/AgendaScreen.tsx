@@ -1,12 +1,20 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import { Agenda, AgendaEntry, AgendaSchedule } from 'react-native-calendars';
+import { useLocalization } from '../../../../shared/localization';
 
 const AgendaScreen: React.FC = () => {
+  const { t } = useLocalization();
   const [items] = useState<AgendaSchedule>({
     [new Date().toISOString().split('T')[0]]: [
-      { name: 'Room A - Standup', height: 80 } as AgendaEntry,
-      { name: 'Room B - Planning', height: 80 } as AgendaEntry,
+      {
+        name: `${t('resources.roomA', 'Room A')} - ${t('events.standup', 'Standup')}`,
+        height: 80,
+      } as AgendaEntry,
+      {
+        name: `${t('resources.roomB', 'Room B')} - ${t('events.planning', 'Planning')}`,
+        height: 80,
+      } as AgendaEntry,
     ],
   });
 

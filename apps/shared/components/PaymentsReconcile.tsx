@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useLocalization } from '../localization';
 
 interface PaymentStatus {
   provider: string;
@@ -12,15 +13,20 @@ interface PaymentsReconcileProps {
 }
 
 export const PaymentsReconcile: React.FC<PaymentsReconcileProps> = ({ statuses }) => {
+  const { t } = useLocalization();
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Payments</Text>
+      <Text style={styles.header}>{t('dashboard.payments.title', 'Payments')}</Text>
       {statuses.map((status) => (
         <View key={status.provider} style={styles.row}>
           <Text style={styles.provider}>{status.provider}</Text>
           <View style={styles.metrics}>
-            <Text style={styles.pending}>{status.pending} pending</Text>
-            <Text style={styles.failed}>{status.failed} failed</Text>
+            <Text style={styles.pending}>
+              {t('dashboard.payments.pending', '{{count}} pending', { count: status.pending })}
+            </Text>
+            <Text style={styles.failed}>
+              {t('dashboard.payments.failed', '{{count}} failed', { count: status.failed })}
+            </Text>
           </View>
         </View>
       ))}

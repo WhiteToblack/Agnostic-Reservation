@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { signUp } from '../../services/api';
+import { useLocalization } from '../../../../shared/localization';
 
 const SignUpScreen: React.FC<NativeStackScreenProps<any>> = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -10,6 +11,7 @@ const SignUpScreen: React.FC<NativeStackScreenProps<any>> = ({ navigation }) => 
   const [fullName, setFullName] = useState('');
   const [preferredTheme, setPreferredTheme] = useState<'light' | 'dark'>('light');
   const [loading, setLoading] = useState(false);
+  const { t } = useLocalization();
 
   const onSubmit = async () => {
     setLoading(true);
@@ -17,7 +19,7 @@ const SignUpScreen: React.FC<NativeStackScreenProps<any>> = ({ navigation }) => 
       await signUp({ email, password, tenantId, fullName, preferredTheme });
       navigation.replace('Main');
     } catch (error) {
-      Alert.alert('Sign up failed', 'Please review your details');
+      Alert.alert(t('auth.signUp.errorTitle', 'Sign up failed'), t('auth.signUp.errorDescription', 'Please review your details'));
     } finally {
       setLoading(false);
     }
@@ -25,19 +27,53 @@ const SignUpScreen: React.FC<NativeStackScreenProps<any>> = ({ navigation }) => 
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
-      <TextInput value={tenantId} onChangeText={setTenantId} style={styles.input} placeholder="Tenant ID" />
-      <TextInput value={fullName} onChangeText={setFullName} style={styles.input} placeholder="Full Name" />
-      <TextInput value={email} onChangeText={setEmail} style={styles.input} placeholder="Email" autoCapitalize="none" />
-      <TextInput value={password} onChangeText={setPassword} style={styles.input} placeholder="Password" secureTextEntry />
+      <Text style={styles.title}>{t('auth.signUp.title', 'Create Account')}</Text>
+      <TextInput
+        value={tenantId}
+        onChangeText={setTenantId}
+        style={styles.input}
+        placeholder={t('auth.signUp.tenantPlaceholder', 'Tenant ID')}
+      />
+      <TextInput
+        value={fullName}
+        onChangeText={setFullName}
+        style={styles.input}
+        placeholder={t('auth.signUp.fullNamePlaceholder', 'Full Name')}
+      />
+      <TextInput
+        value={email}
+        onChangeText={setEmail}
+        style={styles.input}
+        placeholder={t('auth.signUp.emailPlaceholder', 'Email')}
+        autoCapitalize="none"
+      />
+      <TextInput
+        value={password}
+        onChangeText={setPassword}
+        style={styles.input}
+        placeholder={t('auth.signUp.passwordPlaceholder', 'Password')}
+        secureTextEntry
+      />
       <View style={styles.toggleRow}>
-        <Text>Theme</Text>
+        <Text>{t('auth.signUp.themeLabel', 'Theme')}</Text>
         <View style={styles.toggleGroup}>
-          <Button title="Light" onPress={() => setPreferredTheme('light')} color={preferredTheme === 'light' ? '#6366F1' : undefined} />
-          <Button title="Dark" onPress={() => setPreferredTheme('dark')} color={preferredTheme === 'dark' ? '#6366F1' : undefined} />
+          <Button
+            title={t('auth.signUp.themeLight', 'Light')}
+            onPress={() => setPreferredTheme('light')}
+            color={preferredTheme === 'light' ? '#6366F1' : undefined}
+          />
+          <Button
+            title={t('auth.signUp.themeDark', 'Dark')}
+            onPress={() => setPreferredTheme('dark')}
+            color={preferredTheme === 'dark' ? '#6366F1' : undefined}
+          />
         </View>
       </View>
-      <Button title={loading ? 'Signing up...' : 'Sign Up'} onPress={onSubmit} disabled={loading} />
+      <Button
+        title={loading ? t('auth.signUp.loading', 'Signing up...') : t('auth.signUp.submit', 'Sign Up')}
+        onPress={onSubmit}
+        disabled={loading}
+      />
     </View>
   );
 };

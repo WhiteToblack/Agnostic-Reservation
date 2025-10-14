@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, View, Text, Button, StyleSheet, Switch } from 'react-native';
 import { fetchParameters, invalidateCache } from '../../services/api';
 import { useTheme } from '../../theme/ThemeProvider';
+import { useLocalization } from '../../../../shared/localization';
 
 const AdminScreen: React.FC = () => {
   const tenantId = 'demo-tenant';
   const { mode, setMode } = useTheme();
   const [parameters, setParameters] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const { t } = useLocalization();
 
   const load = async () => {
     setLoading(true);
@@ -26,25 +28,29 @@ const AdminScreen: React.FC = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Theme</Text>
+        <Text style={styles.cardTitle}>{t('admin.theme.title', 'Theme')}</Text>
         <View style={styles.row}>
-          <Text>Dark mode</Text>
+          <Text>{t('admin.theme.darkModeLabel', 'Dark mode')}</Text>
           <Switch value={mode === 'dark'} onValueChange={(value) => setMode(value ? 'dark' : 'light')} />
         </View>
       </View>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Parameters</Text>
+        <Text style={styles.cardTitle}>{t('admin.parameters.title', 'Parameters')}</Text>
         {parameters.map((param) => (
           <View key={param.id} style={styles.row}>
             <Text>{param.key}</Text>
             <Text>{param.value}</Text>
           </View>
         ))}
-        <Button title={loading ? 'Refreshing...' : 'Refresh'} onPress={load} disabled={loading} />
+        <Button
+          title={loading ? t('admin.parameters.loading', 'Refreshing...') : t('admin.parameters.refresh', 'Refresh')}
+          onPress={load}
+          disabled={loading}
+        />
       </View>
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Cache</Text>
-        <Button title="Invalidate Tenant Cache" onPress={() => invalidateCache(tenantId)} />
+        <Text style={styles.cardTitle}>{t('admin.cache.title', 'Cache')}</Text>
+        <Button title={t('admin.cache.invalidate', 'Invalidate Tenant Cache')} onPress={() => invalidateCache(tenantId)} />
       </View>
     </ScrollView>
   );
