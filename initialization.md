@@ -54,14 +54,16 @@ DECLARE @RoleShopStaff UNIQUEIDENTIFIER = NEWID();
 DECLARE @RoleAccounting UNIQUEIDENTIFIER = NEWID();
 DECLARE @RoleCustomer UNIQUEIDENTIFIER = NEWID();
 
-INSERT INTO dbo.Roles (Id, Name, CreatedAt)
+INSERT INTO dbo.Roles (Id, Name, HierarchyLevel, IsSuperAdmin, CreatedAt)
 VALUES
-    (@RoleSuperUser, 'SuperUser', @Now),
-    (@RoleTenantAdmin, 'TenantAdmin', @Now),
-    (@RoleShopAdmin, 'ShopAdmin', @Now),
-    (@RoleShopStaff, 'ShopStaff', @Now),
-    (@RoleAccounting, 'Accounting', @Now),
-    (@RoleCustomer, 'Customer', @Now);
+    (@RoleSuperUser, 'SuperUser', 100, 1, @Now),
+    (@RoleTenantAdmin, 'TenantAdmin', 80, 0, @Now),
+    (@RoleShopAdmin, 'ShopAdmin', 60, 0, @Now),
+    (@RoleShopStaff, 'ShopStaff', 40, 0, @Now),
+    (@RoleAccounting, 'Accounting', 50, 0, @Now),
+    (@RoleCustomer, 'Customer', 10, 0, @Now);
+
+> Not: Aynı rol hiyerarşisi `docs/sql/agnostic_reservation_mssql.sql` betiğinde Docker tabanlı kurulum sırasında otomatik olarak uygulanır; mevcut kayıtlar güncellenerek izinler eşitlenir.
 
 -- İzinler (Permission enum değerleri)
 INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES
