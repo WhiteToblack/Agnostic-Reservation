@@ -263,7 +263,7 @@ BEGIN
         CreatedBy UNIQUEIDENTIFIER NULL,
         UpdatedBy UNIQUEIDENTIFIER NULL
     );
-    ALTER TABLE dbo.PaymentTransactions ADD CONSTRAINT FK_PaymentTransactions_Tenants FOREIGN KEY (TenantId) REFERENCES dbo.Tenants(Id) ON DELETE CASCADE;
+    ALTER TABLE dbo.PaymentTransactions ADD CONSTRAINT FK_PaymentTransactions_Tenants FOREIGN KEY (TenantId) REFERENCES dbo.Tenants(Id);
     ALTER TABLE dbo.PaymentTransactions ADD CONSTRAINT FK_PaymentTransactions_Reservations FOREIGN KEY (ReservationId) REFERENCES dbo.Reservations(Id) ON DELETE CASCADE;
     CREATE INDEX IX_PaymentTransactions_ReservationId ON dbo.PaymentTransactions(ReservationId);
 END
@@ -342,7 +342,7 @@ BEGIN
         CreatedBy UNIQUEIDENTIFIER NULL,
         UpdatedBy UNIQUEIDENTIFIER NULL
     );
-    ALTER TABLE dbo.Invoices ADD CONSTRAINT FK_Invoices_Tenants FOREIGN KEY (TenantId) REFERENCES dbo.Tenants(Id) ON DELETE CASCADE;
+    ALTER TABLE dbo.Invoices ADD CONSTRAINT FK_Invoices_Tenants FOREIGN KEY (TenantId) REFERENCES dbo.Tenants(Id);
     ALTER TABLE dbo.Invoices ADD CONSTRAINT FK_Invoices_Reservations FOREIGN KEY (ReservationId) REFERENCES dbo.Reservations(Id) ON DELETE CASCADE;
     CREATE UNIQUE INDEX IX_Invoices_ReservationId ON dbo.Invoices(ReservationId);
 END
