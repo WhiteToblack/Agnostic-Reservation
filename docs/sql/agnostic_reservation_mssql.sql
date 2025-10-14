@@ -38,6 +38,8 @@ BEGIN
     (
         Id UNIQUEIDENTIFIER NOT NULL CONSTRAINT PK_Roles PRIMARY KEY,
         Name NVARCHAR(150) NOT NULL,
+        HierarchyLevel INT NOT NULL CONSTRAINT DF_Roles_HierarchyLevel DEFAULT(0),
+        IsSuperAdmin BIT NOT NULL CONSTRAINT DF_Roles_IsSuperAdmin DEFAULT(0),
         CreatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_Roles_CreatedAt DEFAULT (SYSUTCDATETIME()),
         UpdatedAt DATETIME2(7) NULL,
         CreatedBy UNIQUEIDENTIFIER NULL,
@@ -345,6 +347,155 @@ BEGIN
     ALTER TABLE dbo.Invoices ADD CONSTRAINT FK_Invoices_Tenants FOREIGN KEY (TenantId) REFERENCES dbo.Tenants(Id);
     ALTER TABLE dbo.Invoices ADD CONSTRAINT FK_Invoices_Reservations FOREIGN KEY (ReservationId) REFERENCES dbo.Reservations(Id) ON DELETE CASCADE;
     CREATE UNIQUE INDEX IX_Invoices_ReservationId ON dbo.Invoices(ReservationId);
+END
+GO
+
+PRINT N'Seeding default roles and permissions...';
+GO
+
+IF OBJECT_ID(N'dbo.Roles', 'U') IS NOT NULL AND OBJECT_ID(N'dbo.RolePermissions', 'U') IS NOT NULL
+BEGIN
+    DECLARE @Now DATETIME2(7) = SYSUTCDATETIME();
+
+    DECLARE @RoleSuperUser UNIQUEIDENTIFIER = (SELECT Id FROM dbo.Roles WHERE Name = 'SuperUser');
+    IF @RoleSuperUser IS NULL
+    BEGIN
+        SET @RoleSuperUser = NEWID();
+        INSERT INTO dbo.Roles (Id, Name, HierarchyLevel, IsSuperAdmin, CreatedAt)
+        VALUES (@RoleSuperUser, 'SuperUser', 100, 1, @Now);
+    END
+    ELSE
+    BEGIN
+        UPDATE dbo.Roles SET HierarchyLevel = 100, IsSuperAdmin = 1 WHERE Id = @RoleSuperUser;
+    END
+
+    DECLARE @RoleTenantAdmin UNIQUEIDENTIFIER = (SELECT Id FROM dbo.Roles WHERE Name = 'TenantAdmin');
+    IF @RoleTenantAdmin IS NULL
+    BEGIN
+        SET @RoleTenantAdmin = NEWID();
+        INSERT INTO dbo.Roles (Id, Name, HierarchyLevel, IsSuperAdmin, CreatedAt)
+        VALUES (@RoleTenantAdmin, 'TenantAdmin', 80, 0, @Now);
+    END
+    ELSE
+    BEGIN
+        UPDATE dbo.Roles SET HierarchyLevel = 80, IsSuperAdmin = 0 WHERE Id = @RoleTenantAdmin;
+    END
+
+    DECLARE @RoleShopAdmin UNIQUEIDENTIFIER = (SELECT Id FROM dbo.Roles WHERE Name = 'ShopAdmin');
+    IF @RoleShopAdmin IS NULL
+    BEGIN
+        SET @RoleShopAdmin = NEWID();
+        INSERT INTO dbo.Roles (Id, Name, HierarchyLevel, IsSuperAdmin, CreatedAt)
+        VALUES (@RoleShopAdmin, 'ShopAdmin', 60, 0, @Now);
+    END
+    ELSE
+    BEGIN
+        UPDATE dbo.Roles SET HierarchyLevel = 60, IsSuperAdmin = 0 WHERE Id = @RoleShopAdmin;
+    END
+
+    DECLARE @RoleShopStaff UNIQUEIDENTIFIER = (SELECT Id FROM dbo.Roles WHERE Name = 'ShopStaff');
+    IF @RoleShopStaff IS NULL
+    BEGIN
+        SET @RoleShopStaff = NEWID();
+        INSERT INTO dbo.Roles (Id, Name, HierarchyLevel, IsSuperAdmin, CreatedAt)
+        VALUES (@RoleShopStaff, 'ShopStaff', 40, 0, @Now);
+    END
+    ELSE
+    BEGIN
+        UPDATE dbo.Roles SET HierarchyLevel = 40, IsSuperAdmin = 0 WHERE Id = @RoleShopStaff;
+    END
+
+    DECLARE @RoleAccounting UNIQUEIDENTIFIER = (SELECT Id FROM dbo.Roles WHERE Name = 'Accounting');
+    IF @RoleAccounting IS NULL
+    BEGIN
+        SET @RoleAccounting = NEWID();
+        INSERT INTO dbo.Roles (Id, Name, HierarchyLevel, IsSuperAdmin, CreatedAt)
+        VALUES (@RoleAccounting, 'Accounting', 50, 0, @Now);
+    END
+    ELSE
+    BEGIN
+        UPDATE dbo.Roles SET HierarchyLevel = 50, IsSuperAdmin = 0 WHERE Id = @RoleAccounting;
+    END
+
+    DECLARE @RoleCustomer UNIQUEIDENTIFIER = (SELECT Id FROM dbo.Roles WHERE Name = 'Customer');
+    IF @RoleCustomer IS NULL
+    BEGIN
+        SET @RoleCustomer = NEWID();
+        INSERT INTO dbo.Roles (Id, Name, HierarchyLevel, IsSuperAdmin, CreatedAt)
+        VALUES (@RoleCustomer, 'Customer', 10, 0, @Now);
+    END
+    ELSE
+    BEGIN
+        UPDATE dbo.Roles SET HierarchyLevel = 10, IsSuperAdmin = 0 WHERE Id = @RoleCustomer;
+    END
+
+    -- SuperUser permissions
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleSuperUser AND Permission = 1)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleSuperUser, 1, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleSuperUser AND Permission = 2)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleSuperUser, 2, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleSuperUser AND Permission = 4)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleSuperUser, 4, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleSuperUser AND Permission = 8)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleSuperUser, 8, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleSuperUser AND Permission = 16)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleSuperUser, 16, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleSuperUser AND Permission = 32)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleSuperUser, 32, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleSuperUser AND Permission = 64)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleSuperUser, 64, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleSuperUser AND Permission = 128)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleSuperUser, 128, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleSuperUser AND Permission = 256)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleSuperUser, 256, @Now);
+
+    -- TenantAdmin permissions
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleTenantAdmin AND Permission = 1)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleTenantAdmin, 1, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleTenantAdmin AND Permission = 2)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleTenantAdmin, 2, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleTenantAdmin AND Permission = 8)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleTenantAdmin, 8, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleTenantAdmin AND Permission = 16)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleTenantAdmin, 16, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleTenantAdmin AND Permission = 32)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleTenantAdmin, 32, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleTenantAdmin AND Permission = 64)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleTenantAdmin, 64, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleTenantAdmin AND Permission = 128)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleTenantAdmin, 128, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleTenantAdmin AND Permission = 256)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleTenantAdmin, 256, @Now);
+
+    -- ShopAdmin permissions
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleShopAdmin AND Permission = 1)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleShopAdmin, 1, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleShopAdmin AND Permission = 2)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleShopAdmin, 2, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleShopAdmin AND Permission = 16)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleShopAdmin, 16, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleShopAdmin AND Permission = 128)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleShopAdmin, 128, @Now);
+
+    -- ShopStaff permissions
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleShopStaff AND Permission = 1)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleShopStaff, 1, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleShopStaff AND Permission = 2)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleShopStaff, 2, @Now);
+
+    -- Accounting permissions
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleAccounting AND Permission = 1)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleAccounting, 1, @Now);
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleAccounting AND Permission = 256)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleAccounting, 256, @Now);
+
+    -- Customer permissions
+    IF NOT EXISTS (SELECT 1 FROM dbo.RolePermissions WHERE RoleId = @RoleCustomer AND Permission = 1)
+        INSERT INTO dbo.RolePermissions (Id, RoleId, Permission, CreatedAt) VALUES (NEWID(), @RoleCustomer, 1, @Now);
+END
+ELSE
+BEGIN
+    PRINT N'Skipping role seed because required tables are missing.';
 END
 GO
 
