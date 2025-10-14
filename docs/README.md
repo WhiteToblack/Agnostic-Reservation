@@ -68,13 +68,16 @@ React Native component tests can be added with Jest and React Native Testing Lib
 * **Schema**: Run `docs/sql/agnostic_reservation_mssql.sql` on your SQL Server instance to create all tables, foreign keys, and indexes that map to the domain entities.
 * **Localization seed**: After provisioning the schema, execute `docs/sql/agnostic_reservation_multilanguage_seed.sql` to preload sample multi-language keys and translations for every demo tenant.
 * **Connection string**: Update `ConnectionStrings:DefaultConnection` in `src/Server/AgnosticReservation.Api/appsettings.json` (or user secrets/environment variables) with your SQL Server credentials.
-* **Local development SQL Server**: A ready-to-use Docker Compose file lives at the repository root. Start it before executing migrations:
+* **Local development databases**: A ready-to-use Docker Compose file lives at the repository root. Start it before executing migrations or accessing MongoDB:
 
   ```bash
   docker compose -f compose.infrastructure.yml up -d
   ```
 
-  The compose stack spins up SQL Server 2022 with the `AgnosticReservation` database and the `wtb/Asd123*` login used by the default connection string.
+  The compose stack now starts two containers:
+
+  * **SQL Server 2022** with the `AgnosticReservation` database and the `wtb/Asd123*` login used by the default connection string.
+  * **MongoDB 6.0** with a root user (`root` / `example`) exposed on `localhost:27017` for document-centric scenarios (e.g., caching, audit logs, or prototype features).
 * **Local fallback**: If the connection string is omitted, the API will automatically fall back to the EF Core InMemory provider for lightweight testing.
 * **Migrations**: Because `AppDbContext` lives in the Infrastructure project, run EF Core CLI commands from the API directory while pointing the `--project` flag at the Infrastructure `.csproj`:
 
