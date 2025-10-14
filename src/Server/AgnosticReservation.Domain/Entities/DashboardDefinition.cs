@@ -6,6 +6,8 @@ public class DashboardDefinition : BaseEntity
 {
     public Guid TenantId { get; private set; }
     public Guid RoleId { get; private set; }
+    public Guid? UserId { get; private set; }
+    public string? LayoutConfigJson { get; private set; }
     public ICollection<DashboardWidget> Widgets { get; private set; } = new List<DashboardWidget>();
 
     private DashboardDefinition()
@@ -13,9 +15,26 @@ public class DashboardDefinition : BaseEntity
     }
 
     public DashboardDefinition(Guid tenantId, Guid roleId)
+        : this(tenantId, roleId, null, null)
+    {
+    }
+
+    public DashboardDefinition(Guid tenantId, Guid roleId, Guid? userId, string? layoutConfigJson)
     {
         TenantId = tenantId;
         RoleId = roleId;
+        UserId = userId;
+        LayoutConfigJson = layoutConfigJson;
+    }
+
+    public void AssignToUser(Guid userId)
+    {
+        UserId = userId;
+    }
+
+    public void UpdateLayoutConfig(string? configJson)
+    {
+        LayoutConfigJson = configJson;
     }
 }
 
@@ -35,6 +54,16 @@ public class DashboardWidget : BaseEntity
         DashboardDefinitionId = definitionId;
         WidgetType = widgetType;
         Order = order;
+        ConfigJson = configJson;
+    }
+
+    public void UpdateOrder(int order)
+    {
+        Order = order;
+    }
+
+    public void UpdateConfig(string? configJson)
+    {
         ConfigJson = configJson;
     }
 }

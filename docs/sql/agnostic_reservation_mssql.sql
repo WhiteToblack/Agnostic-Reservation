@@ -199,6 +199,8 @@ BEGIN
         Id UNIQUEIDENTIFIER NOT NULL CONSTRAINT PK_DashboardDefinitions PRIMARY KEY,
         TenantId UNIQUEIDENTIFIER NOT NULL,
         RoleId UNIQUEIDENTIFIER NOT NULL,
+        UserId UNIQUEIDENTIFIER NULL,
+        LayoutConfigJson NVARCHAR(MAX) NULL,
         CreatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_DashboardDefinitions_CreatedAt DEFAULT (SYSUTCDATETIME()),
         UpdatedAt DATETIME2(7) NULL,
         CreatedBy UNIQUEIDENTIFIER NULL,
@@ -206,7 +208,8 @@ BEGIN
     );
     ALTER TABLE dbo.DashboardDefinitions ADD CONSTRAINT FK_DashboardDefinitions_Tenants FOREIGN KEY (TenantId) REFERENCES dbo.Tenants(Id) ON DELETE CASCADE;
     ALTER TABLE dbo.DashboardDefinitions ADD CONSTRAINT FK_DashboardDefinitions_Roles FOREIGN KEY (RoleId) REFERENCES dbo.Roles(Id);
-    CREATE UNIQUE INDEX IX_DashboardDefinitions_Tenant_Role ON dbo.DashboardDefinitions(TenantId, RoleId);
+    ALTER TABLE dbo.DashboardDefinitions ADD CONSTRAINT FK_DashboardDefinitions_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(Id) ON DELETE CASCADE;
+    CREATE UNIQUE INDEX IX_DashboardDefinitions_Tenant_Role_User ON dbo.DashboardDefinitions(TenantId, RoleId, UserId);
 END
 GO
 

@@ -145,6 +145,42 @@ WHEN NOT MATCHED THEN
     VALUES (NEWID(), @TenantBeauty, source.Category, source.[Key], source.[Value], source.IsSecret, @Now);
 ;
 
+DECLARE @BeautyAdminDashboard UNIQUEIDENTIFIER;
+SELECT @BeautyAdminDashboard = Id FROM dbo.DashboardDefinitions WHERE TenantId = @TenantBeauty AND RoleId = @RoleTenantAdmin AND UserId IS NULL;
+IF @BeautyAdminDashboard IS NULL
+BEGIN
+    SET @BeautyAdminDashboard = NEWID();
+    INSERT INTO dbo.DashboardDefinitions (Id, TenantId, RoleId, UserId, LayoutConfigJson, CreatedAt)
+    VALUES (@BeautyAdminDashboard, @TenantBeauty, @RoleTenantAdmin, NULL, N'{"accent":"beauty-blush","density":"comfortable"}', @Now);
+END;
+
+IF NOT EXISTS (SELECT 1 FROM dbo.DashboardWidgets WHERE DashboardDefinitionId = @BeautyAdminDashboard)
+BEGIN
+    INSERT INTO dbo.DashboardWidgets (Id, DashboardDefinitionId, WidgetType, [Order], ConfigJson, CreatedAt)
+    VALUES
+        (NEWID(), @BeautyAdminDashboard, 0, 1, N'{"title":"Haftalık Gelir"}', @Now),
+        (NEWID(), @BeautyAdminDashboard, 1, 2, N'{"range":"week"}', @Now),
+        (NEWID(), @BeautyAdminDashboard, 4, 3, N'{"threshold":5}', @Now);
+END;
+
+DECLARE @BeautyAdminPersonal UNIQUEIDENTIFIER;
+SELECT @BeautyAdminPersonal = Id FROM dbo.DashboardDefinitions WHERE TenantId = @TenantBeauty AND RoleId = @RoleTenantAdmin AND UserId = @BeautyAdmin;
+IF @BeautyAdminPersonal IS NULL
+BEGIN
+    SET @BeautyAdminPersonal = NEWID();
+    INSERT INTO dbo.DashboardDefinitions (Id, TenantId, RoleId, UserId, LayoutConfigJson, CreatedAt)
+    VALUES (@BeautyAdminPersonal, @TenantBeauty, @RoleTenantAdmin, @BeautyAdmin, N'{"accent":"rose","showQuickBook":false,"density":"compact"}', @Now);
+END;
+
+IF NOT EXISTS (SELECT 1 FROM dbo.DashboardWidgets WHERE DashboardDefinitionId = @BeautyAdminPersonal)
+BEGIN
+    INSERT INTO dbo.DashboardWidgets (Id, DashboardDefinitionId, WidgetType, [Order], ConfigJson, CreatedAt)
+    VALUES
+        (NEWID(), @BeautyAdminPersonal, 1, 1, N'{"range":"day"}', @Now),
+        (NEWID(), @BeautyAdminPersonal, 0, 2, N'{"title":"Bugünün Geliri"}', @Now),
+        (NEWID(), @BeautyAdminPersonal, 2, 3, N'{"quickLinks":["gelir","kampanyalar"]}', @Now);
+END;
+
 /* -------------------------------------------------------------------------- */
 /* Automotive Service Network                                                 */
 /* -------------------------------------------------------------------------- */
