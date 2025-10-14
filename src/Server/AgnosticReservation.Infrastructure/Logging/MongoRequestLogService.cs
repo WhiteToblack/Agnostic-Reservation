@@ -11,22 +11,49 @@ namespace AgnosticReservation.Infrastructure.Logging;
 
 public class MongoRequestLogService : IRequestLogService
 {
-    private readonly IMongoCollection<GeneralRequestLogDocument> _generalLogs;
-    private readonly IMongoCollection<AccountingRequestLogDocument> _accountingLogs;
+    private readonly IMongoCollection<GeneralRequestLogDocument>? _generalLogs;
+    private readonly IMongoCollection<AccountingRequestLogDocument>? _accountingLogs;
     private readonly ILogger<MongoRequestLogService> _logger;
+    private readonly bool _isEnabled;
 
     public MongoRequestLogService(IOptions<MongoLoggingOptions> options, ILogger<MongoRequestLogService> logger)
     {
-        var settings = options.Value ?? new MongoLoggingOptions();
-        var client = new MongoClient(settings.ConnectionString);
-        var database = client.GetDatabase(settings.DatabaseName);
-        _generalLogs = database.GetCollection<GeneralRequestLogDocument>(settings.GeneralCollectionName);
-        _accountingLogs = database.GetCollection<AccountingRequestLogDocument>(settings.AccountingCollectionName);
         _logger = logger;
+        var settings = options.Value ?? new MongoLoggingOptions();
+
+        if (!settings.IsEnabled)
+        {
+            _logger.LogInformation("Mongo request logging is disabled.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(settings.ConnectionString) || string.IsNullOrWhiteSpace(settings.DatabaseName))
+        {
+            _logger.LogWarning("Mongo request logging disabled because the configuration is incomplete.");
+            return;
+        }
+
+        try
+        {
+            var client = new MongoClient(settings.ConnectionString);
+            var database = client.GetDatabase(settings.DatabaseName);
+            _generalLogs = database.GetCollection<GeneralRequestLogDocument>(settings.GeneralCollectionName);
+            _accountingLogs = database.GetCollection<AccountingRequestLogDocument>(settings.AccountingCollectionName);
+            _isEnabled = true;
+        }
+        catch (MongoConfigurationException exception)
+        {
+            _logger.LogError(exception, "Failed to initialize MongoDB logging due to invalid configuration.");
+        }
     }
 
     public async Task LogAsync(RequestLogContext context, CancellationToken cancellationToken = default)
     {
+        if (!_isEnabled || _generalLogs is null)
+        {
+            return;
+        }
+
         try
         {
             var document = new GeneralRequestLogDocument
@@ -48,6 +75,12 @@ public class MongoRequestLogService : IRequestLogService
 
             if (context.IsAccountingOperation && context.AccountingContext is not null)
             {
+                if (_accountingLogs is null)
+                {
+                    _logger.LogWarning("Accounting request logging is not configured but an accounting operation was flagged.");
+                    return;
+                }
+
                 var accounting = new AccountingRequestLogDocument
                 {
                     GeneralLogId = document.Id,
