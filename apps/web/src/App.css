@@ -258,6 +258,47 @@ body {
   background: #fbfcff;
 }
 
+.ml-admin__translation {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.ml-admin__translation span {
+  flex: 1;
+  word-break: break-word;
+}
+
+.ml-admin__translation-placeholder {
+  color: #9aa3c6;
+}
+
+.ml-admin__icon-button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #7a86a7;
+  padding: 6px;
+  border-radius: 10px;
+  line-height: 1;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.ml-admin__icon-button:hover {
+  background: rgba(79, 107, 255, 0.12);
+  color: #2d3d74;
+}
+
+.ml-admin__icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.ml-admin__actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
 .ml-admin__highlight {
   background: rgba(79, 107, 255, 0.08);
   border-radius: 10px;
