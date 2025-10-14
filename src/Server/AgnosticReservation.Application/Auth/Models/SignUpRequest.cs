@@ -6,6 +6,7 @@ public record SignUpRequest(
     string Password,
     string FullName,
     string PreferredTheme,
+    string PreferredLanguage = "tr-TR",
     bool AcceptKvkk = false,
     Guid? ShopId = null,
     string? ShopName = null,

@@ -59,6 +59,7 @@ BEGIN
         Email NVARCHAR(256) NOT NULL,
         PasswordHash NVARCHAR(256) NOT NULL,
         PreferredTheme NVARCHAR(50) NOT NULL CONSTRAINT DF_Users_PreferredTheme DEFAULT(N'inherit'),
+        PreferredLanguage NVARCHAR(10) NOT NULL CONSTRAINT DF_Users_PreferredLanguage DEFAULT(N'tr-TR'),
         MultiFactorEnabled BIT NOT NULL CONSTRAINT DF_Users_Mfa DEFAULT(0),
         CreatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_Users_CreatedAt DEFAULT (SYSUTCDATETIME()),
         UpdatedAt DATETIME2(7) NULL,
@@ -126,6 +127,42 @@ BEGIN
     );
     ALTER TABLE dbo.TenantParameters ADD CONSTRAINT FK_TenantParameters_Tenants FOREIGN KEY (TenantId) REFERENCES dbo.Tenants(Id) ON DELETE CASCADE;
     CREATE UNIQUE INDEX IX_TenantParameters_Tenant_Category_Key ON dbo.TenantParameters(TenantId, Category, [Key]);
+END
+GO
+
+IF OBJECT_ID(N'dbo.LocalizationKeys', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.LocalizationKeys
+    (
+        Id UNIQUEIDENTIFIER NOT NULL CONSTRAINT PK_LocalizationKeys PRIMARY KEY,
+        TenantId UNIQUEIDENTIFIER NOT NULL,
+        [Key] NVARCHAR(200) NOT NULL,
+        Description NVARCHAR(500) NULL,
+        CreatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_LocalizationKeys_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        UpdatedAt DATETIME2(7) NULL,
+        CreatedBy UNIQUEIDENTIFIER NULL,
+        UpdatedBy UNIQUEIDENTIFIER NULL
+    );
+    ALTER TABLE dbo.LocalizationKeys ADD CONSTRAINT FK_LocalizationKeys_Tenants FOREIGN KEY (TenantId) REFERENCES dbo.Tenants(Id) ON DELETE CASCADE;
+    CREATE UNIQUE INDEX IX_LocalizationKeys_Tenant_Key ON dbo.LocalizationKeys(TenantId, [Key]);
+END
+GO
+
+IF OBJECT_ID(N'dbo.LocalizationTexts', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.LocalizationTexts
+    (
+        Id UNIQUEIDENTIFIER NOT NULL CONSTRAINT PK_LocalizationTexts PRIMARY KEY,
+        LocalizationKeyId UNIQUEIDENTIFIER NOT NULL,
+        Language NVARCHAR(10) NOT NULL,
+        [Value] NVARCHAR(1024) NOT NULL,
+        CreatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_LocalizationTexts_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        UpdatedAt DATETIME2(7) NULL,
+        CreatedBy UNIQUEIDENTIFIER NULL,
+        UpdatedBy UNIQUEIDENTIFIER NULL
+    );
+    ALTER TABLE dbo.LocalizationTexts ADD CONSTRAINT FK_LocalizationTexts_Keys FOREIGN KEY (LocalizationKeyId) REFERENCES dbo.LocalizationKeys(Id) ON DELETE CASCADE;
+    CREATE UNIQUE INDEX IX_LocalizationTexts_Key_Language ON dbo.LocalizationTexts(LocalizationKeyId, Language);
 END
 GO
 
