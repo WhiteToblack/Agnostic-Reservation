@@ -85,6 +85,12 @@ React Native component tests can be added with Jest and React Native Testing Lib
   dotnet ef database update \
       --project ../AgnosticReservation.Infrastructure/AgnosticReservation.Infrastructure.csproj \
       --startup-project AgnosticReservation.Api.csproj
+
+  # İlk kurulum için varsayılan tenant parametrelerini ve yönetici kullanıcıları oluşturur
+  dotnet ef database update \
+      --project ../AgnosticReservation.Infrastructure/AgnosticReservation.Infrastructure.csproj \
+      --startup-project AgnosticReservation.Api.csproj \
+      -- --initialize
   ```
 
 ## Extension Points

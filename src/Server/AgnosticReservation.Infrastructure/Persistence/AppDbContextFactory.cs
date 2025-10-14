@@ -1,8 +1,10 @@
 using System;
 using System.IO;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+using AgnosticReservation.Infrastructure.Persistence.Initialization;
 
 namespace AgnosticReservation.Infrastructure.Persistence;
 
@@ -41,6 +43,12 @@ public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
         if (bool.TryParse(databaseSection["EnableSensitiveLogging"], out var enableSensitiveLogging) && enableSensitiveLogging)
         {
             optionsBuilder.EnableSensitiveDataLogging();
+        }
+
+        if (ShouldInitialize(args))
+        {
+            using var initializationContext = new AppDbContext(optionsBuilder.Options);
+            DatabaseInitializer.InitializeAsync(initializationContext).GetAwaiter().GetResult();
         }
 
         return new AppDbContext(optionsBuilder.Options);
@@ -89,5 +97,16 @@ public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbConte
         }
 
         return string.IsNullOrWhiteSpace(connectionString);
+    }
+
+    private static bool ShouldInitialize(string[] args)
+    {
+        if (args is null || args.Length == 0)
+        {
+            return false;
+        }
+
+        return args.Any(a => string.Equals(a, "--initialize", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(a, "initialize", StringComparison.OrdinalIgnoreCase));
     }
 }
