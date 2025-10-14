@@ -12,13 +12,23 @@ type LocalizationProviderProps = {
   tenantId: string;
   initialLanguage: string;
   children: React.ReactNode;
+  apiBaseUrl?: string;
 };
 
 const isSupportedLanguage = (language: string): language is LanguageCode =>
   supportedLanguages.includes(language as LanguageCode);
 
-export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ tenantId, initialLanguage, children }) => {
-  const initialLanguageCode: LanguageCode = isSupportedLanguage(initialLanguage) ? (initialLanguage as LanguageCode) : defaultLanguage;
+const defaultApiBase = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:5243/api').replace(/\/$/, '');
+
+export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({
+  tenantId,
+  initialLanguage,
+  apiBaseUrl = defaultApiBase,
+  children,
+}) => {
+  const initialLanguageCode: LanguageCode = isSupportedLanguage(initialLanguage)
+    ? (initialLanguage as LanguageCode)
+    : defaultLanguage;
   const [language, setLanguageState] = useState<string>(initialLanguageCode);
   const [translations, setTranslations] = useState<Record<string, string>>(() => ({ ...fallbackTranslations[initialLanguageCode] }));
   const [loading, setLoading] = useState(false);
@@ -34,17 +44,20 @@ export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ tena
       abortRef.current = controller;
 
       try {
-        const response = await fetch(
-          `/api/localization?tenantId=${encodeURIComponent(tenantId)}&language=${encodeURIComponent(targetLanguage)}`,
-          { signal: controller.signal }
-        );
+        const normalizedBase = apiBaseUrl.replace(/\/$/, '');
+        const url = `${normalizedBase}/localization?tenantId=${encodeURIComponent(tenantId)}&language=${encodeURIComponent(
+          targetLanguage
+        )}`;
+        const response = await fetch(url, { signal: controller.signal });
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
 
         const payload = (await response.json()) as { language: string; translations: Record<string, string> };
-        const baseLanguage: LanguageCode = isSupportedLanguage(payload.language) ? (payload.language as LanguageCode) : defaultLanguage;
+        const baseLanguage: LanguageCode = isSupportedLanguage(payload.language)
+          ? (payload.language as LanguageCode)
+          : defaultLanguage;
         const base = fallbackTranslations[baseLanguage] ?? {};
         setTranslations({ ...base, ...payload.translations });
       } catch (err) {
@@ -59,7 +72,7 @@ export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ tena
         setLoading(false);
       }
     },
-    [tenantId]
+    [apiBaseUrl, tenantId]
   );
 
   useEffect(() => {
@@ -67,12 +80,9 @@ export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ tena
     return () => abortRef.current?.abort();
   }, [fetchTranslations, language]);
 
-  const setLanguage = useCallback(
-    (next: string) => {
-      setLanguageState(next);
-    },
-    []
-  );
+  const setLanguage = useCallback((next: string) => {
+    setLanguageState(next);
+  }, []);
 
   const reload = useCallback(async () => {
     await fetchTranslations(language);

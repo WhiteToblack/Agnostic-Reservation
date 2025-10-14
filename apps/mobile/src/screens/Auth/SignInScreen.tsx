@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { signIn } from '../../services/api';
+import { useLocalization } from '../../../../shared/localization';
 
 const SignInScreen: React.FC<NativeStackScreenProps<any>> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [tenantId, setTenantId] = useState('');
   const [loading, setLoading] = useState(false);
+  const { t } = useLocalization();
 
   const onSubmit = async () => {
     setLoading(true);
@@ -15,7 +17,7 @@ const SignInScreen: React.FC<NativeStackScreenProps<any>> = ({ navigation }) => 
       await signIn({ email, password, tenantId });
       navigation.replace('Main');
     } catch (error) {
-      Alert.alert('Sign in failed', 'Please check your credentials');
+      Alert.alert(t('auth.signIn.errorTitle', 'Sign in failed'), t('auth.signIn.errorDescription', 'Please check your credentials'));
     } finally {
       setLoading(false);
     }
@@ -23,13 +25,35 @@ const SignInScreen: React.FC<NativeStackScreenProps<any>> = ({ navigation }) => 
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back</Text>
-      <TextInput value={tenantId} onChangeText={setTenantId} style={styles.input} placeholder="Tenant ID" autoCapitalize="none" />
-      <TextInput value={email} onChangeText={setEmail} style={styles.input} placeholder="Email" autoCapitalize="none" />
-      <TextInput value={password} onChangeText={setPassword} style={styles.input} placeholder="Password" secureTextEntry />
-      <Button title={loading ? 'Signing in...' : 'Sign In'} onPress={onSubmit} disabled={loading} />
+      <Text style={styles.title}>{t('auth.signIn.title', 'Welcome Back')}</Text>
+      <TextInput
+        value={tenantId}
+        onChangeText={setTenantId}
+        style={styles.input}
+        placeholder={t('auth.signIn.tenantPlaceholder', 'Tenant ID')}
+        autoCapitalize="none"
+      />
+      <TextInput
+        value={email}
+        onChangeText={setEmail}
+        style={styles.input}
+        placeholder={t('auth.signIn.emailPlaceholder', 'Email')}
+        autoCapitalize="none"
+      />
+      <TextInput
+        value={password}
+        onChangeText={setPassword}
+        style={styles.input}
+        placeholder={t('auth.signIn.passwordPlaceholder', 'Password')}
+        secureTextEntry
+      />
+      <Button
+        title={loading ? t('auth.signIn.loading', 'Signing in...') : t('auth.signIn.submit', 'Sign In')}
+        onPress={onSubmit}
+        disabled={loading}
+      />
       <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
-        <Text style={styles.link}>Need an account? Sign up</Text>
+        <Text style={styles.link}>{t('auth.signIn.navigateToSignUp', 'Need an account? Sign up')}</Text>
       </TouchableOpacity>
     </View>
   );

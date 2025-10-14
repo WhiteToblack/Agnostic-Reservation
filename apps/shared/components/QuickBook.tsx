@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useLocalization } from '../localization';
 
 interface QuickBookProps {
   resources: Array<{ id: string; name: string }>;
@@ -7,9 +8,10 @@ interface QuickBookProps {
 }
 
 export const QuickBook: React.FC<QuickBookProps> = ({ resources, onSelect }) => {
+  const { t } = useLocalization();
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Quick Book</Text>
+      <Text style={styles.header}>{t('dashboard.quickBook.title', 'Quick Book')}</Text>
       <View style={styles.grid}>
         {resources.map((resource) => (
           <TouchableOpacity key={resource.id} style={styles.resource} onPress={() => onSelect(resource.id)}>

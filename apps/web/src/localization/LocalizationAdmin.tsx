@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocalization } from './LocalizationProvider';
+import { useLocalization, supportedLanguages } from '../../../shared/localization';
 
 type LocalizationKeyDto = {
   id: string;
@@ -12,8 +12,6 @@ type LocalizationAdminProps = {
   tenantId: string;
   userId?: string;
 };
-
-const supportedLanguages = ['tr-TR', 'en-US', 'en-GB', 'de-DE'];
 
 export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }) => {
   const { t, language, setLanguage, translations, reload, loading: localizationLoading } = useLocalization();
