@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import { createContext, useContext } from 'react';
 import type { LocalizationContextValue, TranslationParams } from './types';
 
 export const LocalizationContext = createContext<LocalizationContextValue | undefined>(undefined);

@@ -1,8 +1,18 @@
 {
-  "extends": "expo/tsconfig.base",
+  "extends": "./tsconfig.expo-base.json",
   "compilerOptions": {
     "strict": true,
-    "baseUrl": "./src"
+    "baseUrl": ".",
+    "module": "esnext",
+    "paths": {
+      "@mobile/*": ["src/*"],
+      "@shared/*": ["../shared/*"],
+      "react": ["./node_modules/@types/react/index.d.ts"],
+      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime.d.ts"],
+      "react-native": ["./node_modules/@types/react-native/index.d.ts"]
+    },
+    "types": ["react", "react-native", "node"],
+    "rootDirs": ["src", "../shared"]
   },
-  "include": ["src"]
+  "include": ["src", "../shared"]
 }

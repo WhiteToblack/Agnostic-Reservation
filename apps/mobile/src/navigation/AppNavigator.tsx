@@ -1,7 +1,7 @@
-import React from 'react';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import type { FC } from 'react';
 import SignInScreen from '../screens/Auth/SignInScreen';
 import SignUpScreen from '../screens/Auth/SignUpScreen';
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
@@ -9,11 +9,12 @@ import AgendaScreen from '../screens/Reservations/AgendaScreen';
 import AdminScreen from '../screens/Admin/AdminScreen';
 import { useTheme } from '../theme/ThemeProvider';
 import { useLocalization } from '../../../shared/localization';
+import type { AppTabParamList, RootStackParamList } from './types';
 
-const Tab = createBottomTabNavigator();
-const RootStack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator<AppTabParamList>();
+const RootStack = createNativeStackNavigator<RootStackParamList>();
 
-const AppTabs: React.FC = () => {
+const AppTabs: FC = () => {
   const { t } = useLocalization();
   return (
     <Tab.Navigator>
@@ -45,7 +46,7 @@ const AppTabs: React.FC = () => {
   );
 };
 
-const AppNavigator: React.FC = () => {
+const AppNavigator: FC = () => {
   const { mode } = useTheme();
   return (
     <NavigationContainer theme={mode === 'dark' ? DarkTheme : DefaultTheme}>

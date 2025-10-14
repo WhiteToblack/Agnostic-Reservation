@@ -1,22 +1,32 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type FC } from 'react';
 import { ScrollView, RefreshControl, View, Text, StyleSheet } from 'react-native';
-import { KpiCard, CalendarMini, QuickBook, WidgetGrid, UtilizationChart, StockAlerts, PaymentsReconcile } from '../../../../shared/components';
-import { fetchDashboard, quickBook } from '../../services/api';
+import {
+  KpiCard,
+  CalendarMini,
+  QuickBook,
+  WidgetGrid,
+  UtilizationChart,
+  StockAlerts,
+  PaymentsReconcile,
+} from '../../../../shared/components';
+import { fetchDashboard, quickBook, type DashboardWidget } from '../../services/api';
 import { useLocalization } from '../../../../shared/localization';
 
-const DashboardScreen: React.FC = () => {
+const DashboardScreen: FC = () => {
   const tenantId = 'demo-tenant';
   const roleId = 'admin-role';
   const userId = 'demo-user';
   const [refreshing, setRefreshing] = useState(false);
-  const [widgets, setWidgets] = useState<any[]>([]);
+  const [widgets, setWidgets] = useState<DashboardWidget[]>([]);
   const { t } = useLocalization();
 
   const load = async () => {
     setRefreshing(true);
     try {
       const data = await fetchDashboard(tenantId, roleId);
-      setWidgets(data.widgets ?? []);
+      setWidgets(Array.isArray(data.widgets) ? data.widgets : []);
+    } catch (error) {
+      console.warn('Dashboard fetch failed', error);
     } finally {
       setRefreshing(false);
     }

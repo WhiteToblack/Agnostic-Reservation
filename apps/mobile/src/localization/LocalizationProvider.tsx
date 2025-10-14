@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   LocalizationContext,
   fallbackTranslations,
@@ -11,7 +11,7 @@ import type { LanguageCode, LocalizationContextValue, TranslationParams } from '
 type LocalizationProviderProps = {
   tenantId: string;
   initialLanguage: string;
-  children: React.ReactNode;
+  children: ReactNode;
   apiBaseUrl?: string;
 };
 
@@ -20,12 +20,12 @@ const isSupportedLanguage = (language: string): language is LanguageCode =>
 
 const defaultApiBase = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:5243/api').replace(/\/$/, '');
 
-export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({
+export const LocalizationProvider = ({
   tenantId,
   initialLanguage,
   apiBaseUrl = defaultApiBase,
   children,
-}) => {
+}: LocalizationProviderProps) => {
   const initialLanguageCode: LanguageCode = isSupportedLanguage(initialLanguage)
     ? (initialLanguage as LanguageCode)
     : defaultLanguage;

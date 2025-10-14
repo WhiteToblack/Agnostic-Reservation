@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { ThemeTokens, lightTheme, darkTheme } from '../../../shared/theme';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { lightTheme, darkTheme } from '../../../shared/theme';
+import type { ThemeTokens } from '../../../shared/theme';
 
 interface ThemeContextValue {
   theme: ThemeTokens;
@@ -9,11 +10,13 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue>({ theme: lightTheme, mode: 'light', setMode: () => undefined });
 
-export const ThemeProvider: React.FC<{ initialMode?: 'light' | 'dark'; onModeChange?: (mode: 'light' | 'dark') => void; children: React.ReactNode }> = ({
-  initialMode = 'light',
-  onModeChange,
-  children,
-}) => {
+type ThemeProviderProps = {
+  initialMode?: 'light' | 'dark';
+  onModeChange?: (mode: 'light' | 'dark') => void;
+  children: ReactNode;
+};
+
+export const ThemeProvider = ({ initialMode = 'light', onModeChange, children }: ThemeProviderProps) => {
   const [mode, setMode] = useState<'light' | 'dark'>(initialMode);
   const theme = useMemo(() => (mode === 'dark' ? darkTheme : lightTheme), [mode]);
 

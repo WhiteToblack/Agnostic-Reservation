@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type FC } from 'react';
 import { ScrollView, View, Text, Button, StyleSheet, Switch } from 'react-native';
-import { fetchParameters, invalidateCache } from '../../services/api';
+import { fetchParameters, invalidateCache, type TenantParameter } from '../../services/api';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useLocalization } from '../../../../shared/localization';
 
-const AdminScreen: React.FC = () => {
+const AdminScreen: FC = () => {
   const tenantId = 'demo-tenant';
   const { mode, setMode } = useTheme();
-  const [parameters, setParameters] = useState<any[]>([]);
+  const [parameters, setParameters] = useState<TenantParameter[]>([]);
   const [loading, setLoading] = useState(false);
   const { t } = useLocalization();
 
@@ -36,7 +36,7 @@ const AdminScreen: React.FC = () => {
       </View>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>{t('admin.parameters.title', 'Parameters')}</Text>
-        {parameters.map((param) => (
+        {parameters.map((param: TenantParameter) => (
           <View key={param.id} style={styles.row}>
             <Text>{param.key}</Text>
             <Text>{param.value}</Text>
