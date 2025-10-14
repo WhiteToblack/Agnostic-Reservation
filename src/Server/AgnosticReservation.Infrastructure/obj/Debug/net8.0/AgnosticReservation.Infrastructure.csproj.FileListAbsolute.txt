@@ -16,3 +16,5 @@ C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Infrastructure\obj\De
 C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Infrastructure\obj\Debug\net8.0\refint\AgnosticReservation.Infrastructure.dll
 C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Infrastructure\obj\Debug\net8.0\AgnosticReservation.Infrastructure.pdb
 C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Infrastructure\obj\Debug\net8.0\ref\AgnosticReservation.Infrastructure.dll
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Infrastructure\bin\Debug\net8.0\AgnosticReservation.Infrastructure.runtimeconfig.json
+C:\GIT\Agnostic-Reservation\src\Server\AgnosticReservation.Infrastructure\obj\Debug\net8.0\AgnosticReservation.Infrastructure.genruntimeconfig.cache
