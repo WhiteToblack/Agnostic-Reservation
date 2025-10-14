@@ -24,13 +24,25 @@ const fallbackTranslations: Record<string, Record<string, string>> = {
     'localization.admin.valueLabel': 'Metin',
     'localization.admin.infoLabel': 'Bilgi',
     'localization.admin.descriptionPlaceholder': 'İsteğe bağlı açıklama',
+    'localization.admin.keyPlaceholder': 'Örn: app.header.title',
+    'localization.admin.valuePlaceholder': 'Çeviri metnini girin',
     'localization.admin.tableDescription': 'Açıklama',
     'localization.admin.emptyState': 'Henüz tanımlanmış bir çeviri bulunmuyor.',
     'localization.admin.toastSaved': 'Çeviri kaydedildi.',
     'localization.admin.toastCleared': 'Çeviri önbelleği temizlendi.',
     'localization.admin.searchPlaceholder': 'Anahtar ara...',
     'localization.admin.validation': 'Anahtar, dil ve metin alanları zorunludur.',
-    'localization.admin.loading': 'Yükleniyor...'
+    'localization.admin.loading': 'Yükleniyor...',
+    'localization.admin.loadingShort': 'Yenileniyor...',
+    'localization.admin.reloadButton': 'Çevirileri yenile',
+    'localization.admin.invalidateButton': 'Önbelleği temizle',
+    'localization.admin.resetButton': 'Formu sıfırla',
+    'localization.admin.dismissToast': 'Kapat',
+    'localization.admin.errorLoad': 'Çeviri listesi yüklenemedi.',
+    'localization.admin.errorSave': 'Çeviri kaydedilirken hata oluştu.',
+    'localization.admin.errorInvalidate': 'Önbellek temizlenirken hata oluştu.',
+    'localization.admin.errorGeneric': 'Bilinmeyen bir hata oluştu.',
+    'localization.admin.notAvailable': 'Mevcut değil'
   },
   'en-US': {
     'app.header.title': 'Agnostic Reservation Console',
@@ -43,13 +55,25 @@ const fallbackTranslations: Record<string, Record<string, string>> = {
     'localization.admin.valueLabel': 'Text',
     'localization.admin.infoLabel': 'Details',
     'localization.admin.descriptionPlaceholder': 'Optional description',
+    'localization.admin.keyPlaceholder': 'e.g., app.header.title',
+    'localization.admin.valuePlaceholder': 'Enter translation text',
     'localization.admin.tableDescription': 'Description',
     'localization.admin.emptyState': 'No translations defined yet.',
     'localization.admin.toastSaved': 'Translation saved.',
     'localization.admin.toastCleared': 'Localization cache cleared.',
     'localization.admin.searchPlaceholder': 'Search key...',
     'localization.admin.validation': 'Key, language and text fields are required.',
-    'localization.admin.loading': 'Loading...'
+    'localization.admin.loading': 'Loading...',
+    'localization.admin.loadingShort': 'Refreshing...',
+    'localization.admin.reloadButton': 'Reload translations',
+    'localization.admin.invalidateButton': 'Clear cache',
+    'localization.admin.resetButton': 'Reset form',
+    'localization.admin.dismissToast': 'Dismiss',
+    'localization.admin.errorLoad': 'Failed to load translations.',
+    'localization.admin.errorSave': 'An error occurred while saving the translation.',
+    'localization.admin.errorInvalidate': 'An error occurred while clearing the cache.',
+    'localization.admin.errorGeneric': 'An unknown error occurred.',
+    'localization.admin.notAvailable': 'Not available'
   },
   'en-GB': {
     'app.header.title': 'Agnostic Reservation Console',
@@ -62,13 +86,25 @@ const fallbackTranslations: Record<string, Record<string, string>> = {
     'localization.admin.valueLabel': 'Text',
     'localization.admin.infoLabel': 'Details',
     'localization.admin.descriptionPlaceholder': 'Optional description',
+    'localization.admin.keyPlaceholder': 'e.g., app.header.title',
+    'localization.admin.valuePlaceholder': 'Enter translation text',
     'localization.admin.tableDescription': 'Description',
     'localization.admin.emptyState': 'No translations defined yet.',
     'localization.admin.toastSaved': 'Translation saved.',
     'localization.admin.toastCleared': 'Localization cache cleared.',
     'localization.admin.searchPlaceholder': 'Search key...',
     'localization.admin.validation': 'Key, language and text fields are required.',
-    'localization.admin.loading': 'Loading...'
+    'localization.admin.loading': 'Loading...',
+    'localization.admin.loadingShort': 'Refreshing...',
+    'localization.admin.reloadButton': 'Reload translations',
+    'localization.admin.invalidateButton': 'Clear cache',
+    'localization.admin.resetButton': 'Reset form',
+    'localization.admin.dismissToast': 'Dismiss',
+    'localization.admin.errorLoad': 'Failed to load translations.',
+    'localization.admin.errorSave': 'An error occurred while saving the translation.',
+    'localization.admin.errorInvalidate': 'An error occurred while clearing the cache.',
+    'localization.admin.errorGeneric': 'An unknown error occurred.',
+    'localization.admin.notAvailable': 'Not available'
   },
   'de-DE': {
     'app.header.title': 'Agnostic Reservierungs-Konsole',
@@ -81,14 +117,40 @@ const fallbackTranslations: Record<string, Record<string, string>> = {
     'localization.admin.valueLabel': 'Text',
     'localization.admin.infoLabel': 'Hinweis',
     'localization.admin.descriptionPlaceholder': 'Optionale Beschreibung',
+    'localization.admin.keyPlaceholder': 'z. B. app.header.title',
+    'localization.admin.valuePlaceholder': 'Übersetzungstext eingeben',
     'localization.admin.tableDescription': 'Beschreibung',
     'localization.admin.emptyState': 'Noch keine Übersetzungen vorhanden.',
     'localization.admin.toastSaved': 'Übersetzung gespeichert.',
     'localization.admin.toastCleared': 'Übersetzungs-Cache geleert.',
     'localization.admin.searchPlaceholder': 'Schlüssel suchen...',
     'localization.admin.validation': 'Schlüssel, Sprache und Text sind Pflichtfelder.',
-    'localization.admin.loading': 'Wird geladen...'
+    'localization.admin.loading': 'Wird geladen...',
+    'localization.admin.loadingShort': 'Aktualisiere...',
+    'localization.admin.reloadButton': 'Übersetzungen neu laden',
+    'localization.admin.invalidateButton': 'Cache leeren',
+    'localization.admin.resetButton': 'Formular zurücksetzen',
+    'localization.admin.dismissToast': 'Schließen',
+    'localization.admin.errorLoad': 'Übersetzungen konnten nicht geladen werden.',
+    'localization.admin.errorSave': 'Beim Speichern der Übersetzung ist ein Fehler aufgetreten.',
+    'localization.admin.errorInvalidate': 'Beim Leeren des Caches ist ein Fehler aufgetreten.',
+    'localization.admin.errorGeneric': 'Es ist ein unbekannter Fehler aufgetreten.',
+    'localization.admin.notAvailable': 'Nicht verfügbar'
   },
+};
+
+const resolveFallback = (language: string, key: string, fallback?: string): string => {
+  const normalized = fallbackTranslations[language]?.[key];
+  if (normalized) {
+    return normalized;
+  }
+
+  const fallbackValue = fallbackTranslations['en-US']?.[key];
+  if (fallbackValue) {
+    return fallbackValue;
+  }
+
+  return fallback ?? key;
 };
 
 type LocalizationProviderProps = {
@@ -99,7 +161,9 @@ type LocalizationProviderProps = {
 
 export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ tenantId, initialLanguage, children }) => {
   const [language, setLanguageState] = useState(initialLanguage);
-  const [translations, setTranslations] = useState<Record<string, string>>(fallbackTranslations[initialLanguage] ?? {});
+  const [translations, setTranslations] = useState<Record<string, string>>(
+    fallbackTranslations[initialLanguage] ?? fallbackTranslations['en-US'] ?? {}
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -123,13 +187,13 @@ export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ tena
         }
 
         const payload = (await response.json()) as { language: string; translations: Record<string, string> };
-        const base = fallbackTranslations[payload.language] ?? {};
+        const base = fallbackTranslations[payload.language] ?? fallbackTranslations['en-US'] ?? {};
         setTranslations({ ...base, ...payload.translations });
       } catch (err) {
         console.warn('Localization fetch failed, using fallback dataset.', err);
-        const fallback = fallbackTranslations[targetLanguage] ?? {};
+        const fallback = fallbackTranslations[targetLanguage] ?? fallbackTranslations['en-US'] ?? {};
         setTranslations(fallback);
-        setError(err instanceof Error ? err.message : 'Unknown error');
+        setError(resolveFallback(targetLanguage, 'localization.admin.errorGeneric', 'Unknown error'));
       } finally {
         setLoading(false);
       }

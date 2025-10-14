@@ -56,7 +56,7 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
       setItems(payload);
     } catch (err) {
       console.warn('Localization key fetch failed, using in-memory fallback.', err);
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setError(t('localization.admin.errorLoad'));
       const fallbackItems: LocalizationKeyDto[] = Object.entries(translations).map(([key, value]) => ({
         id: key,
         key,
@@ -66,7 +66,7 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
     } finally {
       setLoading(false);
     }
-  }, [language, tenantId, translations]);
+  }, [language, t, tenantId, translations]);
 
   useEffect(() => {
     void loadKeys();
@@ -111,7 +111,8 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
       resetForm();
       await Promise.all([loadKeys(), reload()]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      console.warn('Localization upsert failed.', err);
+      setError(t('localization.admin.errorSave'));
     }
   }, [descriptionValue, keyValue, languageValue, loadKeys, reload, t, tenantId, textValue]);
 
@@ -130,7 +131,8 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
       setToast(t('localization.admin.toastCleared'));
       await reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      console.warn('Localization cache invalidation failed.', err);
+      setError(t('localization.admin.errorInvalidate'));
     }
   }, [reload, t, tenantId]);
 
@@ -153,10 +155,10 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
             </select>
           </label>
           <button className="ml-admin__button" onClick={() => void reload()} disabled={localizationLoading}>
-            {localizationLoading ? '…' : '↻'}
+            {localizationLoading ? t('localization.admin.loadingShort') : t('localization.admin.reloadButton')}
           </button>
           <button className="ml-admin__button" onClick={() => void invalidateCache()}>
-            🧹
+            {t('localization.admin.invalidateButton')}
           </button>
         </div>
       </header>
@@ -164,7 +166,11 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
       <section className="ml-admin__form">
         <div className="ml-admin__form-field">
           <label>{t('localization.admin.keyLabel')}</label>
-          <input value={keyValue} onChange={(event) => setKeyValue(event.target.value)} placeholder="app.header.title" />
+          <input
+            value={keyValue}
+            onChange={(event) => setKeyValue(event.target.value)}
+            placeholder={t('localization.admin.keyPlaceholder')}
+          />
         </div>
         <div className="ml-admin__form-field">
           <label>{t('localization.admin.languageLabel')}</label>
@@ -178,7 +184,12 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
         </div>
         <div className="ml-admin__form-field">
           <label>{t('localization.admin.valueLabel')}</label>
-          <textarea value={textValue} onChange={(event) => setTextValue(event.target.value)} rows={2} />
+          <textarea
+            value={textValue}
+            onChange={(event) => setTextValue(event.target.value)}
+            rows={2}
+            placeholder={t('localization.admin.valuePlaceholder')}
+          />
         </div>
         <div className="ml-admin__form-field">
           <label>{t('localization.admin.infoLabel')}</label>
@@ -193,7 +204,7 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
             {t('localization.admin.addButton')}
           </button>
           <button className="ml-admin__ghost" onClick={resetForm}>
-            ✖
+            {t('localization.admin.resetButton')}
           </button>
         </div>
       </section>
@@ -214,7 +225,9 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
         {toast && (
           <div className="ml-admin__toast" role="status">
             {toast}
-            <button onClick={() => setToast(null)}>×</button>
+            <button onClick={() => setToast(null)} aria-label={t('localization.admin.dismissToast')}>
+              ×
+            </button>
           </div>
         )}
 
@@ -244,10 +257,10 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
                     <div className="ml-admin__key-main">{item.key}</div>
                     {item.description && <div className="ml-admin__key-note">{item.description}</div>}
                   </td>
-                  <td className="ml-admin__description">{item.description ?? '—'}</td>
+                  <td className="ml-admin__description">{item.description ?? t('localization.admin.notAvailable')}</td>
                   {supportedLanguages.map((code) => (
                     <td key={code} className={code === language ? 'ml-admin__highlight' : undefined}>
-                      {item.translations?.[code] ?? '—'}
+                      {item.translations?.[code] ?? t('localization.admin.notAvailable')}
                     </td>
                   ))}
                 </tr>
