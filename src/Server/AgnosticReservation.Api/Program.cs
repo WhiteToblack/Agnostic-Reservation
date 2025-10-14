@@ -1,6 +1,7 @@
 using AgnosticReservation.Api.Middleware;
 using AgnosticReservation.Api.Modules;
 using AgnosticReservation.Infrastructure.Persistence;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,10 +33,47 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+if (IsHttpsEndpointConfigured(builder))
+{
+    app.UseHttpsRedirection();
+}
+
 app.UseSessionContext();
 app.UseRequestLogging();
 app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static bool IsHttpsEndpointConfigured(WebApplicationBuilder builder)
+{
+    if (builder.Configuration.GetValue<int?>(WebHostDefaults.HttpsPortKey) is not null)
+    {
+        return true;
+    }
+
+    if (builder.Configuration.GetValue<string>(WebHostDefaults.ServerUrlsKey) is string urls &&
+        urls.Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .Any(url => url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+    {
+        return true;
+    }
+
+    var kestrelEndpoints = builder.Configuration.GetSection("Kestrel:Endpoints");
+
+    foreach (var endpoint in kestrelEndpoints.GetChildren())
+    {
+        if (endpoint.GetValue<string>("Url") is string endpointUrl &&
+            endpointUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        if (endpoint.GetSection("Certificate").Exists())
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
