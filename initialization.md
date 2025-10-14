@@ -161,6 +161,9 @@ VALUES
 GO
 ```
 
+### 5.1 Test Senaryoları İçin Genişletilmiş Sektör Seti
+Test otomasyonlarında daha zengin veri setine ihtiyaç duyulduğunda `docs/sql/agnostic_reservation_test_seed.sql` betiğini çalıştırabilirsiniz. Bu betik, beş farklı sektör (güzellik & bakım, otomotiv, spor, eğitim ve evcil hayvan hizmetleri) için tenant, iki mağaza (Resource), yönetici/çalışan kullanıcıları ve her tenant için iki müşteri oluşturur. Ek olarak ilgili bildirim tercihlerini ve varsayılan mağaza parametrelerini günceller, böylece entegrasyon ve uçtan uca testlerde gerçekçi senaryolar hızla kurulabilir.【F:docs/sql/agnostic_reservation_test_seed.sql†L1-L660】
+
 ## 6. Parametre Önbelleğini Temizleme
 Parametre güncellemeleri sonrası tenant bazlı önbelleği temizlemek için `api/admin/cache?tenantId={id}` uç noktasını çağırabilirsiniz; bu uç nokta tüm tenant parametre anahtarlarını temizler.【F:src/Server/AgnosticReservation.Api/Controllers/AdminCacheController.cs†L6-L21】【F:src/Server/AgnosticReservation.Infrastructure/Services/ParameterService.cs†L18-L65】
 
