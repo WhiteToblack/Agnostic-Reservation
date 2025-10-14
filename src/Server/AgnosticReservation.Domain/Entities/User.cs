@@ -8,6 +8,7 @@ public class User : BaseEntity
     public Tenant Tenant { get; private set; } = default!;
     public string Email { get; private set; }
     public string PasswordHash { get; private set; }
+    public string FullName { get; private set; }
     public Guid RoleId { get; private set; }
     public Role Role { get; private set; } = default!;
     public string PreferredTheme { get; private set; }
@@ -18,11 +19,12 @@ public class User : BaseEntity
     {
         Email = string.Empty;
         PasswordHash = string.Empty;
+        FullName = string.Empty;
         PreferredTheme = "inherit";
         Preference = new NotificationPreference(Guid.Empty, true, true, false, NotificationChannel.Email);
     }
 
-    public User(Guid tenantId, string email, string passwordHash, Role role, string preferredTheme = "inherit")
+    public User(Guid tenantId, string email, string passwordHash, Role role, string preferredTheme = "inherit", string? fullName = null)
     {
         TenantId = tenantId;
         Email = email;
@@ -30,12 +32,21 @@ public class User : BaseEntity
         Role = role;
         RoleId = role.Id;
         PreferredTheme = preferredTheme;
+        FullName = fullName ?? email;
         Preference = new NotificationPreference(Id, push: true, email: true, sms: false, NotificationChannel.Email);
     }
 
     public void UpdateTheme(string theme)
     {
         PreferredTheme = theme;
+    }
+
+    public void UpdateName(string fullName)
+    {
+        if (!string.IsNullOrWhiteSpace(fullName))
+        {
+            FullName = fullName;
+        }
     }
 
     public void EnableMultiFactor(bool enabled)
