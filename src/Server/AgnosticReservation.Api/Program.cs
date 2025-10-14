@@ -22,7 +22,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseInMemoryDatabase("agnostic-reservation");
     }
 });
-builder.Services.AddAgnosticReservationModules();
+builder.Services.AddAgnosticReservationModules(builder.Configuration);
 
 var app = builder.Build();
 
@@ -34,6 +34,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseSessionContext();
+app.UseRequestLogging();
 app.UseAuthorization();
 app.MapControllers();
 

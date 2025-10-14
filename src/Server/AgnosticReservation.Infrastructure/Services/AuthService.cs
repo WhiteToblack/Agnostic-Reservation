@@ -49,7 +49,15 @@ public class AuthService : IAuthService
         var shop = await ResolveShopInfoAsync(request.TenantId, request.ShopId, request.ShopName, request.ShopTimeZone, cancellationToken);
 
         var sessionData = new SessionContextData(
-            new SessionUserInfo(user.Id, user.Email, user.FullName, user.PreferredTheme, role?.Name ?? "Unknown", permissions),
+            new SessionUserInfo(
+                user.Id,
+                user.Email,
+                user.FullName,
+                user.PreferredTheme,
+                role?.Name ?? "Unknown",
+                role?.HierarchyLevel ?? 0,
+                role?.IsSuperAdmin ?? false,
+                permissions),
             new SessionTenantInfo(tenant.Id, tenant.Name, tenant.Domain, tenant.DefaultTheme),
             shop,
             settings.RequireTwoFactor);
@@ -87,7 +95,7 @@ public class AuthService : IAuthService
         }
 
         var adminRole = (await _roleRepository.ListAsync(r => r.Name == "Admin", cancellationToken: cancellationToken)).FirstOrDefault()
-            ?? new Role("Admin", Enum.GetValues<Permission>());
+            ?? new Role("Admin", Enum.GetValues<Permission>(), hierarchyLevel: 1);
         var user = new User(request.TenantId, request.Email, HashPassword(request.Password), adminRole, request.PreferredTheme, request.FullName);
         user.EnableMultiFactor(settings.RequireTwoFactor);
         await _userRepository.AddAsync(user, cancellationToken);
@@ -95,7 +103,15 @@ public class AuthService : IAuthService
         var permissions = adminRole.Permissions.Select(p => p.Permission).ToArray();
         var shop = await ResolveShopInfoAsync(request.TenantId, request.ShopId, request.ShopName, request.ShopTimeZone, cancellationToken);
         var sessionData = new SessionContextData(
-            new SessionUserInfo(user.Id, user.Email, user.FullName, user.PreferredTheme, adminRole.Name, permissions),
+            new SessionUserInfo(
+                user.Id,
+                user.Email,
+                user.FullName,
+                user.PreferredTheme,
+                adminRole.Name,
+                adminRole.HierarchyLevel,
+                adminRole.IsSuperAdmin,
+                permissions),
             new SessionTenantInfo(tenant.Id, tenant.Name, tenant.Domain, tenant.DefaultTheme),
             shop,
             settings.RequireTwoFactor);
