@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AgnosticReservation.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d60447587c88791053b2a65d8be6d3979e6d8785")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+121604f06ea0f7d31c6514799a595a6413006883")]
 [assembly: System.Reflection.AssemblyProductAttribute("AgnosticReservation.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AgnosticReservation.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

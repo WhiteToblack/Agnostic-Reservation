@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AgnosticReservation.Application")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3f37a92c2d50128da872345abf48c9a74d144363")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c4b36dfa02871a4d014cf88d863176914a38d44b")]
 [assembly: System.Reflection.AssemblyProductAttribute("AgnosticReservation.Application")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AgnosticReservation.Application")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

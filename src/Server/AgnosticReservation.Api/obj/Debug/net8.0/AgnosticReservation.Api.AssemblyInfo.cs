@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AgnosticReservation.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3f37a92c2d50128da872345abf48c9a74d144363")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+121604f06ea0f7d31c6514799a595a6413006883")]
 [assembly: System.Reflection.AssemblyProductAttribute("AgnosticReservation.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AgnosticReservation.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

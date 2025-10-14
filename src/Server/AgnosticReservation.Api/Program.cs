@@ -47,7 +47,7 @@ app.Run();
 
 static bool IsHttpsEndpointConfigured(WebApplicationBuilder builder)
 {
-    if (builder.Configuration.GetValue<int?>(WebHostDefaults.HttpsPortKey) is not null)
+    if (builder.Configuration.GetValue<int?>(WebHostDefaults.HttpsPortsKey) is not null)
     {
         return true;
     }
