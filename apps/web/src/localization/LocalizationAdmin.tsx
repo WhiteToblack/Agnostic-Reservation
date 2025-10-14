@@ -196,7 +196,7 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
   }, [reload, t, tenantId]);
 
   return (
-    <div className="ml-admin">
+    <div className="ml-admin admin-card">
       <header className="ml-admin__header">
         <div>
           <h1>{t('app.header.title')}</h1>

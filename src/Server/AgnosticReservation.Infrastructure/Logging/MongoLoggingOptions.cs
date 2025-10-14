@@ -7,4 +7,7 @@ public class MongoLoggingOptions
     public string DatabaseName { get; set; } = "agnostic-reservation";
     public string GeneralCollectionName { get; set; } = "requestLogs";
     public string AccountingCollectionName { get; set; } = "accountingLogs";
+    public string? Username { get; set; }
+    public string? Password { get; set; }
+    public string? AuthenticationDatabase { get; set; }
 }

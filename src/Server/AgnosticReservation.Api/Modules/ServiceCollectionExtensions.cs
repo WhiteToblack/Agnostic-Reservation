@@ -11,6 +11,7 @@ using AgnosticReservation.Infrastructure.Logging;
 using AgnosticReservation.Infrastructure.Persistence.Repositories;
 using AgnosticReservation.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AgnosticReservation.Api.Modules;
 
@@ -31,7 +32,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISessionContextAccessor, SessionContextAccessor>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.Configure<MongoLoggingOptions>(configuration.GetSection("MongoLogging"));
-        services.AddSingleton<IRequestLogService, MongoRequestLogService>();
+        services.AddSingleton<MongoRequestLogService>();
+        services.AddSingleton<IRequestLogService>(provider => provider.GetRequiredService<MongoRequestLogService>());
+        services.AddSingleton<IRequestLogReader>(provider => provider.GetRequiredService<MongoRequestLogService>());
 
         return services;
     }

@@ -22,20 +22,30 @@ public class RequestLoggingMiddleware
     {
         var stopwatch = Stopwatch.StartNew();
         var statusCode = StatusCodes.Status200OK;
+        Exception? capturedException = null;
+
         try
         {
             await _next(context);
             statusCode = context.Response.StatusCode;
         }
-        catch
+        catch (Exception exception)
         {
             statusCode = StatusCodes.Status500InternalServerError;
+            capturedException = exception;
             throw;
         }
         finally
         {
             stopwatch.Stop();
-            await LogAsync(context, requestLogService, parameterService, sessionContextAccessor, stopwatch.ElapsedMilliseconds, statusCode);
+            await LogAsync(
+                context,
+                requestLogService,
+                parameterService,
+                sessionContextAccessor,
+                stopwatch.ElapsedMilliseconds,
+                statusCode,
+                capturedException);
         }
     }
 
@@ -45,7 +55,8 @@ public class RequestLoggingMiddleware
         IParameterService parameterService,
         ISessionContextAccessor sessionContextAccessor,
         long elapsedMilliseconds,
-        int statusCode)
+        int statusCode,
+        Exception? exception)
     {
         var session = sessionContextAccessor.Current;
         var tenantId = session.Tenant?.Id;
@@ -55,15 +66,36 @@ public class RequestLoggingMiddleware
         var isAccountingRequest = IsAccountingRequest(context.Request);
         var (generalEnabled, accountingEnabled) = await ResolveLoggingFlagsAsync(tenantId, parameterService, cancellationToken);
 
-        if ((!isAccountingRequest && !generalEnabled) || (isAccountingRequest && !accountingEnabled))
-        {
-            return;
-        }
-
         var headers = context.Request.Headers.ToDictionary(kvp => kvp.Key, kvp => (string?)kvp.Value);
         var accountingContext = isAccountingRequest
             ? new AccountingLogContext(context.Request.Path, context.Request.Query.TryGetValue("reference", out var reference) ? reference.ToString() : null)
             : null;
+
+        var forceLog = exception is not null;
+
+        if (!forceLog)
+        {
+            if ((!isAccountingRequest && !generalEnabled) || (isAccountingRequest && !accountingEnabled))
+            {
+                return;
+            }
+        }
+
+        var endpointDisplayName = context.GetEndpoint()?.DisplayName;
+        context.Request.Headers.TryGetValue("X-UI-Component", out var uiComponentHeader);
+        var uiComponent = uiComponentHeader.ToString();
+
+        RequestErrorContext? errorContext = null;
+
+        if (exception is not null)
+        {
+            var exceptionType = exception.GetType();
+            errorContext = new RequestErrorContext(
+                exceptionType.FullName ?? exceptionType.Name,
+                exception.Message,
+                exception.StackTrace,
+                DateTime.UtcNow);
+        }
 
         var logContext = new RequestLogContext(
             tenantId,
@@ -76,7 +108,10 @@ public class RequestLoggingMiddleware
             headers,
             isAccountingRequest,
             context.TraceIdentifier,
-            accountingContext);
+            accountingContext,
+            endpointDisplayName,
+            string.IsNullOrWhiteSpace(uiComponent) ? null : uiComponent,
+            errorContext);
 
         await requestLogService.LogAsync(logContext, cancellationToken);
     }

@@ -26,8 +26,53 @@ body {
   align-items: flex-start;
 }
 
-.ml-admin {
-  width: min(1040px, 100%);
+.admin-layout {
+  width: min(1120px, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.admin-layout__tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 6px;
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(26, 46, 102, 0.08);
+  backdrop-filter: blur(6px);
+}
+
+.admin-layout__tab {
+  border: none;
+  background: transparent;
+  color: #556188;
+  padding: 10px 22px;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-layout__tab:hover {
+  background: rgba(85, 97, 136, 0.12);
+}
+
+.admin-layout__tab--active {
+  background: linear-gradient(135deg, #4f6bff, #7a8dff);
+  color: #ffffff;
+  box-shadow: 0 12px 30px rgba(79, 107, 255, 0.35);
+}
+
+.admin-layout__content {
+  display: flex;
+  justify-content: center;
+}
+
+.admin-card {
+  width: min(1080px, 100%);
   background: #ffffff;
   border-radius: 28px;
   box-shadow: 0 28px 80px rgba(15, 31, 83, 0.08);
@@ -35,6 +80,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 32px;
+}
+
+.ml-admin {
+  width: 100%;
 }
 
 .ml-admin__header {
@@ -196,6 +245,285 @@ body {
 .ml-admin__status {
   font-size: 0.9rem;
   color: #7a86a7;
+}
+
+.log-admin {
+  width: 100%;
+}
+
+.log-admin__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.log-admin__header h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 1.2rem + 1vw, 2.2rem);
+  letter-spacing: -0.01em;
+}
+
+.log-admin__header p {
+  margin: 8px 0 0;
+  color: #4f5b78;
+}
+
+.log-admin__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.log-admin__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #3b4468;
+}
+
+.log-admin__toggle input {
+  width: 18px;
+  height: 18px;
+}
+
+.log-admin__refresh {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #2ebf91, #32d4a4);
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(46, 191, 145, 0.28);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.log-admin__refresh:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.log-admin__refresh:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 36px rgba(46, 191, 145, 0.35);
+}
+
+.log-admin__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.log-admin__search {
+  flex: 1 1 320px;
+  border-radius: 14px;
+  border: 1px solid #ccd3ef;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  background: #f9faff;
+  color: #1c274c;
+}
+
+.log-admin__pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.log-admin__page {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  background: #eef1ff;
+  color: #1c254d;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.log-admin__page:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.log-admin__page:not(:disabled):hover {
+  background: #dce4ff;
+  transform: translateY(-1px);
+}
+
+.log-admin__page-status {
+  font-size: 0.9rem;
+  color: #5b647c;
+  min-width: 120px;
+  text-align: center;
+}
+
+.log-admin__status,
+.log-admin__error,
+.log-admin__empty {
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 0.95rem;
+}
+
+.log-admin__status {
+  background: #eef2ff;
+  color: #4b55a1;
+}
+
+.log-admin__error {
+  background: #ffe9ec;
+  color: #c43248;
+}
+
+.log-admin__empty {
+  background: #f4f7fb;
+  color: #6d7798;
+}
+
+.log-admin__list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.log-card {
+  border-radius: 24px;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border-left: 6px solid transparent;
+  box-shadow: 0 14px 40px rgba(12, 28, 64, 0.08);
+  background: #ffffff;
+}
+
+.log-card--info {
+  border-left-color: #4f6bff;
+  background: linear-gradient(145deg, rgba(79, 107, 255, 0.08), rgba(255, 255, 255, 0.9));
+}
+
+.log-card--error {
+  border-left-color: #d14343;
+  background: linear-gradient(145deg, rgba(209, 67, 67, 0.15), rgba(255, 255, 255, 0.92));
+}
+
+.log-card__header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.log-card__method {
+  background: rgba(12, 31, 78, 0.08);
+  color: #10224a;
+  padding: 6px 10px;
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.log-card__path {
+  font-family: 'Inter', monospace;
+  font-weight: 600;
+  color: #1a2353;
+}
+
+.log-card__status {
+  margin-left: auto;
+  font-weight: 700;
+  color: #19285a;
+}
+
+.log-card__time {
+  font-size: 0.9rem;
+  color: #53607f;
+}
+
+.log-card__meta,
+.log-card__details {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.log-card__label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6b7597;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.log-card__details span:last-child,
+.log-card__meta span:last-child {
+  color: #1e2a4f;
+  font-weight: 600;
+}
+
+.log-card__error {
+  border-radius: 18px;
+  padding: 18px 20px;
+  background: rgba(209, 67, 67, 0.12);
+  color: #651a1a;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.log-card__error h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.log-card__error-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.log-card__stacktrace {
+  margin: 0;
+  font-family: 'Fira Code', 'SFMono-Regular', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  background: rgba(12, 28, 64, 0.85);
+  color: #f4f7ff;
+  padding: 14px;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.log-card__extra {
+  border-top: 1px solid rgba(39, 54, 95, 0.12);
+  padding-top: 12px;
+}
+
+.log-card__extra summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #30406e;
+}
+
+.log-card__headers {
+  margin: 12px 0 0;
+  padding: 12px;
+  background: #f6f7fc;
+  border-radius: 12px;
+  font-family: 'Fira Code', 'SFMono-Regular', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.8rem;
+  color: #2c365f;
+  white-space: pre-wrap;
 }
 
 .ml-admin__toast {
