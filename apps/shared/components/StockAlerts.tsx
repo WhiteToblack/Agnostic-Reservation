@@ -1,25 +1,25 @@
-import React from 'react';
+import type { FC } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useLocalization } from '../localization';
 
-interface StockAlert {
+export type StockAlert = {
   sku: string;
   name: string;
   quantity: number;
   reorderLevel: number;
-}
+};
 
-interface StockAlertsProps {
+export type StockAlertsProps = {
   alerts: StockAlert[];
-}
+};
 
-export const StockAlerts: React.FC<StockAlertsProps> = ({ alerts }) => {
+export const StockAlerts: FC<StockAlertsProps> = ({ alerts }) => {
   const { t } = useLocalization();
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{t('dashboard.stockAlerts.title', 'Stock Alerts')}</Text>
       {alerts.length === 0 ? <Text style={styles.empty}>{t('dashboard.stockAlerts.empty', 'No alerts 🎉')}</Text> : null}
-      {alerts.map((alert) => (
+      {alerts.map((alert: StockAlert) => (
         <View key={alert.sku} style={styles.alert}>
           <View>
             <Text style={styles.name}>{alert.name}</Text>

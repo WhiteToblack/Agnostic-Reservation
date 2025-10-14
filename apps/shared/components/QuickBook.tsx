@@ -1,19 +1,21 @@
-import React from 'react';
+import type { FC } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useLocalization } from '../localization';
 
-interface QuickBookProps {
-  resources: Array<{ id: string; name: string }>;
-  onSelect: (resourceId: string) => void;
-}
+export type QuickBookResource = { id: string; name: string };
 
-export const QuickBook: React.FC<QuickBookProps> = ({ resources, onSelect }) => {
+export type QuickBookProps = {
+  resources: QuickBookResource[];
+  onSelect: (resourceId: string) => void;
+};
+
+export const QuickBook: FC<QuickBookProps> = ({ resources, onSelect }) => {
   const { t } = useLocalization();
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{t('dashboard.quickBook.title', 'Quick Book')}</Text>
       <View style={styles.grid}>
-        {resources.map((resource) => (
+        {resources.map((resource: QuickBookResource) => (
           <TouchableOpacity key={resource.id} style={styles.resource} onPress={() => onSelect(resource.id)}>
             <Text style={styles.resourceText}>{resource.name}</Text>
           </TouchableOpacity>

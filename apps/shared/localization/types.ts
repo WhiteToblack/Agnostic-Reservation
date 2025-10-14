@@ -1,5 +1,3 @@
-import type React from 'react';
-
 export type LanguageCode = 'tr-TR' | 'en-US' | 'en-GB' | 'de-DE';
 
 export type TranslationParams = Record<string, string | number>;

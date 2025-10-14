@@ -1,26 +1,32 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import type { FC } from 'react';
+import { View, Text, StyleSheet, type DimensionValue } from 'react-native';
 import { useLocalization } from '../localization';
 
-interface UtilizationChartProps {
-  utilization: Array<{ label: string; value: number }>;
-}
+export type UtilizationPoint = { label: string; value: number };
 
-export const UtilizationChart: React.FC<UtilizationChartProps> = ({ utilization }) => {
+export type UtilizationChartProps = {
+  utilization: UtilizationPoint[];
+};
+
+export const UtilizationChart: FC<UtilizationChartProps> = ({ utilization }) => {
   const { t } = useLocalization();
-  const max = Math.max(...utilization.map((item) => item.value), 1);
+  const max = Math.max(...utilization.map((item: UtilizationPoint) => item.value), 1);
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{t('dashboard.utilizationChart.title', 'Utilization')}</Text>
-      {utilization.map((item) => (
-        <View key={item.label} style={styles.row}>
-          <Text style={styles.label}>{item.label}</Text>
-          <View style={styles.barTrack}>
-            <View style={[styles.barFill, { width: `${(item.value / max) * 100}%` }]} />
+      {utilization.map((item: UtilizationPoint) => {
+        const width: DimensionValue = `${Math.min(100, Math.max(0, (item.value / max) * 100))}%`;
+        return (
+          <View key={item.label} style={styles.row}>
+            <Text style={styles.label}>{item.label}</Text>
+            <View style={styles.barTrack}>
+              <View style={[styles.barFill, { width }]} />
+            </View>
+            <Text style={styles.value}>{Math.round(item.value * 100)}%</Text>
           </View>
-          <Text style={styles.value}>{Math.round(item.value * 100)}%</Text>
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 };

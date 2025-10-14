@@ -1,24 +1,24 @@
-import React from 'react';
+import type { FC } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-interface CalendarMiniProps {
-  date: Date;
-  items: Array<{ time: string; title: string }>;
-}
+export type CalendarMiniItem = { time: string; title: string };
 
-export const CalendarMini: React.FC<CalendarMiniProps> = ({ date, items }) => {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>{date.toLocaleDateString()}</Text>
-      {items.map((item) => (
-        <View key={`${item.time}-${item.title}`} style={styles.item}>
-          <Text style={styles.time}>{item.time}</Text>
-          <Text style={styles.title}>{item.title}</Text>
-        </View>
-      ))}
-    </View>
-  );
+export type CalendarMiniProps = {
+  date: Date;
+  items: CalendarMiniItem[];
 };
+
+export const CalendarMini: FC<CalendarMiniProps> = ({ date, items }) => (
+  <View style={styles.container}>
+    <Text style={styles.header}>{date.toLocaleDateString()}</Text>
+    {items.map((item: CalendarMiniItem) => (
+      <View key={`${item.time}-${item.title}`} style={styles.item}>
+        <Text style={styles.time}>{item.time}</Text>
+        <Text style={styles.title}>{item.title}</Text>
+      </View>
+    ))}
+  </View>
+);
 
 const styles = StyleSheet.create({
   container: {

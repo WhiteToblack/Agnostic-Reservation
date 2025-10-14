@@ -1,23 +1,23 @@
-import React from 'react';
+import type { FC } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useLocalization } from '../localization';
 
-interface PaymentStatus {
+export type PaymentStatus = {
   provider: string;
   pending: number;
   failed: number;
-}
+};
 
-interface PaymentsReconcileProps {
+export type PaymentsReconcileProps = {
   statuses: PaymentStatus[];
-}
+};
 
-export const PaymentsReconcile: React.FC<PaymentsReconcileProps> = ({ statuses }) => {
+export const PaymentsReconcile: FC<PaymentsReconcileProps> = ({ statuses }) => {
   const { t } = useLocalization();
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{t('dashboard.payments.title', 'Payments')}</Text>
-      {statuses.map((status) => (
+      {statuses.map((status: PaymentStatus) => (
         <View key={status.provider} style={styles.row}>
           <Text style={styles.provider}>{status.provider}</Text>
           <View style={styles.metrics}>

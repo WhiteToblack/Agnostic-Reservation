@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState, type FC } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import { Agenda, AgendaEntry, AgendaSchedule } from 'react-native-calendars';
 import { useLocalization } from '../../../../shared/localization';
 
-const AgendaScreen: React.FC = () => {
+const AgendaScreen: FC = () => {
   const { t } = useLocalization();
   const [items] = useState<AgendaSchedule>({
     [new Date().toISOString().split('T')[0]]: [
@@ -23,7 +23,7 @@ const AgendaScreen: React.FC = () => {
       <Agenda
         items={items}
         selected={new Date().toISOString().split('T')[0]}
-        renderItem={(item) => (
+        renderItem={(item: AgendaEntry) => (
           <View style={styles.item}>
             <Text style={styles.itemText}>{item.name}</Text>
           </View>

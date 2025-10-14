@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import { useState, type FC } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { signIn } from '../../services/api';
 import { useLocalization } from '../../../../shared/localization';
+import type { RootStackParamList } from '../../navigation/types';
 
-const SignInScreen: React.FC<NativeStackScreenProps<any>> = ({ navigation }) => {
+type SignInScreenProps = NativeStackScreenProps<RootStackParamList, 'SignIn'>;
+
+const SignInScreen: FC<SignInScreenProps> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [tenantId, setTenantId] = useState('');
