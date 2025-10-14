@@ -52,8 +52,8 @@ SELECT @BeautyAdmin = Id FROM dbo.Users WHERE Email = 'admin@beauty.agnostic.tes
 IF @BeautyAdmin IS NULL
 BEGIN
     SET @BeautyAdmin = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@BeautyAdmin, @TenantBeauty, @RoleTenantAdmin, 'admin@beauty.agnostic.test', 'ldQXbZpb9QOK3ED2vDH9cyDjPCdh5ZEPiCpUzZ74yOE=', 'beauty-blush', 1, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@BeautyAdmin, @TenantBeauty, @RoleTenantAdmin, 'admin@beauty.agnostic.test', 'ldQXbZpb9QOK3ED2vDH9cyDjPCdh5ZEPiCpUzZ74yOE=', N'Elif Kaya', 'beauty-blush', 1, @Now);
 END;
 
 DECLARE @BeautyShopAdmin UNIQUEIDENTIFIER;
@@ -61,8 +61,8 @@ SELECT @BeautyShopAdmin = Id FROM dbo.Users WHERE Email = 'studio@beauty.agnosti
 IF @BeautyShopAdmin IS NULL
 BEGIN
     SET @BeautyShopAdmin = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@BeautyShopAdmin, @TenantBeauty, @RoleShopAdmin, 'studio@beauty.agnostic.test', 'LGRCIPVd8VSPw5gyiq98rlSQT81P7f3t4g7ks3w0/Dg=', 'beauty-blush', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@BeautyShopAdmin, @TenantBeauty, @RoleShopAdmin, 'studio@beauty.agnostic.test', 'LGRCIPVd8VSPw5gyiq98rlSQT81P7f3t4g7ks3w0/Dg=', N'Seda Demir', 'beauty-blush', 0, @Now);
 END;
 
 DECLARE @BeautyShopStaff UNIQUEIDENTIFIER;
@@ -70,8 +70,8 @@ SELECT @BeautyShopStaff = Id FROM dbo.Users WHERE Email = 'staff@beauty.agnostic
 IF @BeautyShopStaff IS NULL
 BEGIN
     SET @BeautyShopStaff = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@BeautyShopStaff, @TenantBeauty, @RoleShopStaff, 'staff@beauty.agnostic.test', 'Bd1KE3anLZpeD60yAA9+YWUaXO9cnJoMOBbHRD2vv28=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@BeautyShopStaff, @TenantBeauty, @RoleShopStaff, 'staff@beauty.agnostic.test', 'Bd1KE3anLZpeD60yAA9+YWUaXO9cnJoMOBbHRD2vv28=', N'Canan Arslan', 'inherit', 0, @Now);
 END;
 
 DECLARE @BeautyAccounting UNIQUEIDENTIFIER;
@@ -79,8 +79,8 @@ SELECT @BeautyAccounting = Id FROM dbo.Users WHERE Email = 'finance@beauty.agnos
 IF @BeautyAccounting IS NULL
 BEGIN
     SET @BeautyAccounting = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@BeautyAccounting, @TenantBeauty, @RoleAccounting, 'finance@beauty.agnostic.test', 'nu6tHiXZdSEW16a7BkrYLvaNVOXyN1plxrvm2yyFqoo=', 'beauty-blush', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@BeautyAccounting, @TenantBeauty, @RoleAccounting, 'finance@beauty.agnostic.test', 'nu6tHiXZdSEW16a7BkrYLvaNVOXyN1plxrvm2yyFqoo=', N'Hakan Er', 'beauty-blush', 0, @Now);
 END;
 
 DECLARE @BeautyCustomer1 UNIQUEIDENTIFIER;
@@ -88,8 +88,8 @@ SELECT @BeautyCustomer1 = Id FROM dbo.Users WHERE Email = 'ayse.customer@beauty.
 IF @BeautyCustomer1 IS NULL
 BEGIN
     SET @BeautyCustomer1 = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@BeautyCustomer1, @TenantBeauty, @RoleCustomer, 'ayse.customer@beauty.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@BeautyCustomer1, @TenantBeauty, @RoleCustomer, 'ayse.customer@beauty.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', N'Ayşe Yılmaz', 'inherit', 0, @Now);
 END;
 
 DECLARE @BeautyCustomer2 UNIQUEIDENTIFIER;
@@ -97,8 +97,8 @@ SELECT @BeautyCustomer2 = Id FROM dbo.Users WHERE Email = 'melis.customer@beauty
 IF @BeautyCustomer2 IS NULL
 BEGIN
     SET @BeautyCustomer2 = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@BeautyCustomer2, @TenantBeauty, @RoleCustomer, 'melis.customer@beauty.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@BeautyCustomer2, @TenantBeauty, @RoleCustomer, 'melis.customer@beauty.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', N'Melis Karaca', 'inherit', 0, @Now);
 END;
 
 MERGE dbo.NotificationPreferences AS target
@@ -180,8 +180,8 @@ SELECT @AutoAdmin = Id FROM dbo.Users WHERE Email = 'admin@auto.agnostic.test';
 IF @AutoAdmin IS NULL
 BEGIN
     SET @AutoAdmin = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@AutoAdmin, @TenantAuto, @RoleTenantAdmin, 'admin@auto.agnostic.test', 'ldQXbZpb9QOK3ED2vDH9cyDjPCdh5ZEPiCpUzZ74yOE=', 'auto-steel', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@AutoAdmin, @TenantAuto, @RoleTenantAdmin, 'admin@auto.agnostic.test', 'ldQXbZpb9QOK3ED2vDH9cyDjPCdh5ZEPiCpUzZ74yOE=', N'Emre Aydın', 'auto-steel', 0, @Now);
 END;
 
 DECLARE @AutoShopAdmin UNIQUEIDENTIFIER;
@@ -189,8 +189,8 @@ SELECT @AutoShopAdmin = Id FROM dbo.Users WHERE Email = 'service@auto.agnostic.t
 IF @AutoShopAdmin IS NULL
 BEGIN
     SET @AutoShopAdmin = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@AutoShopAdmin, @TenantAuto, @RoleShopAdmin, 'service@auto.agnostic.test', 'LGRCIPVd8VSPw5gyiq98rlSQT81P7f3t4g7ks3w0/Dg=', 'auto-steel', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@AutoShopAdmin, @TenantAuto, @RoleShopAdmin, 'service@auto.agnostic.test', 'LGRCIPVd8VSPw5gyiq98rlSQT81P7f3t4g7ks3w0/Dg=', N'Murat Çelik', 'auto-steel', 0, @Now);
 END;
 
 DECLARE @AutoShopStaff UNIQUEIDENTIFIER;
@@ -198,8 +198,8 @@ SELECT @AutoShopStaff = Id FROM dbo.Users WHERE Email = 'usta@auto.agnostic.test
 IF @AutoShopStaff IS NULL
 BEGIN
     SET @AutoShopStaff = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@AutoShopStaff, @TenantAuto, @RoleShopStaff, 'usta@auto.agnostic.test', 'Bd1KE3anLZpeD60yAA9+YWUaXO9cnJoMOBbHRD2vv28=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@AutoShopStaff, @TenantAuto, @RoleShopStaff, 'usta@auto.agnostic.test', 'Bd1KE3anLZpeD60yAA9+YWUaXO9cnJoMOBbHRD2vv28=', N'Tolga Kaplan', 'inherit', 0, @Now);
 END;
 
 DECLARE @AutoAccounting UNIQUEIDENTIFIER;
@@ -207,8 +207,8 @@ SELECT @AutoAccounting = Id FROM dbo.Users WHERE Email = 'finance@auto.agnostic.
 IF @AutoAccounting IS NULL
 BEGIN
     SET @AutoAccounting = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@AutoAccounting, @TenantAuto, @RoleAccounting, 'finance@auto.agnostic.test', 'nu6tHiXZdSEW16a7BkrYLvaNVOXyN1plxrvm2yyFqoo=', 'auto-steel', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@AutoAccounting, @TenantAuto, @RoleAccounting, 'finance@auto.agnostic.test', 'nu6tHiXZdSEW16a7BkrYLvaNVOXyN1plxrvm2yyFqoo=', N'Selim Arslan', 'auto-steel', 0, @Now);
 END;
 
 DECLARE @AutoCustomer1 UNIQUEIDENTIFIER;
@@ -216,8 +216,8 @@ SELECT @AutoCustomer1 = Id FROM dbo.Users WHERE Email = 'omer.customer@auto.agno
 IF @AutoCustomer1 IS NULL
 BEGIN
     SET @AutoCustomer1 = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@AutoCustomer1, @TenantAuto, @RoleCustomer, 'omer.customer@auto.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@AutoCustomer1, @TenantAuto, @RoleCustomer, 'omer.customer@auto.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', N'Ömer Aksoy', 'inherit', 0, @Now);
 END;
 
 DECLARE @AutoCustomer2 UNIQUEIDENTIFIER;
@@ -225,8 +225,8 @@ SELECT @AutoCustomer2 = Id FROM dbo.Users WHERE Email = 'selin.customer@auto.agn
 IF @AutoCustomer2 IS NULL
 BEGIN
     SET @AutoCustomer2 = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@AutoCustomer2, @TenantAuto, @RoleCustomer, 'selin.customer@auto.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@AutoCustomer2, @TenantAuto, @RoleCustomer, 'selin.customer@auto.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', N'Selin Öztürk', 'inherit', 0, @Now);
 END;
 
 MERGE dbo.NotificationPreferences AS target
@@ -308,8 +308,8 @@ SELECT @FitnessAdmin = Id FROM dbo.Users WHERE Email = 'admin@fitness.agnostic.t
 IF @FitnessAdmin IS NULL
 BEGIN
     SET @FitnessAdmin = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@FitnessAdmin, @TenantFitness, @RoleTenantAdmin, 'admin@fitness.agnostic.test', 'ldQXbZpb9QOK3ED2vDH9cyDjPCdh5ZEPiCpUzZ74yOE=', 'fitness-emerald', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@FitnessAdmin, @TenantFitness, @RoleTenantAdmin, 'admin@fitness.agnostic.test', 'ldQXbZpb9QOK3ED2vDH9cyDjPCdh5ZEPiCpUzZ74yOE=', N'Damla Arı', 'fitness-emerald', 0, @Now);
 END;
 
 DECLARE @FitnessShopAdmin UNIQUEIDENTIFIER;
@@ -317,8 +317,8 @@ SELECT @FitnessShopAdmin = Id FROM dbo.Users WHERE Email = 'studio@fitness.agnos
 IF @FitnessShopAdmin IS NULL
 BEGIN
     SET @FitnessShopAdmin = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@FitnessShopAdmin, @TenantFitness, @RoleShopAdmin, 'studio@fitness.agnostic.test', 'LGRCIPVd8VSPw5gyiq98rlSQT81P7f3t4g7ks3w0/Dg=', 'fitness-emerald', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@FitnessShopAdmin, @TenantFitness, @RoleShopAdmin, 'studio@fitness.agnostic.test', 'LGRCIPVd8VSPw5gyiq98rlSQT81P7f3t4g7ks3w0/Dg=', N'Burak Şahin', 'fitness-emerald', 0, @Now);
 END;
 
 DECLARE @FitnessShopStaff UNIQUEIDENTIFIER;
@@ -326,8 +326,8 @@ SELECT @FitnessShopStaff = Id FROM dbo.Users WHERE Email = 'coach@fitness.agnost
 IF @FitnessShopStaff IS NULL
 BEGIN
     SET @FitnessShopStaff = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@FitnessShopStaff, @TenantFitness, @RoleShopStaff, 'coach@fitness.agnostic.test', 'Bd1KE3anLZpeD60yAA9+YWUaXO9cnJoMOBbHRD2vv28=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@FitnessShopStaff, @TenantFitness, @RoleShopStaff, 'coach@fitness.agnostic.test', 'Bd1KE3anLZpeD60yAA9+YWUaXO9cnJoMOBbHRD2vv28=', N'Nazım Koç', 'inherit', 0, @Now);
 END;
 
 DECLARE @FitnessAccounting UNIQUEIDENTIFIER;
@@ -335,8 +335,8 @@ SELECT @FitnessAccounting = Id FROM dbo.Users WHERE Email = 'finance@fitness.agn
 IF @FitnessAccounting IS NULL
 BEGIN
     SET @FitnessAccounting = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@FitnessAccounting, @TenantFitness, @RoleAccounting, 'finance@fitness.agnostic.test', 'nu6tHiXZdSEW16a7BkrYLvaNVOXyN1plxrvm2yyFqoo=', 'fitness-emerald', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@FitnessAccounting, @TenantFitness, @RoleAccounting, 'finance@fitness.agnostic.test', 'nu6tHiXZdSEW16a7BkrYLvaNVOXyN1plxrvm2yyFqoo=', N'Ece Yıldız', 'fitness-emerald', 0, @Now);
 END;
 
 DECLARE @FitnessCustomer1 UNIQUEIDENTIFIER;
@@ -344,8 +344,8 @@ SELECT @FitnessCustomer1 = Id FROM dbo.Users WHERE Email = 'zeynep.customer@fitn
 IF @FitnessCustomer1 IS NULL
 BEGIN
     SET @FitnessCustomer1 = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@FitnessCustomer1, @TenantFitness, @RoleCustomer, 'zeynep.customer@fitness.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@FitnessCustomer1, @TenantFitness, @RoleCustomer, 'zeynep.customer@fitness.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', N'Zeynep Korkmaz', 'inherit', 0, @Now);
 END;
 
 DECLARE @FitnessCustomer2 UNIQUEIDENTIFIER;
@@ -353,8 +353,8 @@ SELECT @FitnessCustomer2 = Id FROM dbo.Users WHERE Email = 'berk.customer@fitnes
 IF @FitnessCustomer2 IS NULL
 BEGIN
     SET @FitnessCustomer2 = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@FitnessCustomer2, @TenantFitness, @RoleCustomer, 'berk.customer@fitness.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@FitnessCustomer2, @TenantFitness, @RoleCustomer, 'berk.customer@fitness.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', N'Berk Güneş', 'inherit', 0, @Now);
 END;
 
 MERGE dbo.NotificationPreferences AS target
@@ -436,8 +436,8 @@ SELECT @EduAdmin = Id FROM dbo.Users WHERE Email = 'admin@edu.agnostic.test';
 IF @EduAdmin IS NULL
 BEGIN
     SET @EduAdmin = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@EduAdmin, @TenantEdu, @RoleTenantAdmin, 'admin@edu.agnostic.test', 'ldQXbZpb9QOK3ED2vDH9cyDjPCdh5ZEPiCpUzZ74yOE=', 'edu-indigo', 1, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@EduAdmin, @TenantEdu, @RoleTenantAdmin, 'admin@edu.agnostic.test', 'ldQXbZpb9QOK3ED2vDH9cyDjPCdh5ZEPiCpUzZ74yOE=', N'Leyla Uçar', 'edu-indigo', 1, @Now);
 END;
 
 DECLARE @EduShopAdmin UNIQUEIDENTIFIER;
@@ -445,8 +445,8 @@ SELECT @EduShopAdmin = Id FROM dbo.Users WHERE Email = 'koord@edu.agnostic.test'
 IF @EduShopAdmin IS NULL
 BEGIN
     SET @EduShopAdmin = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@EduShopAdmin, @TenantEdu, @RoleShopAdmin, 'koord@edu.agnostic.test', 'LGRCIPVd8VSPw5gyiq98rlSQT81P7f3t4g7ks3w0/Dg=', 'edu-indigo', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@EduShopAdmin, @TenantEdu, @RoleShopAdmin, 'koord@edu.agnostic.test', 'LGRCIPVd8VSPw5gyiq98rlSQT81P7f3t4g7ks3w0/Dg=', N'Kerem Ünlü', 'edu-indigo', 0, @Now);
 END;
 
 DECLARE @EduShopStaff UNIQUEIDENTIFIER;
@@ -454,8 +454,8 @@ SELECT @EduShopStaff = Id FROM dbo.Users WHERE Email = 'ogretmen@edu.agnostic.te
 IF @EduShopStaff IS NULL
 BEGIN
     SET @EduShopStaff = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@EduShopStaff, @TenantEdu, @RoleShopStaff, 'ogretmen@edu.agnostic.test', 'Bd1KE3anLZpeD60yAA9+YWUaXO9cnJoMOBbHRD2vv28=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@EduShopStaff, @TenantEdu, @RoleShopStaff, 'ogretmen@edu.agnostic.test', 'Bd1KE3anLZpeD60yAA9+YWUaXO9cnJoMOBbHRD2vv28=', N'Cem Arslan', 'inherit', 0, @Now);
 END;
 
 DECLARE @EduAccounting UNIQUEIDENTIFIER;
@@ -463,8 +463,8 @@ SELECT @EduAccounting = Id FROM dbo.Users WHERE Email = 'finance@edu.agnostic.te
 IF @EduAccounting IS NULL
 BEGIN
     SET @EduAccounting = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@EduAccounting, @TenantEdu, @RoleAccounting, 'finance@edu.agnostic.test', 'nu6tHiXZdSEW16a7BkrYLvaNVOXyN1plxrvm2yyFqoo=', 'edu-indigo', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@EduAccounting, @TenantEdu, @RoleAccounting, 'finance@edu.agnostic.test', 'nu6tHiXZdSEW16a7BkrYLvaNVOXyN1plxrvm2yyFqoo=', N'Figen Sezgin', 'edu-indigo', 0, @Now);
 END;
 
 DECLARE @EduCustomer1 UNIQUEIDENTIFIER;
@@ -472,8 +472,8 @@ SELECT @EduCustomer1 = Id FROM dbo.Users WHERE Email = 'veli1@edu.agnostic.test'
 IF @EduCustomer1 IS NULL
 BEGIN
     SET @EduCustomer1 = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@EduCustomer1, @TenantEdu, @RoleCustomer, 'veli1@edu.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@EduCustomer1, @TenantEdu, @RoleCustomer, 'veli1@edu.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', N'Veli Demir', 'inherit', 0, @Now);
 END;
 
 DECLARE @EduCustomer2 UNIQUEIDENTIFIER;
@@ -481,8 +481,8 @@ SELECT @EduCustomer2 = Id FROM dbo.Users WHERE Email = 'veli2@edu.agnostic.test'
 IF @EduCustomer2 IS NULL
 BEGIN
     SET @EduCustomer2 = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@EduCustomer2, @TenantEdu, @RoleCustomer, 'veli2@edu.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@EduCustomer2, @TenantEdu, @RoleCustomer, 'veli2@edu.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', N'Veli Çetin', 'inherit', 0, @Now);
 END;
 
 MERGE dbo.NotificationPreferences AS target
@@ -564,8 +564,8 @@ SELECT @PetAdmin = Id FROM dbo.Users WHERE Email = 'admin@pet.agnostic.test';
 IF @PetAdmin IS NULL
 BEGIN
     SET @PetAdmin = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@PetAdmin, @TenantPet, @RoleTenantAdmin, 'admin@pet.agnostic.test', 'ldQXbZpb9QOK3ED2vDH9cyDjPCdh5ZEPiCpUzZ74yOE=', 'pet-amber', 1, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@PetAdmin, @TenantPet, @RoleTenantAdmin, 'admin@pet.agnostic.test', 'ldQXbZpb9QOK3ED2vDH9cyDjPCdh5ZEPiCpUzZ74yOE=', N'Gizem Korkmaz', 'pet-amber', 1, @Now);
 END;
 
 DECLARE @PetShopAdmin UNIQUEIDENTIFIER;
@@ -573,8 +573,8 @@ SELECT @PetShopAdmin = Id FROM dbo.Users WHERE Email = 'koordinator@pet.agnostic
 IF @PetShopAdmin IS NULL
 BEGIN
     SET @PetShopAdmin = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@PetShopAdmin, @TenantPet, @RoleShopAdmin, 'koordinator@pet.agnostic.test', 'LGRCIPVd8VSPw5gyiq98rlSQT81P7f3t4g7ks3w0/Dg=', 'pet-amber', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@PetShopAdmin, @TenantPet, @RoleShopAdmin, 'koordinator@pet.agnostic.test', 'LGRCIPVd8VSPw5gyiq98rlSQT81P7f3t4g7ks3w0/Dg=', N'Onur Taş', 'pet-amber', 0, @Now);
 END;
 
 DECLARE @PetShopStaff UNIQUEIDENTIFIER;
@@ -582,8 +582,8 @@ SELECT @PetShopStaff = Id FROM dbo.Users WHERE Email = 'groomer@pet.agnostic.tes
 IF @PetShopStaff IS NULL
 BEGIN
     SET @PetShopStaff = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@PetShopStaff, @TenantPet, @RoleShopStaff, 'groomer@pet.agnostic.test', 'Bd1KE3anLZpeD60yAA9+YWUaXO9cnJoMOBbHRD2vv28=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@PetShopStaff, @TenantPet, @RoleShopStaff, 'groomer@pet.agnostic.test', 'Bd1KE3anLZpeD60yAA9+YWUaXO9cnJoMOBbHRD2vv28=', N'Derya Kaplan', 'inherit', 0, @Now);
 END;
 
 DECLARE @PetAccounting UNIQUEIDENTIFIER;
@@ -591,8 +591,8 @@ SELECT @PetAccounting = Id FROM dbo.Users WHERE Email = 'finance@pet.agnostic.te
 IF @PetAccounting IS NULL
 BEGIN
     SET @PetAccounting = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@PetAccounting, @TenantPet, @RoleAccounting, 'finance@pet.agnostic.test', 'nu6tHiXZdSEW16a7BkrYLvaNVOXyN1plxrvm2yyFqoo=', 'pet-amber', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@PetAccounting, @TenantPet, @RoleAccounting, 'finance@pet.agnostic.test', 'nu6tHiXZdSEW16a7BkrYLvaNVOXyN1plxrvm2yyFqoo=', N'Mehmet Erdem', 'pet-amber', 0, @Now);
 END;
 
 DECLARE @PetCustomer1 UNIQUEIDENTIFIER;
@@ -600,8 +600,8 @@ SELECT @PetCustomer1 = Id FROM dbo.Users WHERE Email = 'mert.customer@pet.agnost
 IF @PetCustomer1 IS NULL
 BEGIN
     SET @PetCustomer1 = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@PetCustomer1, @TenantPet, @RoleCustomer, 'mert.customer@pet.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@PetCustomer1, @TenantPet, @RoleCustomer, 'mert.customer@pet.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', N'Mert Arı', 'inherit', 0, @Now);
 END;
 
 DECLARE @PetCustomer2 UNIQUEIDENTIFIER;
@@ -609,8 +609,8 @@ SELECT @PetCustomer2 = Id FROM dbo.Users WHERE Email = 'irem.customer@pet.agnost
 IF @PetCustomer2 IS NULL
 BEGIN
     SET @PetCustomer2 = NEWID();
-    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, PreferredTheme, MultiFactorEnabled, CreatedAt)
-    VALUES (@PetCustomer2, @TenantPet, @RoleCustomer, 'irem.customer@pet.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', 'inherit', 0, @Now);
+    INSERT INTO dbo.Users (Id, TenantId, RoleId, Email, PasswordHash, FullName, PreferredTheme, MultiFactorEnabled, CreatedAt)
+    VALUES (@PetCustomer2, @TenantPet, @RoleCustomer, 'irem.customer@pet.agnostic.test', 'b5ryb2L3VovuHm+ElZRUeoz9+QRJb6sZze5xkqLCtTg=', N'İrem Sönmez', 'inherit', 0, @Now);
 END;
 
 MERGE dbo.NotificationPreferences AS target
