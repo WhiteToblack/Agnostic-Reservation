@@ -6,6 +6,7 @@ public static class TenantParameterKeys
     {
         public const string Auth = "auth";
         public const string Shop = "shop";
+        public const string Logging = "logging";
     }
 
     public static class Auth
@@ -21,5 +22,11 @@ public static class TenantParameterKeys
         public const string DefaultShopId = "defaultShopId";
         public const string DefaultShopName = "defaultShopName";
         public const string DefaultShopTimeZone = "defaultShopTimeZone";
+    }
+
+    public static class Logging
+    {
+        public const string EnableGeneral = "enableGeneral";
+        public const string EnableAccounting = "enableAccounting";
     }
 }

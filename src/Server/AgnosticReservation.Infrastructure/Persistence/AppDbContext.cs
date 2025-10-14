@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<TenantParameter> TenantParameters => Set<TenantParameter>();
+    public DbSet<TenantParameterChangeRequest> TenantParameterChangeRequests => Set<TenantParameterChangeRequest>();
     public DbSet<Resource> Resources => Set<Resource>();
     public DbSet<Reservation> Reservations => Set<Reservation>();
     public DbSet<Document> Documents => Set<Document>();

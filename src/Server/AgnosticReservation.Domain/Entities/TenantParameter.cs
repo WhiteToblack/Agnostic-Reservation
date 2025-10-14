@@ -25,4 +25,6 @@ public class TenantParameter : BaseEntity
     }
 
     public void UpdateValue(string value) => Value = value;
+
+    public void UpdateSecret(bool isSecret) => IsSecret = isSecret;
 }
