@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AgnosticReservation.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c4b36dfa02871a4d014cf88d863176914a38d44b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b310e7604cbb0362bde8a6bfc9b37980debdb132")]
 [assembly: System.Reflection.AssemblyProductAttribute("AgnosticReservation.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AgnosticReservation.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -7,7 +7,7 @@
 *.suo
 
 .fake
-src/Server/AgnosticReservation.Api/bin/*
-src/Server/AgnosticReservation.Application/bin/*
-src/Server/AgnosticReservation.Domain/bin/*
-src/Server/AgnosticReservation.Infrastructre/bin/*
+# Ignore all bin and obj folders recursively
+**/bin/
+**/obj/
+
