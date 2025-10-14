@@ -1,29 +1,29 @@
 services:
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    environment:
-      ACCEPT_EULA: "Y"
-      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
-    ports:
-      - "1433:1433"
-    volumes:
-      - sqlserver-data:/var/opt/mssql
-    healthcheck:
-      test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourStrong!Passw0rd", "-Q", "SELECT 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 20s
-  sqlserver-seed:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    depends_on:
-      sqlserver:
-        condition: service_healthy
-    environment:
-      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
-    volumes:
-      - ./docker/mssql/init.sql:/init.sql:ro
-    entrypoint: ["/bin/bash", "-c", "/opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P ${MSSQL_SA_PASSWORD} -i /init.sql"]
+  # sqlserver:
+  #   image: mcr.microsoft.com/mssql/server:2022-latest
+  #   environment:
+  #     ACCEPT_EULA: "Y"
+  #     MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+  #   ports:
+  #     - "1433:1433"
+  #   volumes:
+  #     - sqlserver-data:/var/opt/mssql
+  #   healthcheck:
+  #     test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourStrong!Passw0rd", "-Q", "SELECT 1"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 10
+  #     start_period: 20s
+  # sqlserver-seed:
+  #   image: mcr.microsoft.com/mssql/server:2022-latest
+  #   depends_on:
+  #     sqlserver:
+  #       condition: service_healthy
+  #   environment:
+  #     MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+  #   volumes:
+  #     - ./docker/mssql/init.sql:/init.sql:ro
+  #   entrypoint: ["/bin/bash", "-c", "/opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P ${MSSQL_SA_PASSWORD} -i /init.sql"]
   mongodb:
     image: mongo:6.0
     restart: unless-stopped
@@ -35,5 +35,5 @@ services:
     volumes:
       - mongodb-data:/data/db
 volumes:
-  sqlserver-data:
+  # sqlserver-data:
   mongodb-data:

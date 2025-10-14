@@ -11,3 +11,4 @@
 **/bin/
 **/obj/
 
+src/Server/AgnosticReservation.Api/bin

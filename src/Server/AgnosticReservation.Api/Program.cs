@@ -27,11 +27,10 @@ builder.Services.AddAgnosticReservationModules(builder.Configuration);
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
-{
+
     app.UseSwagger();
     app.UseSwaggerUI();
-}
+
 
 if (IsHttpsEndpointConfigured(builder))
 {
