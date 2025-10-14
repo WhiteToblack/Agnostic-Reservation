@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using AgnosticReservation.Application.Logging;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
@@ -12,48 +13,65 @@ public class MongoRequestLogService : IRequestLogService
 {
     private readonly IMongoCollection<GeneralRequestLogDocument> _generalLogs;
     private readonly IMongoCollection<AccountingRequestLogDocument> _accountingLogs;
+    private readonly ILogger<MongoRequestLogService> _logger;
 
-    public MongoRequestLogService(IOptions<MongoLoggingOptions> options)
+    public MongoRequestLogService(IOptions<MongoLoggingOptions> options, ILogger<MongoRequestLogService> logger)
     {
         var settings = options.Value ?? new MongoLoggingOptions();
         var client = new MongoClient(settings.ConnectionString);
         var database = client.GetDatabase(settings.DatabaseName);
         _generalLogs = database.GetCollection<GeneralRequestLogDocument>(settings.GeneralCollectionName);
         _accountingLogs = database.GetCollection<AccountingRequestLogDocument>(settings.AccountingCollectionName);
+        _logger = logger;
     }
 
     public async Task LogAsync(RequestLogContext context, CancellationToken cancellationToken = default)
     {
-        var document = new GeneralRequestLogDocument
+        try
         {
-            TenantId = context.TenantId,
-            UserId = context.UserId,
-            Method = context.Method,
-            Path = context.Path,
-            Query = context.Query,
-            StatusCode = context.StatusCode,
-            DurationMilliseconds = context.DurationMilliseconds,
-            Headers = context.Headers.ToDictionary(pair => pair.Key, pair => pair.Value),
-            IsAccountingOperation = context.IsAccountingOperation,
-            CorrelationId = context.CorrelationId,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        await _generalLogs.InsertOneAsync(document, cancellationToken: cancellationToken).ConfigureAwait(false);
-
-        if (context.IsAccountingOperation && context.AccountingContext is not null)
-        {
-            var accounting = new AccountingRequestLogDocument
+            var document = new GeneralRequestLogDocument
             {
-                GeneralLogId = document.Id,
                 TenantId = context.TenantId,
                 UserId = context.UserId,
-                OperationKey = context.AccountingContext.OperationKey,
-                ReferenceCode = context.AccountingContext.ReferenceCode,
-                CreatedAt = document.CreatedAt
+                Method = context.Method,
+                Path = context.Path,
+                Query = context.Query,
+                StatusCode = context.StatusCode,
+                DurationMilliseconds = context.DurationMilliseconds,
+                Headers = context.Headers.ToDictionary(pair => pair.Key, pair => pair.Value),
+                IsAccountingOperation = context.IsAccountingOperation,
+                CorrelationId = context.CorrelationId,
+                CreatedAt = DateTime.UtcNow
             };
 
-            await _accountingLogs.InsertOneAsync(accounting, cancellationToken: cancellationToken).ConfigureAwait(false);
+            await _generalLogs.InsertOneAsync(document, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            if (context.IsAccountingOperation && context.AccountingContext is not null)
+            {
+                var accounting = new AccountingRequestLogDocument
+                {
+                    GeneralLogId = document.Id,
+                    TenantId = context.TenantId,
+                    UserId = context.UserId,
+                    OperationKey = context.AccountingContext.OperationKey,
+                    ReferenceCode = context.AccountingContext.ReferenceCode,
+                    CreatedAt = document.CreatedAt
+                };
+
+                await _accountingLogs.InsertOneAsync(accounting, cancellationToken: cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (MongoException exception)
+        {
+            _logger.LogError(exception, "Failed to persist request log to MongoDB.");
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Unexpected error while persisting request log to MongoDB.");
         }
     }
 
