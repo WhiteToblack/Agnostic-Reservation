@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AgnosticReservation.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+da9d1e8871351d7e753359a7e79fc6c6b4877aa6")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0622562e634fbce99a405dc51982569d453e7164")]
 [assembly: System.Reflection.AssemblyProductAttribute("AgnosticReservation.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AgnosticReservation.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
