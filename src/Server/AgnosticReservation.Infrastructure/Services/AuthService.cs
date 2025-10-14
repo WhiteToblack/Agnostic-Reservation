@@ -54,6 +54,7 @@ public class AuthService : IAuthService
                 user.Email,
                 user.FullName,
                 user.PreferredTheme,
+                user.PreferredLanguage,
                 role?.Name ?? "Unknown",
                 role?.HierarchyLevel ?? 0,
                 role?.IsSuperAdmin ?? false,
@@ -75,6 +76,7 @@ public class AuthService : IAuthService
             accessToken,
             refreshToken,
             user.PreferredTheme,
+            user.PreferredLanguage,
             twoFactorPending,
             settings,
             sessionData);
@@ -96,7 +98,7 @@ public class AuthService : IAuthService
 
         var adminRole = (await _roleRepository.ListAsync(r => r.Name == "Admin", cancellationToken: cancellationToken)).FirstOrDefault()
             ?? new Role("Admin", Enum.GetValues<Permission>(), hierarchyLevel: 1);
-        var user = new User(request.TenantId, request.Email, HashPassword(request.Password), adminRole, request.PreferredTheme, request.FullName);
+        var user = new User(request.TenantId, request.Email, HashPassword(request.Password), adminRole, request.PreferredTheme, request.FullName, request.PreferredLanguage);
         user.EnableMultiFactor(settings.RequireTwoFactor);
         await _userRepository.AddAsync(user, cancellationToken);
 
@@ -108,6 +110,7 @@ public class AuthService : IAuthService
                 user.Email,
                 user.FullName,
                 user.PreferredTheme,
+                user.PreferredLanguage,
                 adminRole.Name,
                 adminRole.HierarchyLevel,
                 adminRole.IsSuperAdmin,
@@ -129,6 +132,7 @@ public class AuthService : IAuthService
             accessToken,
             refreshToken,
             user.PreferredTheme,
+            user.PreferredLanguage,
             twoFactorPending,
             settings,
             sessionData);
@@ -138,6 +142,13 @@ public class AuthService : IAuthService
     {
         var user = await _userRepository.GetAsync(userId, cancellationToken) ?? throw new InvalidOperationException("User not found");
         user.UpdateTheme(preferredTheme);
+        await _userRepository.UpdateAsync(user, cancellationToken);
+    }
+
+    public async Task RefreshLanguageAsync(Guid userId, string preferredLanguage, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetAsync(userId, cancellationToken) ?? throw new InvalidOperationException("User not found");
+        user.UpdateLanguage(preferredLanguage);
         await _userRepository.UpdateAsync(user, cancellationToken);
     }
 

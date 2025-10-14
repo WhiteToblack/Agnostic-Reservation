@@ -66,6 +66,7 @@ React Native component tests can be added with Jest and React Native Testing Lib
 ## Database
 
 * **Schema**: Run `docs/sql/agnostic_reservation_mssql.sql` on your SQL Server instance to create all tables, foreign keys, and indexes that map to the domain entities.
+* **Localization seed**: After provisioning the schema, execute `docs/sql/agnostic_reservation_multilanguage_seed.sql` to preload sample multi-language keys and translations for every demo tenant.
 * **Connection string**: Update `ConnectionStrings:DefaultConnection` in `src/Server/AgnosticReservation.Api/appsettings.json` (or user secrets/environment variables) with your SQL Server credentials.
 * **Local development SQL Server**: A ready-to-use Docker Compose file lives at the repository root. Start it before executing migrations:
 

@@ -657,4 +657,27 @@ WHEN NOT MATCHED THEN
     VALUES (NEWID(), @TenantPet, source.Category, source.[Key], source.[Value], source.IsSecret, @Now);
 ;
 
+/* -------------------------------------------------------------------------- */
+/* Dil tercihleri                                                             */
+/* -------------------------------------------------------------------------- */
+UPDATE dbo.Users
+SET PreferredLanguage = 'tr-TR'
+WHERE Email LIKE 'admin@%.agnostic.test';
+
+UPDATE dbo.Users
+SET PreferredLanguage = 'en-US'
+WHERE Email LIKE 'studio@%.agnostic.test'
+   OR Email LIKE 'service@%.agnostic.test'
+   OR Email LIKE 'koord@%.agnostic.test'
+   OR Email LIKE 'finance@%.agnostic.test';
+
+UPDATE dbo.Users
+SET PreferredLanguage = 'en-GB'
+WHERE Email LIKE 'coach@%.agnostic.test'
+   OR Email LIKE 'groomer@%.agnostic.test';
+
+UPDATE dbo.Users
+SET PreferredLanguage = 'de-DE'
+WHERE Email LIKE 'usta@auto.%' OR Email LIKE 'selin.customer@auto.%';
+
 GO

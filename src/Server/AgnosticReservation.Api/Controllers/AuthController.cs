@@ -35,4 +35,11 @@ public class AuthController : ControllerBase
         await _authService.RefreshThemeAsync(userId, theme, cancellationToken);
         return NoContent();
     }
+
+    [HttpPost("language")]
+    public async Task<IActionResult> UpdateLanguage([FromQuery] Guid userId, [FromBody] string language, CancellationToken cancellationToken)
+    {
+        await _authService.RefreshLanguageAsync(userId, language, cancellationToken);
+        return NoContent();
+    }
 }
