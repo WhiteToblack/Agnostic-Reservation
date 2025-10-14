@@ -30,6 +30,7 @@ Kurulum komutları doğrudan proje dokümantasyonundan alınmıştır.【F:docs/
 ## 3. Veritabanı Hazırlığı
 1. SQL Server üzerinde `docs/sql/agnostic_reservation_mssql.sql` betiğini çalıştırarak tüm şema nesnelerini oluşturun.【F:docs/README.md†L66-L81】
 2. EF Core göçlerini yönetmek için dokümandaki `dotnet ef` komutlarını kullanın (AppDbContext Infrastructure katmanındadır).【F:docs/README.md†L66-L81】
+3. Varsayılan parametreleri ve yönetici kullanıcılarını oluşturmak için `dotnet ef database update -- --initialize` komutunu çalıştırabilirsiniz; bu komut EF tarafından sağlanan tasarım zamanı bağlamını kullanarak tohumlama işlemini gerçekleştirir.【F:docs/README.md†L78-L87】【F:src/Server/AgnosticReservation.Infrastructure/Persistence/AppDbContextFactory.cs†L5-L66】
 
 ## 4. Redis (Opsiyonel) Kurulumu
 Varsayılan olarak `ICacheService` için bellek içi uygulama gelir; tenant parametreleri gibi yönetimsel değerleri Redis üzerinde saklamak için bu servisi Redis sürümüyle değiştirin.【F:docs/README.md†L18-L27】【F:src/Server/AgnosticReservation.Infrastructure/Services/ParameterService.cs†L7-L65】
