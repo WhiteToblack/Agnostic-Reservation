@@ -29,6 +29,8 @@ public class AppDbContext : DbContext
     public DbSet<ServicePackage> ServicePackages => Set<ServicePackage>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+    public DbSet<LocalizationKey> LocalizationKeys => Set<LocalizationKey>();
+    public DbSet<LocalizationText> LocalizationTexts => Set<LocalizationText>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

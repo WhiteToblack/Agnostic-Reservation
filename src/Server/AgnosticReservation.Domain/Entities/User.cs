@@ -12,6 +12,7 @@ public class User : BaseEntity
     public Guid RoleId { get; private set; }
     public Role Role { get; private set; } = default!;
     public string PreferredTheme { get; private set; }
+    public string PreferredLanguage { get; private set; }
     public bool MultiFactorEnabled { get; private set; }
     public NotificationPreference Preference { get; private set; }
 
@@ -21,10 +22,11 @@ public class User : BaseEntity
         PasswordHash = string.Empty;
         FullName = string.Empty;
         PreferredTheme = "inherit";
+        PreferredLanguage = "tr-TR";
         Preference = new NotificationPreference(Guid.Empty, true, true, false, NotificationChannel.Email);
     }
 
-    public User(Guid tenantId, string email, string passwordHash, Role role, string preferredTheme = "inherit", string? fullName = null)
+    public User(Guid tenantId, string email, string passwordHash, Role role, string preferredTheme = "inherit", string? fullName = null, string preferredLanguage = "tr-TR")
     {
         TenantId = tenantId;
         Email = email;
@@ -33,6 +35,7 @@ public class User : BaseEntity
         RoleId = role.Id;
         PreferredTheme = preferredTheme;
         FullName = fullName ?? email;
+        PreferredLanguage = preferredLanguage;
         Preference = new NotificationPreference(Id, push: true, email: true, sms: false, NotificationChannel.Email);
     }
 
@@ -52,6 +55,14 @@ public class User : BaseEntity
     public void EnableMultiFactor(bool enabled)
     {
         MultiFactorEnabled = enabled;
+    }
+
+    public void UpdateLanguage(string preferredLanguage)
+    {
+        if (!string.IsNullOrWhiteSpace(preferredLanguage))
+        {
+            PreferredLanguage = preferredLanguage;
+        }
     }
 
     public void UpdatePreference(bool push, bool email, bool sms, NotificationChannel channel)

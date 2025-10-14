@@ -9,6 +9,7 @@ public record AuthResult(
     string? AccessToken,
     string? RefreshToken,
     string PreferredTheme,
+    string PreferredLanguage,
     bool TwoFactorPending,
     AuthFeatureSettings Features,
     SessionContextData Session);

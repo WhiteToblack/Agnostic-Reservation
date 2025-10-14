@@ -3,6 +3,7 @@ using AgnosticReservation.Application.Admin;
 using AgnosticReservation.Application.Auth;
 using AgnosticReservation.Application.Context;
 using AgnosticReservation.Application.Logging;
+using AgnosticReservation.Application.Localization;
 using AgnosticReservation.Application.Dashboard;
 using AgnosticReservation.Application.Notifications;
 using AgnosticReservation.Application.Reservations;
@@ -26,6 +27,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IReservationService, ReservationService>();
+        services.AddScoped<ILocalizationService, LocalizationService>();
         services.AddScoped<ISessionContextAccessor, SessionContextAccessor>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.Configure<MongoLoggingOptions>(configuration.GetSection("MongoLogging"));
