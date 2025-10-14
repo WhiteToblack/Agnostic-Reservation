@@ -1,4 +1,6 @@
+import 'react-native-gesture-handler';
 import React from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider } from './theme/ThemeProvider';
 import AppNavigator from './navigation/AppNavigator';
 import { useThemePreference } from './hooks/useThemePreference';
@@ -10,11 +12,13 @@ const tenantId = 'demo-tenant';
 const App = () => {
   const { mode, setMode } = useThemePreference();
   return (
-    <LocalizationProvider tenantId={tenantId} initialLanguage={defaultLanguage}>
-      <ThemeProvider initialMode={mode} onModeChange={setMode}>
-        <AppNavigator />
-      </ThemeProvider>
-    </LocalizationProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <LocalizationProvider tenantId={tenantId} initialLanguage={defaultLanguage}>
+        <ThemeProvider initialMode={mode} onModeChange={setMode}>
+          <AppNavigator />
+        </ThemeProvider>
+      </LocalizationProvider>
+    </GestureHandlerRootView>
   );
 };
 
