@@ -14,6 +14,28 @@ type Sector = {
   featuredPros: { name: string; specialty: string; rating: number; availability: string }[];
 };
 
+type PlatformStat = {
+  id: string;
+  label: string;
+  value: string;
+  helper: string;
+};
+
+type Benefit = {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  accent: string;
+};
+
+type JourneyStep = {
+  id: string;
+  title: string;
+  description: string;
+  badge: string;
+};
+
 type Business = {
   id: string;
   sectorId: string;
@@ -257,6 +279,71 @@ const quickShortcuts: (SearchState & { label: string })[] = [
   { label: 'Sigortalı temizlik ekibi', sectorId: 'home', shop: 'temizlik', pro: '' },
 ];
 
+const platformStats: PlatformStat[] = [
+  { id: 'appointments', label: 'Tamamlanan randevu', value: '2.4M+', helper: 'Kullanıcılar giriş yapmadan rezervasyon akışını başlattı.' },
+  { id: 'approval', label: 'Onay oranı', value: '%97', helper: 'Ustalar ve işletmeler gerçek zamanlı takvimlerini paylaşıyor.' },
+  { id: 'time', label: 'Ortalama işlem süresi', value: '45 sn', helper: 'Non-login arayüzde arama & seçim süresi.' },
+];
+
+const benefits: Benefit[] = [
+  {
+    id: 'personalization',
+    title: 'Kişiselleştirilmiş arama',
+    description:
+      'Sektörünüzü seçtiğiniz anda ilgili filtreler ve ustalar ön plana çıkar. Non-login kullanıcı bile kendine özel bir deneyim yaşar.',
+    icon: '🎯',
+    accent: 'rgba(61, 107, 255, 0.16)',
+  },
+  {
+    id: 'speed',
+    title: '45 saniyede sonuç',
+    description:
+      'Modern arayüzümüz, hızlı doldurulabilen formlar ve önerilen hazır aramalarla saniyeler içinde uygun randevuları gösterir.',
+    icon: '⚡',
+    accent: 'rgba(255, 145, 77, 0.18)',
+  },
+  {
+    id: 'trust',
+    title: 'Güvenilir profesyoneller',
+    description:
+      'Onaylı işletme ve ustalar, değerlendirme puanları ve uygunluk bilgisiyle kartlarda vurgulanır. Kullanıcı güveni tasarımın merkezinde.',
+    icon: '🛡️',
+    accent: 'rgba(41, 180, 168, 0.18)',
+  },
+  {
+    id: 'conversion',
+    title: 'Dönüşüme hazır CTA alanları',
+    description:
+      'Arama sonrası sektörel deneyim sayfasına geçişi teşvik eden çağrılar, kullanıcıyı üyelik oluşturmadan akışa taşır.',
+    icon: '🚀',
+    accent: 'rgba(79, 123, 255, 0.18)',
+  },
+];
+
+const journeySteps: JourneyStep[] = [
+  {
+    id: 'discover',
+    title: 'Keşfet ve filtrele',
+    description:
+      'Kullanıcı sektörünü seçtiğinde ilgili hizmet, lokasyon ve usta filtreleri otomatik olarak sunulur. Akıllı öneriler, arama çubuğuna yazmadan seçim yapmasını sağlar.',
+    badge: '1. Adım',
+  },
+  {
+    id: 'compare',
+    title: 'Kartları karşılaştır',
+    description:
+      'Modern kart tasarımları; puan, müsaitlik ve etiketleri hızlıca kıyaslama imkânı verir. Kullanıcı, login olmadan bile doğru seçime yaklaşır.',
+    badge: '2. Adım',
+  },
+  {
+    id: 'reserve',
+    title: 'Rezervasyonu başlat',
+    description:
+      'Seçilen sektör için özel deneyim ekranı, non-login kullanıcıyı giriş yapmaya veya devam eden rezervasyonu tamamlamaya motive eder.',
+    badge: '3. Adım',
+  },
+];
+
 const LandingView: React.FC<{
   search: SearchState;
   onChange: (state: SearchState) => void;
@@ -274,25 +361,83 @@ const LandingView: React.FC<{
     onSearch(search);
   };
 
+  const heroSector = useMemo(() => sectors.find((sector) => sector.id === search.sectorId) ?? sectors[0], [search.sectorId]);
+
   return (
     <div className="landing-container">
-      <section className="hero-section">
-        <div className="hero-content">
-          <h1>Randevunuzu saniyeler içinde oluşturun</h1>
-          <p>
-            Kolay Randevu deneyimini temel alan bu tasarım; sektör, dükkan ve usta aramalarını aynı yerde birleştirir. İlk adımda
-            sektörünüzü seçin, devamında size özel filtrelerle aramanızı derinleştirin.
-          </p>
-          <div className="hero-pills">
-            <span className="pill">Gerçek zamanlı müsaitlik</span>
-            <span className="pill">Konuma göre öneriler</span>
-            <span className="pill">Onaylanan ustalar</span>
+      <div className="hero-wrapper">
+        <header className="top-nav">
+          <div className="brand-mark">Kolay Randevu</div>
+          <nav>
+            <a href="#avantajlar">Avantajlar</a>
+            <a href="#sektorler">Sektörler</a>
+            <a href="#oneriler">Öneriler</a>
+          </nav>
+          <div className="nav-actions">
+            <button type="button" className="ghost-button">
+              Destek Al
+            </button>
+            <button type="button" className="primary-button small">
+              Giriş Yap
+            </button>
           </div>
+        </header>
+
+        <div className="hero-layout">
+          <div className="hero-copy">
+            <span className="hero-chip">Yeni nesil non-login deneyim</span>
+            <h1>Şehrinizdeki profesyonellere randevu almak artık çok daha kolay</h1>
+            <p>
+              Kolay Randevu&apos;nun modern non-login arayüzü, kullanıcıları üyelik zorunluluğu olmadan rezervasyon yolculuğuna davet eder.
+              Akıllı filtreler ve gerçek zamanlı müsaitlik kartları ile ihtiyacınıza saniyeler içinde ulaşırsınız.
+            </p>
+            <div className="hero-highlights">
+              <span>⚡ Hızlı arama</span>
+              <span>🧭 Kişiselleştirilmiş öneriler</span>
+              <span>🛡️ Güvenli işletmeler</span>
+            </div>
+          </div>
+          <aside className="hero-preview-card" style={{ background: heroSector.gradient }}>
+            <header>
+              <span>{heroSector.name}</span>
+              <strong>{heroSector.tagline}</strong>
+            </header>
+            <ul>
+              {heroSector.featuredPros.map((pro) => (
+                <li key={pro.name}>
+                  <div>
+                    <strong>{pro.name}</strong>
+                    <span>{pro.specialty}</span>
+                  </div>
+                  <span className="rating">{pro.rating.toFixed(1)}</span>
+                </li>
+              ))}
+            </ul>
+            <button type="button" className="hero-preview-action" onClick={() => onSelectSector(heroSector.id)}>
+              {heroSector.name} deneyimini incele
+            </button>
+          </aside>
         </div>
+
+        <div className="hero-stats">
+          {platformStats.map((stat) => (
+            <article key={stat.id}>
+              <strong>{stat.value}</strong>
+              <span>{stat.label}</span>
+              <p>{stat.helper}</p>
+            </article>
+          ))}
+        </div>
+      </div>
+
+      <div className="search-surface" id="arama">
         <div className="search-card">
           <header>
-            <h2>Aramanızı başlatın</h2>
-            <small style={{ color: 'rgba(11, 28, 54, 0.6)' }}>Sadece sektör seçerseniz, size özel sayfaya yönlendiririz.</small>
+            <div>
+              <h2>Aramanızı başlatın</h2>
+              <p>Non-login kullanıcı olarak bile kişiselleştirilmiş sonuçlar alın.</p>
+            </div>
+            <span className="search-helper">Sadece sektör seçerseniz sizi ilgili deneyime taşıyacağız.</span>
           </header>
           <form className="search-form" onSubmit={handleSubmit}>
             <div className="search-row">
@@ -326,24 +471,53 @@ const LandingView: React.FC<{
                 />
               </label>
             </div>
-            <button type="submit" className="primary-button">
-              Uygun randevuları bul
-            </button>
-          </form>
-          <div className="quick-searches">
-            {quickShortcuts.map(({ label, ...criteria }) => (
-              <button key={label} onClick={() => onSearch(criteria)}>
-                {label}
+            <div className="search-actions">
+              <button type="submit" className="primary-button">
+                Uygun randevuları bul
               </button>
-            ))}
+              <button type="button" className="ghost-button" onClick={() => onSearch({ sectorId: heroSector.id, shop: '', pro: '' })}>
+                {heroSector.name} keşfini başlat
+              </button>
+            </div>
+          </form>
+          <div className="smart-suggestions">
+            <h3>Hazır aramalar</h3>
+            <div className="smart-suggestion-list">
+              {quickShortcuts.map(({ label, ...criteria }) => (
+                <button key={label} onClick={() => onSearch(criteria)}>
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
+        </div>
+      </div>
+
+      <section className="benefits-section" id="avantajlar">
+        <div className="section-heading">
+          <span className="section-eyebrow">Kullanıcı yolculuğu</span>
+          <h2>Non-login arayüzde öne çıkan deneyim detayları</h2>
+          <p>
+            Tasarım dili; pastel degrade yüzeyler, kart gölgeleri ve mikro etkileşimlerle desteklenerek kullanıcıyı güvenle rezervasyon
+            akışına hazırlar.
+          </p>
+        </div>
+        <div className="benefit-grid">
+          {benefits.map((benefit) => (
+            <article key={benefit.id} className="benefit-card" style={{ '--benefit-accent': benefit.accent } as React.CSSProperties}>
+              <span className="benefit-icon">{benefit.icon}</span>
+              <h3>{benefit.title}</h3>
+              <p>{benefit.description}</p>
+            </article>
+          ))}
         </div>
       </section>
 
-      <section className="sector-section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2>Popüler sektörlere göz atın</h2>
-          <span style={{ color: 'rgba(11, 28, 54, 0.6)', fontSize: '0.95rem' }}>Sektör seçmek sizi özel arayüze götürür.</span>
+      <section className="sector-section" id="sektorler">
+        <div className="section-heading">
+          <span className="section-eyebrow">Sektörler</span>
+          <h2>Popüler sektörlerde modern kart deneyimi</h2>
+          <p>Sektör kartları, bir bakışta öne çıkan hizmetleri ve aktif işletme sayılarını gösterir.</p>
         </div>
         <div className="sector-grid">
           {sectors.map((sector) => (
@@ -361,11 +535,32 @@ const LandingView: React.FC<{
         </div>
       </section>
 
+      <section className="journey-section" id="oneriler">
+        <div className="section-heading">
+          <span className="section-eyebrow">Akış</span>
+          <h2>Non-login kullanıcı yolculuğu üç adımda</h2>
+          <p>Modern UX akışı, kullanıcıyı üyelik adımlarında kaybetmeden rezervasyon ekranına taşır.</p>
+        </div>
+        <div className="journey-grid">
+          {journeySteps.map((step) => (
+            <article key={step.id} className="journey-card">
+              <span className="journey-badge">{step.badge}</span>
+              <h3>{step.title}</h3>
+              <p>{step.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
       {showResults && (
         <section className="results-section">
-          <h3>Arama sonuçları</h3>
+          <div className="section-heading">
+            <span className="section-eyebrow">Arama sonuçları</span>
+            <h3>Seçiminize uygun işletmeler</h3>
+            <p>Rezervasyon akışını başlatmak için kartlardan birine dokunun veya sektörel deneyimi keşfedin.</p>
+          </div>
           {results.length === 0 ? (
-            <p style={{ color: 'rgba(11, 28, 54, 0.6)' }}>
+            <p className="empty-state">
               Aradığınız kriterlere uygun işletme bulamadık. Sadece sektör seçerek ilgili deneyime geçebilirsiniz.
             </p>
           ) : (
@@ -375,9 +570,7 @@ const LandingView: React.FC<{
                   <h4>{business.name}</h4>
                   <div className="result-meta">
                     <span>{business.shopType}</span>
-                    <span>
-                      ⭐ {business.rating.toFixed(1)} ({business.reviewCount})
-                    </span>
+                    <span>⭐ {business.rating.toFixed(1)} ({business.reviewCount})</span>
                   </div>
                   <div className="result-meta">
                     <span>{business.neighborhood}</span>
@@ -396,6 +589,22 @@ const LandingView: React.FC<{
           )}
         </section>
       )}
+
+      <section className="cta-section">
+        <div>
+          <span className="section-eyebrow">Hazır mısınız?</span>
+          <h2>Non-login arayüzüyle kullanıcıyı rezervasyona yönlendirin</h2>
+          <p>Modern tasarımı kendi markanıza göre özelleştirerek birkaç gün içinde canlıya alın.</p>
+        </div>
+        <div className="cta-actions">
+          <button type="button" className="primary-button large">
+            Demo talep et
+          </button>
+          <button type="button" className="ghost-button">
+            Ücretsiz deneyin
+          </button>
+        </div>
+      </section>
     </div>
   );
 };
