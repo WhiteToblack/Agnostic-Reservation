@@ -26,6 +26,6 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   cell: {
-    maxWidth: '100%',
+    flexGrow: 1,
   },
 });
