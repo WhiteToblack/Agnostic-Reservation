@@ -1,5 +1,7 @@
+using System.Linq;
 using AgnosticReservation.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace AgnosticReservation.Infrastructure.Persistence;
 
@@ -31,5 +33,16 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+
+        var decimalProperties = modelBuilder.Model
+            .GetEntityTypes()
+            .SelectMany(entity => entity.GetProperties())
+            .Where(property => property.ClrType == typeof(decimal) || property.ClrType == typeof(decimal?));
+
+        foreach (var property in decimalProperties)
+        {
+            property.SetPrecision(18);
+            property.SetScale(2);
+        }
     }
 }
