@@ -1,3 +1,4 @@
+using AgnosticReservation.Api.Middleware;
 using AgnosticReservation.Api.Modules;
 using AgnosticReservation.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseSessionContext();
 app.UseAuthorization();
 app.MapControllers();
 
