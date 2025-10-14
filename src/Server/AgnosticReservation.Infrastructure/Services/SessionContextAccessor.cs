@@ -5,7 +5,7 @@ namespace AgnosticReservation.Infrastructure.Services;
 
 public class SessionContextAccessor : ISessionContextAccessor
 {
-    private static readonly AsyncLocal<SessionContextHolder> Holder = new();
+    private static readonly AsyncLocal<SessionContextHolder?> Holder = new();
 
     public ISessionContext Current => Holder.Value?.Context ?? SessionContext.Empty;
 
