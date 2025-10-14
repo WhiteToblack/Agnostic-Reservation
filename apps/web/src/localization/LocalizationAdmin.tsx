@@ -25,6 +25,8 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
   const [textValue, setTextValue] = useState('');
   const [descriptionValue, setDescriptionValue] = useState('');
 
+  const busy = loading || localizationLoading;
+
   const filteredItems = useMemo(() => {
     if (!search.trim()) {
       return items;
@@ -74,12 +76,12 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
     setLanguageValue(language);
   }, [language]);
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setKeyValue('');
     setLanguageValue(language);
     setTextValue('');
     setDescriptionValue('');
-  };
+  }, [language]);
 
   const upsertTranslation = useCallback(async () => {
     if (!keyValue.trim() || !languageValue.trim() || !textValue.trim()) {
@@ -89,6 +91,7 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
 
     setError(null);
     setToast(null);
+    setLoading(true);
     try {
       const response = await fetch(`/api/admin/localization?tenantId=${encodeURIComponent(tenantId)}`, {
         method: 'POST',
@@ -110,8 +113,68 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
       await Promise.all([loadKeys(), reload()]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setLoading(false);
     }
-  }, [descriptionValue, keyValue, languageValue, loadKeys, reload, t, tenantId, textValue]);
+  }, [descriptionValue, keyValue, languageValue, loadKeys, reload, resetForm, t, tenantId, textValue]);
+
+  const deleteTranslation = useCallback(
+    async (keyId: string, languageCode: string) => {
+      setError(null);
+      setToast(null);
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `/api/admin/localization/${keyId}/translations/${encodeURIComponent(languageCode)}?tenantId=${encodeURIComponent(
+            tenantId
+          )}`,
+          { method: 'DELETE' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        setToast(t('localization.admin.toastDeleted'));
+        await Promise.all([loadKeys(), reload()]);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [loadKeys, reload, t, tenantId]
+  );
+
+  const deleteKey = useCallback(
+    async (keyId: string, keyName: string) => {
+      setError(null);
+      setToast(null);
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `/api/admin/localization/${keyId}?tenantId=${encodeURIComponent(tenantId)}`,
+          { method: 'DELETE' }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        if (keyValue === keyName) {
+          resetForm();
+        }
+
+        setToast(t('localization.admin.toastKeyDeleted'));
+        await Promise.all([loadKeys(), reload()]);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [keyValue, loadKeys, reload, resetForm, t, tenantId]
+  );
 
   const invalidateCache = useCallback(async () => {
     setError(null);
@@ -187,7 +250,7 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
           />
         </div>
         <div className="ml-admin__form-actions">
-          <button className="ml-admin__primary" onClick={() => void upsertTranslation()}>
+          <button className="ml-admin__primary" onClick={() => void upsertTranslation()} disabled={busy}>
             {t('localization.admin.addButton')}
           </button>
           <button className="ml-admin__ghost" onClick={resetForm}>
@@ -233,6 +296,7 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
                 {supportedLanguages.map((code) => (
                   <th key={code}>{code}</th>
                 ))}
+                <th>{t('localization.admin.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -245,9 +309,43 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
                   <td className="ml-admin__description">{item.description ?? '—'}</td>
                   {supportedLanguages.map((code) => (
                     <td key={code} className={code === language ? 'ml-admin__highlight' : undefined}>
-                      {item.translations?.[code] ?? '—'}
+                      {item.translations?.[code] ? (
+                        <div className="ml-admin__translation">
+                          <span>{item.translations[code]}</span>
+                          <button
+                            type="button"
+                            className="ml-admin__icon-button"
+                            onClick={() => void deleteTranslation(item.id, code)}
+                            aria-label={t('localization.admin.removeTranslation', undefined, { language: code })}
+                            disabled={busy}
+                          >
+                            🗑
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="ml-admin__translation-placeholder">—</span>
+                      )}
                     </td>
                   ))}
+                  <td className="ml-admin__actions">
+                    <button
+                      type="button"
+                      className="ml-admin__icon-button"
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            t('localization.admin.confirmDeleteKey', undefined, { key: item.key })
+                          )
+                        ) {
+                          void deleteKey(item.id, item.key);
+                        }
+                      }}
+                      aria-label={t('localization.admin.removeKey', undefined, { key: item.key })}
+                      disabled={busy}
+                    >
+                      🗑
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
