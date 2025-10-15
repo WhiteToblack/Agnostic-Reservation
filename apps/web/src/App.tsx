@@ -13,9 +13,26 @@ import {
   BillingInformation,
   ContactInformation,
   RegisteredUser,
-  Reservation,
   SupportInteraction,
 } from './types/domain';
+import type { AuthResult } from '../../shared/types/auth';
+import {
+  signIn as apiSignIn,
+  signUp as apiSignUp,
+  signOut as apiSignOut,
+  resumeSession,
+  fetchUserProfile,
+  updateUserProfile as apiUpdateUserProfile,
+  fetchResources,
+  fetchUserReservations,
+  createReservation as apiCreateReservation,
+  updateReservation as apiUpdateReservation,
+  deleteReservation as apiDeleteReservation,
+  type UserProfile as ApiUserProfile,
+  type UserReservationsOverview,
+  type ResourceDto,
+  type UpdateUserProfilePayload,
+} from './services/api';
 
 type TenantOption = {
   id: string;
@@ -103,6 +120,54 @@ const createUserKey = (email: string, tenantId: string) => `${email.trim().toLow
 
 const getTenantName = (tenantId: string) => tenantOptions.find((tenant) => tenant.id === tenantId)?.name ?? 'Seçili tenant';
 
+const deviceIdStorageKey = 'agnostic-reservation-web-device';
+
+const getOrCreateDeviceId = () => {
+  if (typeof window === 'undefined') {
+    return 'web-browser';
+  }
+
+  const existing = window.localStorage.getItem(deviceIdStorageKey);
+  if (existing) {
+    return existing;
+  }
+
+  const generated = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `web-${Math.random().toString(36).slice(2, 10)}`;
+  try {
+    window.localStorage.setItem(deviceIdStorageKey, generated);
+  } catch {
+    // ignore storage errors
+  }
+
+  return generated;
+};
+
+const mapProfileToRegisteredUser = (profile: ApiUserProfile, base?: RegisteredUser): RegisteredUser => ({
+  id: profile.userId,
+  fullName: profile.fullName,
+  email: profile.email,
+  tenantId: profile.tenantId,
+  role: base?.role ?? 'user',
+  contact: {
+    phoneNumber: profile.phoneNumber,
+    addressLine1: profile.addressLine1,
+    addressLine2: profile.addressLine2 ?? '',
+    city: profile.city,
+    country: profile.country,
+    postalCode: profile.postalCode,
+  },
+  billing: {
+    billingName: profile.billingName,
+    billingTaxNumber: profile.billingTaxNumber,
+    billingAddress: profile.billingAddress,
+    billingCity: profile.billingCity,
+    billingCountry: profile.billingCountry,
+    billingPostalCode: profile.billingPostalCode,
+  },
+  supportHistory: base?.supportHistory ?? [],
+  tags: base?.tags ?? ['Portal'],
+});
+
 const createEmptyContactInformation = (): ContactInformation => ({
   phoneNumber: '',
   addressLine1: '',
@@ -113,11 +178,8 @@ const createEmptyContactInformation = (): ContactInformation => ({
 });
 
 const createEmptyBillingInformation = (): BillingInformation => ({
-  cardHolderName: '',
-  cardBrand: 'VISA',
-  cardLast4: '',
-  expiryMonth: '',
-  expiryYear: '',
+  billingName: '',
+  billingTaxNumber: '',
   billingAddress: '',
   billingCity: '',
   billingCountry: '',
@@ -150,63 +212,6 @@ const createSupportInteraction = (
   createdAt: new Date().toISOString(),
 });
 
-const toISODate = (date: Date) => date.toISOString().split('T')[0];
-
-const addDays = (date: Date, days: number) => {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-};
-
-const generateSampleReservations = (tenantName: string, fullName: string): Reservation[] => {
-  const base = new Date();
-  const firstStart = addDays(base, 18);
-  const firstEnd = addDays(firstStart, 3);
-  const secondStart = addDays(base, 45);
-  const secondEnd = addDays(secondStart, 4);
-  const pastStart = addDays(base, -26);
-  const pastEnd = addDays(pastStart, 2);
-  const guestShortName = fullName.split(' ')[0];
-
-  return [
-    {
-      id: `AR-${firstStart.getTime().toString().slice(-4)}`,
-      propertyName: `${tenantName} · Panorama Süit`,
-      checkIn: toISODate(firstStart),
-      checkOut: toISODate(firstEnd),
-      nights: 3,
-      guests: 2,
-      status: 'Onaylandı',
-      totalPrice: 7200,
-      channel: 'Web Sitesi',
-      notes: `${guestShortName} için özel karşılama kartı`,
-    },
-    {
-      id: `AR-${secondStart.getTime().toString().slice(-4)}`,
-      propertyName: `${tenantName} · Executive Oda`,
-      checkIn: toISODate(secondStart),
-      checkOut: toISODate(secondEnd),
-      nights: 4,
-      guests: 2,
-      status: 'Beklemede',
-      totalPrice: 8600,
-      channel: 'Mobil Uygulama',
-    },
-    {
-      id: `AR-${pastStart.getTime().toString().slice(-4)}`,
-      propertyName: `${tenantName} · Deluxe Oda`,
-      checkIn: toISODate(pastStart),
-      checkOut: toISODate(pastEnd),
-      nights: 2,
-      guests: 1,
-      status: 'İptal',
-      totalPrice: 3400,
-      channel: 'Çağrı Merkezi',
-      notes: 'Misafir isteği ile ücretsiz iptal yapıldı.',
-    },
-  ];
-};
-
 const primaryTenantId = defaultTenantOptions[0]?.id ?? tenantOptions[0].id;
 const seededTenant = tenantOptions.find((tenant) => tenant.id === primaryTenantId) ?? tenantOptions[0];
 const seededUserEmail = 'mert.cengiz@agnostic.com';
@@ -233,11 +238,8 @@ const initialRegisteredUsers: Record<string, RegisteredUser> = {
       postalCode: '34728',
     },
     billing: {
-      cardHolderName: 'Mert Cengiz',
-      cardBrand: 'VISA',
-      cardLast4: '4242',
-      expiryMonth: '08',
-      expiryYear: '27',
+      billingName: 'Mert Cengiz',
+      billingTaxNumber: '11111111111',
       billingAddress: 'Bağdat Caddesi No:42 Daire 8',
       billingCity: 'İstanbul',
       billingCountry: 'Türkiye',
@@ -278,11 +280,8 @@ const initialRegisteredUsers: Record<string, RegisteredUser> = {
       postalCode: '34906',
     },
     billing: {
-      cardHolderName: 'Agnostic Platform',
-      cardBrand: 'MASTERCARD',
-      cardLast4: '8842',
-      expiryMonth: '11',
-      expiryYear: '28',
+      billingName: 'Agnostic Platform',
+      billingTaxNumber: '22222222222',
       billingAddress: 'Teknopark İstanbul B2 Blok',
       billingCity: 'İstanbul',
       billingCountry: 'Türkiye',
@@ -305,11 +304,8 @@ const initialRegisteredUsers: Record<string, RegisteredUser> = {
       postalCode: '34425',
     },
     billing: {
-      cardHolderName: 'Eurasia City Escapes',
-      cardBrand: 'VISA',
-      cardLast4: '2210',
-      expiryMonth: '06',
-      expiryYear: '26',
+      billingName: 'Eurasia City Escapes',
+      billingTaxNumber: '33333333333',
       billingAddress: 'Karaköy İş Merkezi Kat:5',
       billingCity: 'İstanbul',
       billingCountry: 'Türkiye',
@@ -327,46 +323,6 @@ const initialRegisteredUsers: Record<string, RegisteredUser> = {
     ],
     tags: ['Şube Yöneticisi'],
   },
-};
-
-const initialReservations: Record<string, Reservation[]> = {
-  [seededUserKey]: [
-    {
-      id: 'AR-4521',
-      propertyName: `${seededTenant.name} · Superior Oda`,
-      checkIn: '2024-04-18',
-      checkOut: '2024-04-21',
-      nights: 3,
-      guests: 2,
-      status: 'Onaylandı',
-      totalPrice: 6800,
-      channel: 'Mobil Uygulama',
-      notes: 'Geç giriş talebi onaylandı.',
-    },
-    {
-      id: 'AR-4396',
-      propertyName: `${seededTenant.name} · City View Suite`,
-      checkIn: '2024-05-02',
-      checkOut: '2024-05-05',
-      nights: 3,
-      guests: 2,
-      status: 'Beklemede',
-      totalPrice: 7400,
-      channel: 'Web Sitesi',
-    },
-    {
-      id: 'AR-4102',
-      propertyName: `${seededTenant.name} · Corner Oda`,
-      checkIn: '2024-03-08',
-      checkOut: '2024-03-10',
-      nights: 2,
-      guests: 1,
-      status: 'İptal',
-      totalPrice: 3150,
-      channel: 'Çağrı Merkezi',
-      notes: 'Konaklama tarihi değişikliği nedeniyle iptal edildi.',
-    },
-  ],
 };
 
 const persistTenantSelection = (tenantId: string) => {
@@ -391,15 +347,48 @@ const App: React.FC = () => {
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [registeredUsers, setRegisteredUsers] = useState<Record<string, RegisteredUser>>(initialRegisteredUsers);
-  const [reservationsByUser, setReservationsByUser] = useState<Record<string, Reservation[]>>(initialReservations);
   const [user, setUser] = useState<RegisteredUser | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [loginTenantId, setLoginTenantId] = useState<string>(selectedTenantId);
   const [signupTenantId, setSignupTenantId] = useState<string>(selectedTenantId);
   const [showAuthPanel, setShowAuthPanel] = useState<boolean>(false);
+  const [deviceId] = useState<string>(() => getOrCreateDeviceId());
+  const [authSession, setAuthSession] = useState<AuthResult | null>(null);
+  const [userProfileData, setUserProfileData] = useState<ApiUserProfile | null>(null);
+  const [userReservationsOverview, setUserReservationsOverview] = useState<UserReservationsOverview | null>(null);
+  const [resourceOptions, setResourceOptions] = useState<ResourceDto[]>([]);
+  const [loadingUserData, setLoadingUserData] = useState<boolean>(false);
 
   const isAdminUser = user?.role === 'admin';
   const adminUser = isAdminUser ? user : null;
+
+  const loadUserWorkspace = useCallback(
+    async (tenantId: string, userId: string) => {
+      setLoadingUserData(true);
+      try {
+        const [profile, reservations, resources] = await Promise.all([
+          fetchUserProfile(userId),
+          fetchUserReservations(tenantId, userId),
+          fetchResources(tenantId),
+        ]);
+
+        setUserProfileData(profile);
+        setUserReservationsOverview(reservations);
+        setResourceOptions(resources);
+
+        const mappedUser = mapProfileToRegisteredUser(profile, user ?? undefined);
+        const userKey = createUserKey(profile.email, tenantId);
+        setRegisteredUsers((previous) => ({ ...previous, [userKey]: mappedUser }));
+        setUser(mappedUser);
+      } catch (error) {
+        console.error('Failed to load user workspace', error);
+        setAuthError('Kullanıcı verileri yüklenemedi. Lütfen tekrar deneyin.');
+      } finally {
+        setLoadingUserData(false);
+      }
+    },
+    [user]
+  );
 
   const baseTenantOptions = useMemo(() => {
     if (defaultTenantOptions.some((tenant) => tenant.id === defaultTenantId)) {
@@ -438,6 +427,37 @@ const App: React.FC = () => {
 
     return domainOptions.filter((option) => option.id === user.role);
   }, [user, isAdminUser]);
+
+  useEffect(() => {
+    if (authSession) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const tryResumeSession = async () => {
+      try {
+        const session = await resumeSession(selectedTenantId, deviceId);
+        if (!session || cancelled) {
+          return;
+        }
+
+        setAuthSession(session);
+        setSelectedTenantId(session.tenantId);
+        setSelectedDomain('user');
+        setActiveView('userReservations');
+        await loadUserWorkspace(session.tenantId, session.userId);
+      } catch (error) {
+        console.info('No existing session to resume', error);
+      }
+    };
+
+    void tryResumeSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authSession, deviceId, loadUserWorkspace, selectedTenantId]);
 
   useEffect(() => {
     if (user && !isAdminUser && selectedDomain !== user.role) {
@@ -572,27 +592,46 @@ const App: React.FC = () => {
   };
 
   const handleCurrentUserProfileUpdate = useCallback(
-    (profileUpdates: { contact?: ContactInformation; billing?: BillingInformation }) => {
-      if (!user) {
+    async (profileUpdates: { contact?: ContactInformation; billing?: BillingInformation }) => {
+      if (!user || !authSession) {
         return;
       }
 
-      const updates: Partial<RegisteredUser> = {};
+      const payload: UpdateUserProfilePayload = {};
       if (profileUpdates.contact) {
-        updates.contact = profileUpdates.contact;
+        payload.phoneNumber = profileUpdates.contact.phoneNumber;
+        payload.addressLine1 = profileUpdates.contact.addressLine1;
+        payload.addressLine2 = profileUpdates.contact.addressLine2 ?? '';
+        payload.city = profileUpdates.contact.city;
+        payload.country = profileUpdates.contact.country;
+        payload.postalCode = profileUpdates.contact.postalCode;
       }
       if (profileUpdates.billing) {
-        updates.billing = profileUpdates.billing;
+        payload.billingName = profileUpdates.billing.billingName;
+        payload.billingTaxNumber = profileUpdates.billing.billingTaxNumber;
+        payload.billingAddress = profileUpdates.billing.billingAddress;
+        payload.billingCity = profileUpdates.billing.billingCity;
+        payload.billingCountry = profileUpdates.billing.billingCountry;
+        payload.billingPostalCode = profileUpdates.billing.billingPostalCode;
       }
 
-      if (Object.keys(updates).length === 0) {
+      if (Object.keys(payload).length === 0) {
         return;
       }
 
-      const key = createUserKey(user.email, user.tenantId);
-      updateRegisteredUser(key, (current) => mergeUser(current, updates));
+      try {
+        const updatedProfile = await apiUpdateUserProfile(authSession.userId, payload);
+        setUserProfileData(updatedProfile);
+        const mappedUser = mapProfileToRegisteredUser(updatedProfile, user);
+        setUser(mappedUser);
+        const key = createUserKey(mappedUser.email, mappedUser.tenantId);
+        updateRegisteredUser(key, () => mappedUser);
+      } catch (error) {
+        console.error('Profile update failed', error);
+        setAuthError('Profil güncellemesi başarısız oldu.');
+      }
     },
-    [updateRegisteredUser, user]
+    [authSession, updateRegisteredUser, user]
   );
 
   const handleCurrentUserSupportRequest = useCallback(
@@ -608,6 +647,69 @@ const App: React.FC = () => {
       );
     },
     [updateRegisteredUser, user]
+  );
+
+  const handleReservationCreate = useCallback(
+    async (request: { resourceId: string; startUtc: string; endUtc: string }) => {
+      if (!authSession) {
+        return;
+      }
+
+      try {
+        await apiCreateReservation({
+          tenantId: authSession.tenantId,
+          userId: authSession.userId,
+          resourceId: request.resourceId,
+          startUtc: request.startUtc,
+          endUtc: request.endUtc,
+        });
+        await loadUserWorkspace(authSession.tenantId, authSession.userId);
+      } catch (error) {
+        console.error('Reservation create failed', error);
+        setAuthError('Rezervasyon eklenemedi.');
+      }
+    },
+    [authSession, loadUserWorkspace]
+  );
+
+  const handleReservationUpdate = useCallback(
+    async (reservationId: string, updates: { startUtc?: string; endUtc?: string; status?: string }) => {
+      if (!authSession) {
+        return;
+      }
+
+      try {
+        await apiUpdateReservation({
+          reservationId,
+          tenantId: authSession.tenantId,
+          startUtc: updates.startUtc,
+          endUtc: updates.endUtc,
+          status: updates.status,
+        });
+        await loadUserWorkspace(authSession.tenantId, authSession.userId);
+      } catch (error) {
+        console.error('Reservation update failed', error);
+        setAuthError('Rezervasyon güncellenemedi.');
+      }
+    },
+    [authSession, loadUserWorkspace]
+  );
+
+  const handleReservationDelete = useCallback(
+    async (reservationId: string) => {
+      if (!authSession) {
+        return;
+      }
+
+      try {
+        await apiDeleteReservation(reservationId, authSession.tenantId);
+        await loadUserWorkspace(authSession.tenantId, authSession.userId);
+      } catch (error) {
+        console.error('Reservation delete failed', error);
+        setAuthError('Rezervasyon silinemedi.');
+      }
+    },
+    [authSession, loadUserWorkspace]
   );
 
   const handleSupportCenterUpdate = useCallback(
@@ -660,8 +762,20 @@ const App: React.FC = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (authSession) {
+      try {
+        await apiSignOut({ tenantId: authSession.tenantId, userId: authSession.userId, deviceId });
+      } catch (error) {
+        console.warn('Logout request failed', error);
+      }
+    }
+
+    setAuthSession(null);
     setUser(null);
+    setUserProfileData(null);
+    setUserReservationsOverview(null);
+    setResourceOptions([]);
     setAuthError(null);
     setAuthMode('login');
     setSelectedDomain('admin');
@@ -669,7 +783,7 @@ const App: React.FC = () => {
     setShowAuthPanel(false);
   };
 
-  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const email = String(formData.get('email') ?? '').trim();
@@ -680,48 +794,26 @@ const App: React.FC = () => {
       return;
     }
 
-    const key = createUserKey(email, loginTenantId);
-    const account = registeredUsers[key];
-
-    if (!account) {
-      setAuthError('Kayıtlı kullanıcı bulunamadı. Lütfen bilgilerinizi kontrol edin.');
-      return;
-    }
-
-    if (account.password !== password) {
-      setAuthError('Şifre eşleşmiyor.');
-      return;
-    }
-
-    setAuthError(null);
-    setUser(account);
-    persistTenantSelection(account.tenantId);
-    setSelectedTenantId(account.tenantId);
-
-    const nextDomain: Domain = account.role;
-    setSelectedDomain(nextDomain);
-
-    if (account.role === 'admin') {
-      setActiveView('dashboard');
-    } else if (account.role === 'company') {
-      setActiveView('companyOverview');
-    } else {
+    try {
+      const tenantId = loginTenantId || selectedTenantId;
+      const result = await apiSignIn({ tenantId, email, password, deviceId });
+      setAuthSession(result);
+      persistTenantSelection(tenantId);
+      setSelectedTenantId(tenantId);
+      setSelectedDomain('user');
       setActiveView('userReservations');
+      setShowAuthPanel(false);
+      setAuthError(null);
+      await loadUserWorkspace(tenantId, result.userId);
+    } catch (error) {
+      console.error('Login failed', error);
+      setAuthError('Giriş yapılamadı. Lütfen bilgilerinizi kontrol edin.');
+    } finally {
+      (event.currentTarget as HTMLFormElement).reset();
     }
-
-    setShowAuthPanel(false);
-    (event.currentTarget as HTMLFormElement).reset();
-
-    const tenantName = getTenantName(account.tenantId);
-    setReservationsByUser((previous) => {
-      if (previous[key]) {
-        return previous;
-      }
-      return { ...previous, [key]: generateSampleReservations(tenantName, account.fullName) };
-    });
   };
 
-  const handleSignup = (event: FormEvent<HTMLFormElement>) => {
+  const handleSignup = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const fullName = String(formData.get('fullName') ?? '').trim();
@@ -733,42 +825,33 @@ const App: React.FC = () => {
       return;
     }
 
-    const key = createUserKey(email, signupTenantId);
-
-    if (registeredUsers[key]) {
-      setAuthError('Bu tenant için bu e-posta ile daha önce kayıt olunmuş.');
-      return;
+    try {
+      const tenantId = signupTenantId || selectedTenantId;
+      const result = await apiSignUp({
+        tenantId,
+        email,
+        password,
+        fullName,
+        preferredTheme: 'light',
+        preferredLanguage: navigator.language ?? 'tr-TR',
+        deviceId,
+      });
+      setAuthSession(result);
+      persistTenantSelection(tenantId);
+      setSelectedTenantId(tenantId);
+      setSelectedDomain('user');
+      setActiveView('userReservations');
+      setAuthMode('login');
+      setLoginTenantId(tenantId);
+      setShowAuthPanel(false);
+      setAuthError(null);
+      await loadUserWorkspace(tenantId, result.userId);
+    } catch (error) {
+      console.error('Signup failed', error);
+      setAuthError('Kayıt işlemi gerçekleştirilemedi. Lütfen bilgilerinizi kontrol edin.');
+    } finally {
+      (event.currentTarget as HTMLFormElement).reset();
     }
-
-    const newUser: RegisteredUser = {
-      fullName,
-      email,
-      password,
-      tenantId: signupTenantId,
-      role: 'user',
-      contact: createEmptyContactInformation(),
-      billing: createEmptyBillingInformation(),
-      supportHistory: [],
-      tags: ['Yeni'],
-    };
-
-    const tenantName = getTenantName(signupTenantId);
-
-    setRegisteredUsers((previous) => ({ ...previous, [key]: newUser }));
-    setReservationsByUser((previous) => ({
-      ...previous,
-      [key]: generateSampleReservations(tenantName, fullName),
-    }));
-    setAuthError(null);
-    setUser(newUser);
-    persistTenantSelection(signupTenantId);
-    setSelectedTenantId(signupTenantId);
-    setSelectedDomain('user');
-    setActiveView('userReservations');
-    setAuthMode('login');
-    setLoginTenantId(signupTenantId);
-    setShowAuthPanel(false);
-    (event.currentTarget as HTMLFormElement).reset();
   };
 
   const dashboardLayoutClassName = [
@@ -778,8 +861,6 @@ const App: React.FC = () => {
       : 'dashboard-layout--single',
   ].join(' ');
 
-  const userReservationKey = user ? createUserKey(user.email, user.tenantId) : null;
-  const reservationsForUser = userReservationKey ? reservationsByUser[userReservationKey] ?? [] : [];
   const resolvedUserView: 'userReservations' | 'userProfile' | 'userSupport' =
     activeView === 'userProfile' ? 'userProfile' : activeView === 'userSupport' ? 'userSupport' : 'userReservations';
   const supportDirectory = useMemo(
@@ -1229,19 +1310,25 @@ const App: React.FC = () => {
 
             {selectedDomain === 'user' && (
               <>
-                {user ? (
+                {user && userProfileData ? (
                   <UserDashboard
                     userName={user.fullName}
                     userEmail={user.email}
                     tenantName={selectedTenantName}
-                    reservations={reservationsForUser}
+                    reservations={userReservationsOverview?.reservations ?? []}
+                    timeline={userReservationsOverview?.timeline ?? []}
+                    resources={resourceOptions.map((resource) => ({ id: resource.id, name: resource.name }))}
                     activeView={resolvedUserView}
                     contact={user.contact}
                     billing={user.billing}
                     supportHistory={user.supportHistory}
                     tags={user.tags ?? []}
+                    loading={loadingUserData}
                     onProfileUpdate={handleCurrentUserProfileUpdate}
                     onCreateSupportRequest={handleCurrentUserSupportRequest}
+                    onReservationCreate={handleReservationCreate}
+                    onReservationUpdate={handleReservationUpdate}
+                    onReservationDelete={handleReservationDelete}
                   />
                 ) : (
                   <section className="user-access">

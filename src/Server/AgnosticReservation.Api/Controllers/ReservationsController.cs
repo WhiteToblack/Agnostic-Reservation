@@ -32,6 +32,18 @@ public class ReservationsController : ControllerBase
         return CreatedAtAction(nameof(GetAvailability), new { request.TenantId, request.ResourceId }, reservation);
     }
 
+    [HttpGet("user")]
+    public async Task<ActionResult<UserReservationsOverview>> GetForUser([FromQuery] Guid tenantId, [FromQuery] Guid userId, [FromQuery] DateTime? startUtc, [FromQuery] DateTime? endUtc, CancellationToken cancellationToken)
+    {
+        if (tenantId == Guid.Empty || userId == Guid.Empty)
+        {
+            return BadRequest("TenantId and UserId are required");
+        }
+
+        var reservations = await _service.GetForUserAsync(tenantId, userId, startUtc, endUtc, cancellationToken);
+        return Ok(reservations);
+    }
+
     [HttpPut("{id:guid}")]
     public async Task<ActionResult> Update(Guid id, [FromBody] UpdateReservationRequest request, CancellationToken cancellationToken)
     {

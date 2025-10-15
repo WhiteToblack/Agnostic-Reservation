@@ -170,6 +170,18 @@ BEGIN
         PreferredTheme NVARCHAR(50) NOT NULL CONSTRAINT DF_Users_PreferredTheme DEFAULT(N'inherit'),
         PreferredLanguage NVARCHAR(10) NOT NULL CONSTRAINT DF_Users_PreferredLanguage DEFAULT(N'tr-TR'),
         MultiFactorEnabled BIT NOT NULL CONSTRAINT DF_Users_Mfa DEFAULT(0),
+        PhoneNumber NVARCHAR(32) NOT NULL CONSTRAINT DF_Users_PhoneNumber DEFAULT(N''),
+        AddressLine1 NVARCHAR(200) NOT NULL CONSTRAINT DF_Users_AddressLine1 DEFAULT(N''),
+        AddressLine2 NVARCHAR(200) NULL,
+        City NVARCHAR(100) NOT NULL CONSTRAINT DF_Users_City DEFAULT(N''),
+        Country NVARCHAR(100) NOT NULL CONSTRAINT DF_Users_Country DEFAULT(N''),
+        PostalCode NVARCHAR(20) NOT NULL CONSTRAINT DF_Users_PostalCode DEFAULT(N''),
+        BillingName NVARCHAR(200) NOT NULL CONSTRAINT DF_Users_BillingName DEFAULT(N''),
+        BillingTaxNumber NVARCHAR(50) NOT NULL CONSTRAINT DF_Users_BillingTaxNumber DEFAULT(N''),
+        BillingAddress NVARCHAR(200) NOT NULL CONSTRAINT DF_Users_BillingAddress DEFAULT(N''),
+        BillingCity NVARCHAR(100) NOT NULL CONSTRAINT DF_Users_BillingCity DEFAULT(N''),
+        BillingCountry NVARCHAR(100) NOT NULL CONSTRAINT DF_Users_BillingCountry DEFAULT(N''),
+        BillingPostalCode NVARCHAR(20) NOT NULL CONSTRAINT DF_Users_BillingPostalCode DEFAULT(N''),
         CreatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_Users_CreatedAt DEFAULT (SYSUTCDATETIME()),
         UpdatedAt DATETIME2(7) NULL,
         CreatedBy UNIQUEIDENTIFIER NULL,
@@ -191,6 +203,18 @@ BEGIN
     EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'PreferredTheme', @ColumnDefinition = N'NVARCHAR(50) NOT NULL', @DefaultConstraintName = N'DF_Users_PreferredTheme', @DefaultValue = N'N''inherit''', @WithValues = 1;
     EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'PreferredLanguage', @ColumnDefinition = N'NVARCHAR(10) NOT NULL', @DefaultConstraintName = N'DF_Users_PreferredLanguage', @DefaultValue = N'N''tr-TR''', @WithValues = 1;
     EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'MultiFactorEnabled', @ColumnDefinition = N'BIT NOT NULL', @DefaultConstraintName = N'DF_Users_Mfa', @DefaultValue = N'0', @WithValues = 1;
+    EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'PhoneNumber', @ColumnDefinition = N'NVARCHAR(32) NOT NULL', @DefaultConstraintName = N'DF_Users_PhoneNumber', @DefaultValue = N'N''''', @WithValues = 1;
+    EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'AddressLine1', @ColumnDefinition = N'NVARCHAR(200) NOT NULL', @DefaultConstraintName = N'DF_Users_AddressLine1', @DefaultValue = N'N''''', @WithValues = 1;
+    EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'AddressLine2', @ColumnDefinition = N'NVARCHAR(200) NULL';
+    EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'City', @ColumnDefinition = N'NVARCHAR(100) NOT NULL', @DefaultConstraintName = N'DF_Users_City', @DefaultValue = N'N''''', @WithValues = 1;
+    EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'Country', @ColumnDefinition = N'NVARCHAR(100) NOT NULL', @DefaultConstraintName = N'DF_Users_Country', @DefaultValue = N'N''''', @WithValues = 1;
+    EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'PostalCode', @ColumnDefinition = N'NVARCHAR(20) NOT NULL', @DefaultConstraintName = N'DF_Users_PostalCode', @DefaultValue = N'N''''', @WithValues = 1;
+    EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'BillingName', @ColumnDefinition = N'NVARCHAR(200) NOT NULL', @DefaultConstraintName = N'DF_Users_BillingName', @DefaultValue = N'N''''', @WithValues = 1;
+    EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'BillingTaxNumber', @ColumnDefinition = N'NVARCHAR(50) NOT NULL', @DefaultConstraintName = N'DF_Users_BillingTaxNumber', @DefaultValue = N'N''''', @WithValues = 1;
+    EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'BillingAddress', @ColumnDefinition = N'NVARCHAR(200) NOT NULL', @DefaultConstraintName = N'DF_Users_BillingAddress', @DefaultValue = N'N''''', @WithValues = 1;
+    EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'BillingCity', @ColumnDefinition = N'NVARCHAR(100) NOT NULL', @DefaultConstraintName = N'DF_Users_BillingCity', @DefaultValue = N'N''''', @WithValues = 1;
+    EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'BillingCountry', @ColumnDefinition = N'NVARCHAR(100) NOT NULL', @DefaultConstraintName = N'DF_Users_BillingCountry', @DefaultValue = N'N''''', @WithValues = 1;
+    EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'BillingPostalCode', @ColumnDefinition = N'NVARCHAR(20) NOT NULL', @DefaultConstraintName = N'DF_Users_BillingPostalCode', @DefaultValue = N'N''''', @WithValues = 1;
     EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'CreatedAt', @ColumnDefinition = N'DATETIME2(7) NOT NULL', @DefaultConstraintName = N'DF_Users_CreatedAt', @DefaultValue = N'SYSUTCDATETIME()', @WithValues = 1;
     EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'UpdatedAt', @ColumnDefinition = N'DATETIME2(7) NULL';
     EXEC dbo.EnsureColumn @SchemaName = N'dbo', @TableName = N'Users', @ColumnName = N'CreatedBy', @ColumnDefinition = N'UNIQUEIDENTIFIER NULL';

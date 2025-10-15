@@ -12,6 +12,7 @@ using AgnosticReservation.Application.Auth.Models;
 using AgnosticReservation.Application.Context;
 using AgnosticReservation.Domain.Entities;
 using AgnosticReservation.Domain.Enums;
+using Microsoft.Extensions.Options;
 
 namespace AgnosticReservation.Infrastructure.Services;
 
@@ -23,6 +24,7 @@ public class AuthService : IAuthService
     private readonly IRepository<UserSession> _sessionRepository;
     private readonly IParameterService _parameterService;
     private readonly ISessionContextAccessor _sessionContextAccessor;
+    private readonly SessionOptions _sessionOptions;
 
     public AuthService(
         IRepository<User> userRepository,
@@ -30,7 +32,8 @@ public class AuthService : IAuthService
         IRepository<Role> roleRepository,
         IParameterService parameterService,
         ISessionContextAccessor sessionContextAccessor,
-        IRepository<UserSession> sessionRepository)
+        IRepository<UserSession> sessionRepository,
+        IOptions<SessionOptions> sessionOptions)
     {
         _userRepository = userRepository;
         _tenantRepository = tenantRepository;
@@ -38,6 +41,7 @@ public class AuthService : IAuthService
         _parameterService = parameterService;
         _sessionContextAccessor = sessionContextAccessor;
         _sessionRepository = sessionRepository;
+        _sessionOptions = sessionOptions.Value;
     }
 
     public async Task<AuthResult> SignInAsync(SignInRequest request, CancellationToken cancellationToken = default)
@@ -92,15 +96,14 @@ public class AuthService : IAuthService
             throw new InvalidOperationException("User already exists");
         }
 
-        var adminRole = (await _roleRepository.ListAsync(r => r.Name == "Admin", cancellationToken: cancellationToken)).FirstOrDefault()
-            ?? new Role("Admin", Enum.GetValues<Permission>(), hierarchyLevel: 1);
-        var user = new User(request.TenantId, request.Email, HashPassword(request.Password), adminRole, request.PreferredTheme, request.FullName, request.PreferredLanguage);
+        var customerRole = await EnsureDefaultCustomerRoleAsync(cancellationToken);
+        var user = new User(request.TenantId, request.Email, HashPassword(request.Password), customerRole, request.PreferredTheme, request.FullName, request.PreferredLanguage);
         user.EnableMultiFactor(settings.RequireTwoFactor);
         await _userRepository.AddAsync(user, cancellationToken);
 
-        var permissions = adminRole.Permissions.Select(p => p.Permission).ToArray();
+        var permissions = customerRole.Permissions.Select(p => p.Permission).ToArray();
         var shop = await ResolveShopInfoAsync(request.TenantId, request.ShopId, request.ShopName, request.ShopTimeZone, cancellationToken);
-        var sessionData = BuildSessionContext(user, tenant, adminRole, shop, settings.RequireTwoFactor, permissions);
+        var sessionData = BuildSessionContext(user, tenant, customerRole, shop, settings.RequireTwoFactor, permissions);
 
         _sessionContextAccessor.SetSession(sessionData);
 
@@ -145,13 +148,21 @@ public class AuthService : IAuthService
             s => s.TenantId == tenantId && s.DeviceId == normalizedDeviceId,
             cancellationToken);
 
+        var expirationThreshold = DateTime.UtcNow - _sessionOptions.IdleTimeout;
+
         var session = sessions
-            .Where(s => s.IsActive)
+            .Where(s => s.IsActive && s.LastActivityUtc >= expirationThreshold)
             .OrderByDescending(s => s.LastActivityUtc)
             .FirstOrDefault();
 
         if (session is null)
         {
+            foreach (var stale in sessions.Where(s => s.IsActive && s.LastActivityUtc < expirationThreshold))
+            {
+                stale.Close();
+                await _sessionRepository.UpdateAsync(stale, cancellationToken);
+            }
+
             return null;
         }
 
@@ -183,6 +194,20 @@ public class AuthService : IAuthService
             session.AccessToken,
             session.RefreshToken,
             sessionData);
+    }
+
+    public async Task SignOutAsync(Guid tenantId, Guid userId, string deviceId, CancellationToken cancellationToken = default)
+    {
+        var normalizedDeviceId = NormalizeDeviceId(deviceId);
+        var sessions = await _sessionRepository.ListAsync(
+            s => s.TenantId == tenantId && s.UserId == userId && s.DeviceId == normalizedDeviceId && s.IsActive,
+            cancellationToken);
+
+        foreach (var activeSession in sessions)
+        {
+            activeSession.Close();
+            await _sessionRepository.UpdateAsync(activeSession, cancellationToken);
+        }
     }
 
     private static string GenerateToken(User user, bool isRefresh = false)
@@ -222,6 +247,26 @@ public class AuthService : IAuthService
 
         existing.UpdateTokens(accessToken, refreshToken);
         await _sessionRepository.UpdateAsync(existing, cancellationToken);
+    }
+
+    private async Task<Role> EnsureDefaultCustomerRoleAsync(CancellationToken cancellationToken)
+    {
+        var roles = await _roleRepository.ListAsync(r => r.Name == "Customer", cancellationToken: cancellationToken);
+        var role = roles.FirstOrDefault();
+        if (role is not null)
+        {
+            if (!role.Permissions.Any())
+            {
+                role.Permissions.Add(new RolePermission(role.Id, Permission.ViewDashboard));
+                await _roleRepository.UpdateAsync(role, cancellationToken);
+            }
+
+            return role;
+        }
+
+        role = new Role("Customer", new[] { Permission.ViewDashboard }, hierarchyLevel: 5);
+        await _roleRepository.AddAsync(role, cancellationToken);
+        return role;
     }
 
     private static SessionContextData BuildSessionContext(

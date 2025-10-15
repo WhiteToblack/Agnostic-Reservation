@@ -12,4 +12,5 @@ public interface IAuthService
     Task RefreshThemeAsync(Guid userId, string preferredTheme, CancellationToken cancellationToken = default);
     Task RefreshLanguageAsync(Guid userId, string preferredLanguage, CancellationToken cancellationToken = default);
     Task<SessionResume?> GetSessionAsync(Guid tenantId, string deviceId, CancellationToken cancellationToken = default);
+    Task SignOutAsync(Guid tenantId, Guid userId, string deviceId, CancellationToken cancellationToken = default);
 }

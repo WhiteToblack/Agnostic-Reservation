@@ -7,6 +7,7 @@ using AgnosticReservation.Application.Localization;
 using AgnosticReservation.Application.Dashboard;
 using AgnosticReservation.Application.Notifications;
 using AgnosticReservation.Application.Reservations;
+using AgnosticReservation.Application.Users;
 using AgnosticReservation.Infrastructure.Logging;
 using AgnosticReservation.Infrastructure.Persistence.Repositories;
 using AgnosticReservation.Infrastructure.Services;
@@ -32,7 +33,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISessionContextAccessor, SessionContextAccessor>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IAdminNavigationService, AdminNavigationService>();
+        services.AddScoped<IUserProfileService, UserProfileService>();
         services.Configure<MongoLoggingOptions>(configuration.GetSection("MongoLogging"));
+        services.Configure<SessionOptions>(configuration.GetSection("Session"));
         services.AddSingleton<MongoRequestLogService>();
         services.AddSingleton<IRequestLogService>(provider => provider.GetRequiredService<MongoRequestLogService>());
         services.AddSingleton<IRequestLogReader>(provider => provider.GetRequiredService<MongoRequestLogService>());

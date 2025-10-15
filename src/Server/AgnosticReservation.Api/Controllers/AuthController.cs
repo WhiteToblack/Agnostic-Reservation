@@ -32,6 +32,13 @@ public class AuthController : ControllerBase
         return CreatedAtAction(nameof(SignIn), new { request.Email }, result);
     }
 
+    [HttpPost("signout")]
+    public async Task<IActionResult> SignOut([FromBody] SignOutRequest request, CancellationToken cancellationToken)
+    {
+        await _authService.SignOutAsync(request.TenantId, request.UserId, request.DeviceId, cancellationToken);
+        return NoContent();
+    }
+
     [HttpPost("theme")]
     public async Task<IActionResult> UpdateTheme([FromQuery] Guid userId, [FromBody] string theme, CancellationToken cancellationToken)
     {

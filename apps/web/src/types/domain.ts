@@ -8,11 +8,8 @@ export type ContactInformation = {
 };
 
 export type BillingInformation = {
-  cardHolderName: string;
-  cardBrand: string;
-  cardLast4: string;
-  expiryMonth: string;
-  expiryYear: string;
+  billingName: string;
+  billingTaxNumber: string;
   billingAddress: string;
   billingCity: string;
   billingCountry: string;
@@ -31,9 +28,9 @@ export type SupportInteraction = {
 };
 
 export type RegisteredUser = {
+  id?: string;
   fullName: string;
   email: string;
-  password: string;
   tenantId: string;
   role: 'admin' | 'company' | 'user';
   contact: ContactInformation;

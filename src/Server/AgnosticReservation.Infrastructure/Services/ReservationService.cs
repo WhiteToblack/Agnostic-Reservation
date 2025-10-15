@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AgnosticReservation.Application.Abstractions;
@@ -101,5 +102,52 @@ public class ReservationService : IReservationService
 
         await _reservationRepository.UpdateAsync(reservation, cancellationToken);
         return reservation;
+    }
+
+    public async Task<UserReservationsOverview> GetForUserAsync(Guid tenantId, Guid userId, DateTime? rangeStart, DateTime? rangeEnd, CancellationToken cancellationToken = default)
+    {
+        var effectiveStart = rangeStart ?? DateTime.UtcNow.AddDays(-30);
+        var effectiveEnd = rangeEnd ?? DateTime.UtcNow.AddDays(60);
+
+        if (effectiveEnd <= effectiveStart)
+        {
+            effectiveEnd = effectiveStart.AddDays(30);
+        }
+
+        var range = DateRange.Create(effectiveStart, effectiveEnd);
+
+        var reservations = await _reservationRepository.ListAsync(
+            r =>
+                r.TenantId == tenantId
+                && r.UserId == userId
+                && r.StartUtc < range.EndUtc
+                && r.EndUtc > range.StartUtc,
+            cancellationToken);
+
+        var resourceIds = reservations.Select(r => r.ResourceId).Distinct().ToArray();
+        var resources = resourceIds.Length == 0
+            ? Array.Empty<Resource>()
+            : await _resourceRepository.ListAsync(r => r.TenantId == tenantId && resourceIds.Contains(r.Id), cancellationToken);
+
+        var resourceMap = resources.ToDictionary(r => r.Id, r => r.Name);
+
+        var summaries = reservations
+            .OrderByDescending(r => r.StartUtc)
+            .Select(r => new ReservationSummaryDto(
+                r.Id,
+                r.ResourceId,
+                resourceMap.TryGetValue(r.ResourceId, out var name) ? name : "Tanımsız Kaynak",
+                r.StartUtc,
+                r.EndUtc,
+                r.Status))
+            .ToList();
+
+        var timeline = summaries
+            .GroupBy(r => DateOnly.FromDateTime(r.StartUtc.ToUniversalTime()))
+            .Select(group => new ReservationTimelinePoint(group.Key, group.Count()))
+            .OrderBy(point => point.Date)
+            .ToList();
+
+        return new UserReservationsOverview(summaries, timeline);
     }
 }

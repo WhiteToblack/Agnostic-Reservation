@@ -29,11 +29,8 @@ const emptyContact = {
 };
 
 const emptyBilling: BillingInformation = {
-  cardHolderName: '',
-  cardBrand: 'VISA',
-  cardLast4: '',
-  expiryMonth: '',
-  expiryYear: '',
+  billingName: '',
+  billingTaxNumber: '',
   billingAddress: '',
   billingCity: '',
   billingCountry: '',
@@ -285,48 +282,25 @@ export const AdminSupportPanel: React.FC<AdminSupportPanelProps> = ({
 
               <section className="support-admin__card">
                 <header>
-                  <h2>Ödeme ve faturalandırma</h2>
-                  <p>Kurumsal faturalar ve ön provizyon işlemleri için kart bilgileri.</p>
+                  <h2>Faturalandırma profili</h2>
+                  <p>Fatura unvanı, vergi numarası ve teslimat adresi gibi bilgileri güncelleyin.</p>
                 </header>
                 <form className="support-admin__form" onSubmit={handleBillingSubmit}>
                   <label>
-                    <span>Kart sahibinin adı</span>
+                    <span>Fatura unvanı</span>
                     <input
-                      value={billingForm.cardHolderName}
-                      onChange={(event) => setBillingForm((form) => ({ ...form, cardHolderName: event.target.value }))}
-                      placeholder="Kart üzerindeki isim"
+                      value={billingForm.billingName}
+                      onChange={(event) => setBillingForm((form) => ({ ...form, billingName: event.target.value }))}
+                      placeholder="Şirket veya kişi adı"
                     />
                   </label>
                   <label>
-                    <span>Kart markası</span>
+                    <span>Vergi numarası</span>
                     <input
-                      value={billingForm.cardBrand}
-                      onChange={(event) => setBillingForm((form) => ({ ...form, cardBrand: event.target.value }))}
-                      placeholder="Visa, MasterCard vb."
+                      value={billingForm.billingTaxNumber}
+                      onChange={(event) => setBillingForm((form) => ({ ...form, billingTaxNumber: event.target.value }))}
+                      placeholder="T.C. / Vergi No"
                     />
-                  </label>
-                  <label>
-                    <span>Kart son dört hane</span>
-                    <input
-                      value={billingForm.cardLast4}
-                      onChange={(event) => setBillingForm((form) => ({ ...form, cardLast4: event.target.value }))}
-                      placeholder="1234"
-                    />
-                  </label>
-                  <label>
-                    <span>Son kullanma (AA/YY)</span>
-                    <div className="support-admin__expiry">
-                      <input
-                        value={billingForm.expiryMonth}
-                        onChange={(event) => setBillingForm((form) => ({ ...form, expiryMonth: event.target.value }))}
-                        placeholder="Ay"
-                      />
-                      <input
-                        value={billingForm.expiryYear}
-                        onChange={(event) => setBillingForm((form) => ({ ...form, expiryYear: event.target.value }))}
-                        placeholder="Yıl"
-                      />
-                    </div>
                   </label>
                   <label>
                     <span>Fatura adresi</span>
@@ -336,32 +310,34 @@ export const AdminSupportPanel: React.FC<AdminSupportPanelProps> = ({
                       placeholder="Adres satırı"
                     />
                   </label>
-                  <label>
-                    <span>Fatura şehri</span>
-                    <input
-                      value={billingForm.billingCity}
-                      onChange={(event) => setBillingForm((form) => ({ ...form, billingCity: event.target.value }))}
-                      placeholder="Şehir"
-                    />
-                  </label>
-                  <label>
-                    <span>Fatura ülkesi</span>
-                    <input
-                      value={billingForm.billingCountry}
-                      onChange={(event) => setBillingForm((form) => ({ ...form, billingCountry: event.target.value }))}
-                      placeholder="Ülke"
-                    />
-                  </label>
-                  <label>
-                    <span>Fatura posta kodu</span>
-                    <input
-                      value={billingForm.billingPostalCode}
-                      onChange={(event) => setBillingForm((form) => ({ ...form, billingPostalCode: event.target.value }))}
-                      placeholder="Posta kodu"
-                    />
-                  </label>
+                  <div className="support-admin__form-row">
+                    <label>
+                      <span>Şehir</span>
+                      <input
+                        value={billingForm.billingCity}
+                        onChange={(event) => setBillingForm((form) => ({ ...form, billingCity: event.target.value }))}
+                        placeholder="Şehir"
+                      />
+                    </label>
+                    <label>
+                      <span>Ülke</span>
+                      <input
+                        value={billingForm.billingCountry}
+                        onChange={(event) => setBillingForm((form) => ({ ...form, billingCountry: event.target.value }))}
+                        placeholder="Ülke"
+                      />
+                    </label>
+                    <label>
+                      <span>Posta kodu</span>
+                      <input
+                        value={billingForm.billingPostalCode}
+                        onChange={(event) => setBillingForm((form) => ({ ...form, billingPostalCode: event.target.value }))}
+                        placeholder="Posta kodu"
+                      />
+                    </label>
+                  </div>
                   <div className="support-admin__form-actions">
-                    <button type="submit">Faturalandırmayı kaydet</button>
+                    <button type="submit">Fatura bilgilerini kaydet</button>
                   </div>
                 </form>
               </section>

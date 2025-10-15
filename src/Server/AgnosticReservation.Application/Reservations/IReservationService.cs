@@ -13,4 +13,5 @@ public interface IReservationService
     Task<Reservation> CreateAsync(CreateReservationRequest request, CancellationToken cancellationToken = default);
     Task CancelAsync(Guid reservationId, Guid tenantId, CancellationToken cancellationToken = default);
     Task<Reservation> UpdateAsync(UpdateReservationRequest request, CancellationToken cancellationToken = default);
+    Task<UserReservationsOverview> GetForUserAsync(Guid tenantId, Guid userId, DateTime? rangeStart, DateTime? rangeEnd, CancellationToken cancellationToken = default);
 }
