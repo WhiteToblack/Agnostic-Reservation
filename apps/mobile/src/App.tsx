@@ -1,4 +1,5 @@
 import 'react-native-gesture-handler';
+import './utils/setupErrorHandling';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider } from './theme/ThemeProvider';
 import AppNavigator from './navigation/AppNavigator';
