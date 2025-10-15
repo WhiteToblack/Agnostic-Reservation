@@ -6,7 +6,7 @@ import { useLocalization } from '../../../../shared/localization';
 import type { RootStackParamList } from '../../navigation/types';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useDeviceId } from '../../hooks/useDeviceId';
-import { defaultTenantId } from '../../config/constants';
+import { appConfig } from '../../config/appConfig';
 import { saveSession } from '../../storage/sessionStorage';
 
 type SignUpScreenProps = NativeStackScreenProps<RootStackParamList, 'SignUp'>;
@@ -14,7 +14,7 @@ type SignUpScreenProps = NativeStackScreenProps<RootStackParamList, 'SignUp'>;
 const SignUpScreen: FC<SignUpScreenProps> = ({ navigation, route }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [tenantId, setTenantId] = useState(defaultTenantId);
+  const [tenantId, setTenantId] = useState(appConfig.defaultTenantId);
   const [fullName, setFullName] = useState('');
   const [preferredTheme, setPreferredTheme] = useState<'light' | 'dark'>('light');
   const [loading, setLoading] = useState(false);

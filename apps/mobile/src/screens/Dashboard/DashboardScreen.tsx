@@ -27,7 +27,7 @@ import {
 import type { DashboardInsights, TimelinePoint, UtilizationRevenueRow, RoomInsight, RoomReservationRow } from '../../../../shared/types/insights';
 import { useLocalization } from '../../../../shared/localization';
 import { useTheme } from '../../theme/ThemeProvider';
-import { defaultTenantId } from '../../config/constants';
+import { appConfig } from '../../config/appConfig';
 import { loadSession } from '../../storage/sessionStorage';
 import type { AuthResult } from '../../../../shared/types/auth';
 
@@ -83,7 +83,7 @@ const DashboardScreen: FC = () => {
     });
   }, []);
 
-  const tenantId = session?.tenantId ?? defaultTenantId;
+  const tenantId = session?.tenantId ?? appConfig.defaultTenantId;
   const userId = session?.userId ?? '00000000-0000-0000-0000-000000000000';
   const scopedUserId = session?.userId;
   const roleId = session?.session.user?.roleId ?? '00000000-0000-0000-0000-000000000000';

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { appConfig } from '../config/appConfig';
 import type { AuthResult, SessionResume } from '../../../shared/types/auth';
 
 export type SignInPayload = {
@@ -86,7 +87,7 @@ export type SupportTicketDto = {
 };
 
 const client = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5243/api',
+  baseURL: appConfig.apiBaseUrl,
 });
 
 const mapSignUpPayload = (payload: SignUpPayload) => ({

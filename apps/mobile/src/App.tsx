@@ -8,13 +8,13 @@ import { useThemePreference } from './hooks/useThemePreference';
 import { LocalizationProvider } from './localization/LocalizationProvider';
 import { defaultLanguage } from '../../shared/localization';
 import AppNavigator from './navigation/AppNavigator';
-import { defaultTenantId } from './config/constants';
+import { appConfig } from './config/appConfig';
 
 const App = () => {
   const { mode, setMode } = useThemePreference();
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <LocalizationProvider tenantId={defaultTenantId} initialLanguage={defaultLanguage}>
+      <LocalizationProvider tenantId={appConfig.defaultTenantId} initialLanguage={defaultLanguage}>
         <ThemeProvider initialMode={mode} onModeChange={setMode}>
           <AppNavigator />
         </ThemeProvider>
