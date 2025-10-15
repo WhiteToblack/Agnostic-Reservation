@@ -32,6 +32,7 @@ public class AppDbContext : DbContext
     public DbSet<LocalizationKey> LocalizationKeys => Set<LocalizationKey>();
     public DbSet<LocalizationText> LocalizationTexts => Set<LocalizationText>();
     public DbSet<UserSession> UserSessions => Set<UserSession>();
+    public DbSet<UserSupportTicket> UserSupportTickets => Set<UserSupportTicket>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

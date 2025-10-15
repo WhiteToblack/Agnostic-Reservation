@@ -197,6 +197,27 @@ namespace AgnosticReservation.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserSupportTickets",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Subject = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Summary = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
+                    Channel = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserSupportTickets", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Tenants",
                 columns: table => new
                 {
@@ -474,6 +495,11 @@ namespace AgnosticReservation.Infrastructure.Migrations
                 column: "TenantId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserSupportTickets_Tenant_User",
+                table: "UserSupportTickets",
+                columns: new[] { "TenantId", "UserId", "CreatedAt" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Users_RoleId",
                 table: "Users",
                 column: "RoleId");
@@ -489,6 +515,9 @@ namespace AgnosticReservation.Infrastructure.Migrations
         {
             migrationBuilder.DropTable(
                 name: "DashboardWidgets");
+
+            migrationBuilder.DropTable(
+                name: "UserSupportTickets");
 
             migrationBuilder.DropTable(
                 name: "Documents");

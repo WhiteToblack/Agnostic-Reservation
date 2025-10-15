@@ -42,7 +42,7 @@ type UserDashboardProps = {
   tags?: string[];
   loading?: boolean;
   onProfileUpdate: (updates: { contact: ContactInformation; billing: BillingInformation }) => void;
-  onCreateSupportRequest: (subject: string, summary: string) => void;
+  onCreateSupportRequest: (subject: string, summary: string) => Promise<void> | void;
   onReservationCreate: (payload: { resourceId: string; startUtc: string; endUtc: string }) => void;
   onReservationUpdate: (
     reservationId: string,
@@ -179,16 +179,21 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
     setProfileMessage('Profil bilgileri güncellendi.');
   };
 
-  const handleSupportSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSupportSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!supportSubject.trim() || !supportSummary.trim()) {
       setSupportMessage('Lütfen konu ve açıklama alanlarını doldurun.');
       return;
     }
-    onCreateSupportRequest(supportSubject.trim(), supportSummary.trim());
-    setSupportSubject('');
-    setSupportSummary('');
-    setSupportMessage('Destek talebiniz alındı.');
+    try {
+      await onCreateSupportRequest(supportSubject.trim(), supportSummary.trim());
+      setSupportSubject('');
+      setSupportSummary('');
+      setSupportMessage('Destek talebiniz alındı.');
+    } catch (error) {
+      console.error('Support request submission failed', error);
+      setSupportMessage('Destek talebi oluşturulamadı. Lütfen tekrar deneyin.');
+    }
   };
 
   const handleCreateReservation = (event: React.FormEvent<HTMLFormElement>) => {

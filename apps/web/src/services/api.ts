@@ -73,6 +73,18 @@ export type UserReservationsOverview = {
   timeline: ReservationTimelinePoint[];
 };
 
+export type SupportTicketDto = {
+  id: string;
+  tenantId: string;
+  userId: string;
+  subject: string;
+  summary: string | null;
+  status: string;
+  channel: string;
+  createdAt: string;
+  updatedAt?: string | null;
+};
+
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:5243/api',
 });
@@ -124,3 +136,25 @@ export const updateReservation = (payload: { reservationId: string; tenantId: st
 
 export const deleteReservation = (reservationId: string, tenantId: string) =>
   client.delete(`/reservations/${reservationId}`, { params: { tenantId } });
+
+export const fetchSupportTickets = (tenantId: string, userId?: string) =>
+  client
+    .get<SupportTicketDto[]>('/support-tickets', { params: { tenantId, userId } })
+    .then((response) => response.data);
+
+export const createSupportTicket = (payload: {
+  tenantId: string;
+  userId: string;
+  subject: string;
+  summary?: string;
+  status?: string;
+  channel?: string;
+}) => client.post<SupportTicketDto>('/support-tickets', payload).then((response) => response.data);
+
+export const updateSupportTicket = (
+  ticketId: string,
+  payload: { tenantId: string; subject?: string; summary?: string | null; status?: string; channel?: string }
+) => client.put<SupportTicketDto>(`/support-tickets/${ticketId}`, payload).then((response) => response.data);
+
+export const deleteSupportTicket = (ticketId: string, tenantId: string) =>
+  client.delete(`/support-tickets/${ticketId}`, { params: { tenantId } });
