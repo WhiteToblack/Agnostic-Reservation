@@ -50,6 +50,7 @@ const App: React.FC = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [loginTenantId, setLoginTenantId] = useState<string>(initialTenantId);
   const [signupTenantId, setSignupTenantId] = useState<string>(initialTenantId);
+  const [showAuthPanel, setShowAuthPanel] = useState<boolean>(false);
 
   useEffect(() => {
     if (activeView === 'profile' && !user) {
@@ -73,16 +74,37 @@ const App: React.FC = () => {
     setSelectedTenantId(event.target.value);
   };
 
+  const handleTenantSelect = (tenantId: string) => {
+    setSelectedTenantId(tenantId);
+  };
+
+  const handleGoToLocalization = () => {
+    setActiveView('localization');
+    setShowAuthPanel(false);
+  };
+
+  const handleGoToLogs = () => {
+    setActiveView('logs');
+    setShowAuthPanel(false);
+  };
+
+  const handleCloseAuthPanel = () => {
+    setShowAuthPanel(false);
+    setAuthError(null);
+  };
+
   const handleOpenLogin = () => {
     setActiveView('dashboard');
     setAuthMode('login');
     setAuthError(null);
+    setShowAuthPanel(true);
   };
 
   const handleOpenSignup = () => {
     setActiveView('dashboard');
     setAuthMode('signup');
     setAuthError(null);
+    setShowAuthPanel(true);
   };
 
   const handleLogout = () => {
@@ -90,6 +112,7 @@ const App: React.FC = () => {
     setAuthError(null);
     setAuthMode('login');
     setActiveView('dashboard');
+    setShowAuthPanel(false);
   };
 
   const handleLogin = (event: FormEvent<HTMLFormElement>) => {
@@ -120,6 +143,7 @@ const App: React.FC = () => {
     setUser(account);
     setSelectedTenantId(account.tenantId);
     setActiveView('profile');
+    setShowAuthPanel(false);
     (event.currentTarget as HTMLFormElement).reset();
   };
 
@@ -156,8 +180,14 @@ const App: React.FC = () => {
     setActiveView('profile');
     setAuthMode('login');
     setLoginTenantId(signupTenantId);
+    setShowAuthPanel(false);
     (event.currentTarget as HTMLFormElement).reset();
   };
+
+  const dashboardLayoutClassName = [
+    'dashboard-layout',
+    user || showAuthPanel ? 'dashboard-layout--with-aside' : 'dashboard-layout--single',
+  ].join(' ');
 
   return (
     <LocalizationProvider tenantId={selectedTenantId} initialLanguage={preferredLanguage}>
@@ -180,14 +210,14 @@ const App: React.FC = () => {
               <button
                 type="button"
                 className={activeView === 'localization' ? 'app-header__nav-button app-header__nav-button--active' : 'app-header__nav-button'}
-                onClick={() => setActiveView('localization')}
+                onClick={handleGoToLocalization}
               >
                 Lokalizasyon
               </button>
               <button
                 type="button"
                 className={activeView === 'logs' ? 'app-header__nav-button app-header__nav-button--active' : 'app-header__nav-button'}
-                onClick={() => setActiveView('logs')}
+                onClick={handleGoToLogs}
               >
                 Log yönetimi
               </button>
@@ -195,7 +225,10 @@ const App: React.FC = () => {
                 <button
                   type="button"
                   className={activeView === 'profile' ? 'app-header__nav-button app-header__nav-button--active' : 'app-header__nav-button'}
-                  onClick={() => setActiveView('profile')}
+                  onClick={() => {
+                    setActiveView('profile');
+                    setShowAuthPanel(false);
+                  }}
                 >
                   Profilim
                 </button>
@@ -241,11 +274,14 @@ const App: React.FC = () => {
 
           <main className="app-main">
             {activeView === 'dashboard' && (
-              <div className="dashboard-layout">
+              <div className={dashboardLayoutClassName}>
                 <NonUserDashboard
                   selectedTenantName={selectedTenantName}
-                  onExploreLocalization={() => setActiveView('localization')}
-                  onExploreLogs={() => setActiveView('logs')}
+                  tenantOptions={tenantOptions}
+                  selectedTenantId={selectedTenantId}
+                  onSelectTenant={handleTenantSelect}
+                  onExploreLocalization={handleGoToLocalization}
+                  onExploreLogs={handleGoToLogs}
                   onLogin={handleOpenLogin}
                   onSignup={handleOpenSignup}
                 />
@@ -273,8 +309,19 @@ const App: React.FC = () => {
                       </button>
                     </div>
                   </aside>
-                ) : (
+                ) : showAuthPanel ? (
                   <aside className="auth-card">
+                    <div className="auth-card__header">
+                      <h2>Hesabınıza giriş yapın</h2>
+                      <button
+                        type="button"
+                        className="auth-card__close"
+                        onClick={handleCloseAuthPanel}
+                        aria-label="Kimlik doğrulama panelini kapat"
+                      >
+                        ×
+                      </button>
+                    </div>
                     <div className="auth-card__tabs" role="tablist" aria-label="Kimlik doğrulama">
                       <button
                         type="button"
@@ -357,6 +404,22 @@ const App: React.FC = () => {
                     )}
 
                     {authError && <p className="auth-card__error">{authError}</p>}
+                  </aside>
+                ) : (
+                  <aside className="welcome-card">
+                    <h2>Keşfetmeye hemen başlayın</h2>
+                    <p>
+                      Platform özelliklerini gezinebilir, tenant seçicisi üzerinden farklı işletmeler arasında geçiş yapabilir ve
+                      dilediğiniz an giriş ya da kayıt işlemini başlatabilirsiniz.
+                    </p>
+                    <div className="welcome-card__actions">
+                      <button type="button" onClick={handleOpenLogin}>
+                        Giriş yap
+                      </button>
+                      <button type="button" onClick={handleOpenSignup}>
+                        Kayıt ol
+                      </button>
+                    </div>
                   </aside>
                 )}
               </div>
