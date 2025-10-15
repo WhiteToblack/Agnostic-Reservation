@@ -13,7 +13,7 @@ type NonUserDashboardProps = {
 
 export const NonUserDashboard: React.FC<NonUserDashboardProps> = ({
   selectedTenantName,
-  tenantOptions,
+  tenantOptions = [],
   selectedTenantId,
   onSelectTenant,
   onExploreLocalization,
@@ -21,6 +21,8 @@ export const NonUserDashboard: React.FC<NonUserDashboardProps> = ({
   onLogin,
   onSignup,
 }) => {
+  const hasTenantOptions = tenantOptions.length > 0;
+
   return (
     <section className="non-user-dashboard">
       <header className="non-user-dashboard__hero">
@@ -36,12 +38,20 @@ export const NonUserDashboard: React.FC<NonUserDashboardProps> = ({
           <div className="non-user-dashboard__tenant-picker">
             <label>
               <span>Tenant seçimi</span>
-              <select value={selectedTenantId} onChange={(event) => onSelectTenant(event.target.value)}>
-                {tenantOptions.map((tenant) => (
-                  <option key={tenant.id} value={tenant.id}>
-                    {tenant.name}
-                  </option>
-                ))}
+              <select
+                value={selectedTenantId}
+                onChange={(event) => onSelectTenant(event.target.value)}
+                disabled={!hasTenantOptions}
+              >
+                {hasTenantOptions ? (
+                  tenantOptions.map((tenant) => (
+                    <option key={tenant.id} value={tenant.id}>
+                      {tenant.name}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">Tenant bulunamadı</option>
+                )}
               </select>
             </label>
             <p>Seçili tenant: {selectedTenantName}</p>
