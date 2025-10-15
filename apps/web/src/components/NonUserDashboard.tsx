@@ -2,6 +2,9 @@ import React from 'react';
 
 type NonUserDashboardProps = {
   selectedTenantName: string;
+  tenantOptions: { id: string; name: string }[];
+  selectedTenantId: string;
+  onSelectTenant: (tenantId: string) => void;
   onExploreLocalization: () => void;
   onExploreLogs: () => void;
   onLogin: () => void;
@@ -10,6 +13,9 @@ type NonUserDashboardProps = {
 
 export const NonUserDashboard: React.FC<NonUserDashboardProps> = ({
   selectedTenantName,
+  tenantOptions,
+  selectedTenantId,
+  onSelectTenant,
   onExploreLocalization,
   onExploreLogs,
   onLogin,
@@ -27,6 +33,19 @@ export const NonUserDashboard: React.FC<NonUserDashboardProps> = ({
             Lokasyon ve kanal bağımsız çalışan platformumuz sayesinde, içerik çevirilerinden operasyon loglarına kadar tüm
             süreçleri merkezi olarak yönetebilir, ekiplerinizi tek bir dijital oturumda buluşturabilirsiniz.
           </p>
+          <div className="non-user-dashboard__tenant-picker">
+            <label>
+              <span>Tenant seçimi</span>
+              <select value={selectedTenantId} onChange={(event) => onSelectTenant(event.target.value)}>
+                {tenantOptions.map((tenant) => (
+                  <option key={tenant.id} value={tenant.id}>
+                    {tenant.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p>Seçili tenant: {selectedTenantName}</p>
+          </div>
           <div className="non-user-dashboard__cta">
             <button type="button" className="cta-button cta-button--primary" onClick={onExploreLocalization}>
               Lokalizasyonu incele
