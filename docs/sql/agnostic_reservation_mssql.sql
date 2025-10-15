@@ -44,7 +44,8 @@ BEGIN
           AND name = @ColumnName
     )
     BEGIN
-        DECLARE @AddSql NVARCHAR(MAX) = N'ALTER TABLE ' + @FullTableName + N' ADD ' + QUOTENAME(@ColumnName) + N' ' + @ColumnDefinition;
+        DECLARE @AddSql NVARCHAR(MAX);
+        SET @AddSql = N'ALTER TABLE ' + @FullTableName + N' ADD ' + QUOTENAME(@ColumnName) + N' ' + @ColumnDefinition;
 
         IF @DefaultConstraintName IS NOT NULL AND @DefaultValue IS NOT NULL
         BEGIN
@@ -72,18 +73,22 @@ BEGIN
 
             IF @ExistingConstraint IS NOT NULL
             BEGIN
-                EXEC sp_executesql(
-                    N'ALTER TABLE ' + @FullTableName + N' DROP CONSTRAINT ' + QUOTENAME(@ExistingConstraint) + N';'
-                );
+                DECLARE @DropConstraintSql NVARCHAR(MAX);
+                SET @DropConstraintSql =
+                    N'ALTER TABLE ' + @FullTableName + N' DROP CONSTRAINT ' + QUOTENAME(@ExistingConstraint) + N';';
+                EXEC sp_executesql @DropConstraintSql;
             END
         END
 
-        DECLARE @AlterSql NVARCHAR(MAX) = N'ALTER TABLE ' + @FullTableName + N' ALTER COLUMN ' + QUOTENAME(@ColumnName) + N' ' + @ColumnDefinition + N';';
+        DECLARE @AlterSql NVARCHAR(MAX);
+        SET @AlterSql =
+            N'ALTER TABLE ' + @FullTableName + N' ALTER COLUMN ' + QUOTENAME(@ColumnName) + N' ' + @ColumnDefinition + N';';
         EXEC sp_executesql @AlterSql;
 
         IF @DefaultConstraintName IS NOT NULL AND @DefaultValue IS NOT NULL
         BEGIN
-            DECLARE @DefaultSql NVARCHAR(MAX) =
+            DECLARE @DefaultSql NVARCHAR(MAX);
+            SET @DefaultSql =
                 N'ALTER TABLE ' + @FullTableName +
                 N' ADD CONSTRAINT ' + QUOTENAME(@DefaultConstraintName) +
                 N' DEFAULT (' + @DefaultValue + N') FOR ' + QUOTENAME(@ColumnName) + N';';
