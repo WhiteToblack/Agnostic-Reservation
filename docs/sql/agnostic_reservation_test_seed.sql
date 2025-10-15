@@ -165,14 +165,19 @@ WHEN NOT MATCHED THEN
 
 MERGE dbo.UserSupportTickets AS target
 USING (VALUES
-    (NEWID(), @BeautyCustomer1, @TenantBeauty, N'Spa randevu teyidi', N'Konaklama öncesi spa rezervasyon saatini onaylamak istiyor.', N'Yanıtlandı', N'E-posta', DATEADD(DAY, -5, @Now)),
-    (NEWID(), @BeautyCustomer1, @TenantBeauty, N'Kurumsal fatura talebi', N'Son konaklama faturası şirket ünvanı ile gönderildi.', N'Çözüldü', N'Portal', DATEADD(DAY, -12, @Now)),
-    (NEWID(), @BeautyCustomer2, @TenantBeauty, N'Paket yükseltme', N'Çift kişilik paket yerine deluxe paket tercih edilmek istendi.', N'Alındı', N'Telefon', DATEADD(DAY, -2, @Now))
-) AS source(Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
-ON target.Id = source.Id
+    (@BeautyCustomer1, @TenantBeauty, N'Spa randevu teyidi', N'Konaklama öncesi spa rezervasyon saatini onaylamak istiyor.', N'Yanıtlandı', N'E-posta', DATEADD(DAY, -5, @Now)),
+    (@BeautyCustomer1, @TenantBeauty, N'Kurumsal fatura talebi', N'Son konaklama faturası şirket ünvanı ile gönderildi.', N'Çözüldü', N'Portal', DATEADD(DAY, -12, @Now)),
+    (@BeautyCustomer2, @TenantBeauty, N'Paket yükseltme', N'Çift kişilik paket yerine deluxe paket tercih edilmek istendi.', N'Alındı', N'Telefon', DATEADD(DAY, -2, @Now))
+) AS source(UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+ON target.UserId = source.UserId AND target.TenantId = source.TenantId AND target.Subject = source.Subject
+WHEN MATCHED THEN
+    UPDATE SET Summary = source.Summary,
+               Status = source.Status,
+               Channel = source.Channel,
+               UpdatedAt = @Now
 WHEN NOT MATCHED THEN
     INSERT (Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
-    VALUES (source.Id, source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
+    VALUES (NEWID(), source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
 ;
 
 MERGE dbo.TenantParameters AS target
@@ -346,13 +351,18 @@ WHEN NOT MATCHED THEN
 
 MERGE dbo.UserSupportTickets AS target
 USING (VALUES
-    (NEWID(), @AutoCustomer1, @TenantAuto, N'Lastik değişim randevusu', N'Yedek lastik stok bilgisi talep edildi.', N'Yanıtlandı', N'Telefon', DATEADD(DAY, -3, @Now)),
-    (NEWID(), @AutoCustomer2, @TenantAuto, N'Mobil servis talebi', N'Ankara ofisine mobil ekip yönlendirme isteği alındı.', N'Alındı', N'Portal', DATEADD(DAY, -1, @Now))
-) AS source(Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
-ON target.Id = source.Id
+    (@AutoCustomer1, @TenantAuto, N'Lastik değişim randevusu', N'Yedek lastik stok bilgisi talep edildi.', N'Yanıtlandı', N'Telefon', DATEADD(DAY, -3, @Now)),
+    (@AutoCustomer2, @TenantAuto, N'Mobil servis talebi', N'Ankara ofisine mobil ekip yönlendirme isteği alındı.', N'Alındı', N'Portal', DATEADD(DAY, -1, @Now))
+) AS source(UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+ON target.UserId = source.UserId AND target.TenantId = source.TenantId AND target.Subject = source.Subject
+WHEN MATCHED THEN
+    UPDATE SET Summary = source.Summary,
+               Status = source.Status,
+               Channel = source.Channel,
+               UpdatedAt = @Now
 WHEN NOT MATCHED THEN
     INSERT (Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
-    VALUES (source.Id, source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
+    VALUES (NEWID(), source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
 ;
 
 MERGE dbo.TenantParameters AS target
@@ -526,13 +536,18 @@ WHEN NOT MATCHED THEN
 
 MERGE dbo.UserSupportTickets AS target
 USING (VALUES
-    (NEWID(), @FitnessCustomer1, @TenantFitness, N'Grup dersi kontenjanı', N'Spinning dersi kontenjanı artırılması talep edildi.', N'Çözüldü', N'Portal', DATEADD(DAY, -7, @Now)),
-    (NEWID(), @FitnessCustomer2, @TenantFitness, N'Kişisel antrenör talebi', N'Yeni program için koç ataması istendi.', N'Yanıtlandı', N'E-posta', DATEADD(DAY, -4, @Now))
-) AS source(Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
-ON target.Id = source.Id
+    (@FitnessCustomer1, @TenantFitness, N'Grup dersi kontenjanı', N'Spinning dersi kontenjanı artırılması talep edildi.', N'Çözüldü', N'Portal', DATEADD(DAY, -7, @Now)),
+    (@FitnessCustomer2, @TenantFitness, N'Kişisel antrenör talebi', N'Yeni program için koç ataması istendi.', N'Yanıtlandı', N'E-posta', DATEADD(DAY, -4, @Now))
+) AS source(UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+ON target.UserId = source.UserId AND target.TenantId = source.TenantId AND target.Subject = source.Subject
+WHEN MATCHED THEN
+    UPDATE SET Summary = source.Summary,
+               Status = source.Status,
+               Channel = source.Channel,
+               UpdatedAt = @Now
 WHEN NOT MATCHED THEN
     INSERT (Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
-    VALUES (source.Id, source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
+    VALUES (NEWID(), source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
 ;
 
 MERGE dbo.TenantParameters AS target
@@ -706,13 +721,18 @@ WHEN NOT MATCHED THEN
 
 MERGE dbo.UserSupportTickets AS target
 USING (VALUES
-    (NEWID(), @EduCustomer1, @TenantEdu, N'Online ders kaydı', N'Yeni STEM sınıfı için kontenjan soruldu.', N'Yanıtlandı', N'Portal', DATEADD(DAY, -6, @Now)),
-    (NEWID(), @EduCustomer2, @TenantEdu, N'Sertifika talebi', N'Tamamlanan eğitim için sertifika e-postası tekrar istendi.', N'Çözüldü', N'E-posta', DATEADD(DAY, -3, @Now))
-) AS source(Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
-ON target.Id = source.Id
+    (@EduCustomer1, @TenantEdu, N'Online ders kaydı', N'Yeni STEM sınıfı için kontenjan soruldu.', N'Yanıtlandı', N'Portal', DATEADD(DAY, -6, @Now)),
+    (@EduCustomer2, @TenantEdu, N'Sertifika talebi', N'Tamamlanan eğitim için sertifika e-postası tekrar istendi.', N'Çözüldü', N'E-posta', DATEADD(DAY, -3, @Now))
+) AS source(UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+ON target.UserId = source.UserId AND target.TenantId = source.TenantId AND target.Subject = source.Subject
+WHEN MATCHED THEN
+    UPDATE SET Summary = source.Summary,
+               Status = source.Status,
+               Channel = source.Channel,
+               UpdatedAt = @Now
 WHEN NOT MATCHED THEN
     INSERT (Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
-    VALUES (source.Id, source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
+    VALUES (NEWID(), source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
 ;
 
 MERGE dbo.TenantParameters AS target
@@ -886,13 +906,18 @@ WHEN NOT MATCHED THEN
 
 MERGE dbo.UserSupportTickets AS target
 USING (VALUES
-    (NEWID(), @PetCustomer1, @TenantPet, N'Evcil hayvan transferi', N'Ankara çıkışlı uçuş için transfer desteği talep edildi.', N'Yanıtlandı', N'E-posta', DATEADD(DAY, -8, @Now)),
-    (NEWID(), @PetCustomer2, @TenantPet, N'Ödeme planı sorusu', N'Yıllık bakım paketi için taksit bilgisi istendi.', N'Alındı', N'Portal', DATEADD(DAY, -2, @Now))
-) AS source(Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
-ON target.Id = source.Id
+    (@PetCustomer1, @TenantPet, N'Evcil hayvan transferi', N'Ankara çıkışlı uçuş için transfer desteği talep edildi.', N'Yanıtlandı', N'E-posta', DATEADD(DAY, -8, @Now)),
+    (@PetCustomer2, @TenantPet, N'Ödeme planı sorusu', N'Yıllık bakım paketi için taksit bilgisi istendi.', N'Alındı', N'Portal', DATEADD(DAY, -2, @Now))
+) AS source(UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+ON target.UserId = source.UserId AND target.TenantId = source.TenantId AND target.Subject = source.Subject
+WHEN MATCHED THEN
+    UPDATE SET Summary = source.Summary,
+               Status = source.Status,
+               Channel = source.Channel,
+               UpdatedAt = @Now
 WHEN NOT MATCHED THEN
     INSERT (Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
-    VALUES (source.Id, source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
+    VALUES (NEWID(), source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
 ;
 
 MERGE dbo.TenantParameters AS target
