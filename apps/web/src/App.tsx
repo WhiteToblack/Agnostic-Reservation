@@ -191,6 +191,33 @@ const initialReservations: Record<string, Reservation[]> = {
   ],
 };
 
+const resolveInitialTenantId = () => {
+  if (typeof window !== 'undefined') {
+    const persistedTenant = window.localStorage.getItem(appConfig.testToolbarStorageKey);
+    if (persistedTenant) {
+      return persistedTenant;
+    }
+  }
+
+  return appConfig.defaultTenantId;
+};
+
+const persistTenantSelection = (tenantId: string) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    if (tenantId === appConfig.defaultTenantId) {
+      window.localStorage.removeItem(appConfig.testToolbarStorageKey);
+    } else {
+      window.localStorage.setItem(appConfig.testToolbarStorageKey, tenantId);
+    }
+  } catch {
+    // Silently ignore storage errors (private mode, quota, etc.).
+  }
+};
+
 const App: React.FC = () => {
   const [selectedDomain, setSelectedDomain] = useState<Domain>('admin');
   const [selectedTenantId, setSelectedTenantId] = useState<string>(initialTenantId);
@@ -200,9 +227,39 @@ const App: React.FC = () => {
   const [reservationsByUser, setReservationsByUser] = useState<Record<string, Reservation[]>>(initialReservations);
   const [user, setUser] = useState<RegisteredUser | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [loginTenantId, setLoginTenantId] = useState<string>(initialTenantId);
-  const [signupTenantId, setSignupTenantId] = useState<string>(initialTenantId);
+  const [loginTenantId, setLoginTenantId] = useState<string>(selectedTenantId);
+  const [signupTenantId, setSignupTenantId] = useState<string>(selectedTenantId);
   const [showAuthPanel, setShowAuthPanel] = useState<boolean>(false);
+
+  const baseTenantOptions = useMemo(() => {
+    if (defaultTenantOptions.some((tenant) => tenant.id === appConfig.defaultTenantId)) {
+      return defaultTenantOptions;
+    }
+
+    return [{ id: appConfig.defaultTenantId, name: 'Varsayılan Tenant' }, ...defaultTenantOptions];
+  }, [appConfig.defaultTenantId]);
+
+  const tenantOptions = useMemo(() => {
+    const map = new Map<string, TenantOption>();
+    baseTenantOptions.forEach((tenant) => map.set(tenant.id, tenant));
+
+    if (selectedTenantId && !map.has(selectedTenantId)) {
+      map.set(selectedTenantId, { id: selectedTenantId, name: 'Seçili Tenant' });
+    }
+
+    return Array.from(map.values()).map((tenant) => {
+      if (tenant.id === appConfig.defaultTenantId && !tenant.name.includes('(varsayılan)')) {
+        return { ...tenant, name: `${tenant.name} (varsayılan)` };
+      }
+
+      return tenant;
+    });
+  }, [appConfig.defaultTenantId, baseTenantOptions, selectedTenantId]);
+
+  const defaultTenantName = useMemo(() => {
+    const match = baseTenantOptions.find((tenant) => tenant.id === appConfig.defaultTenantId);
+    return match?.name ?? 'Varsayılan Tenant';
+  }, [appConfig.defaultTenantId, baseTenantOptions]);
 
   useEffect(() => {
     if (selectedDomain === 'admin') {
@@ -258,10 +315,13 @@ const App: React.FC = () => {
   };
 
   const handleTenantChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedTenantId(event.target.value);
+    const tenantId = event.target.value;
+    persistTenantSelection(tenantId);
+    setSelectedTenantId(tenantId);
   };
 
   const handleTenantSelect = (tenantId: string) => {
+    persistTenantSelection(tenantId);
     setSelectedTenantId(tenantId);
   };
 
@@ -342,6 +402,7 @@ const App: React.FC = () => {
 
     setAuthError(null);
     setUser(account);
+    persistTenantSelection(account.tenantId);
     setSelectedTenantId(account.tenantId);
     setSelectedDomain('user');
     setActiveView('userReservations');
@@ -392,6 +453,7 @@ const App: React.FC = () => {
     }));
     setAuthError(null);
     setUser(newUser);
+    persistTenantSelection(signupTenantId);
     setSelectedTenantId(signupTenantId);
     setSelectedDomain('user');
     setActiveView('userReservations');
@@ -413,6 +475,14 @@ const App: React.FC = () => {
     <LocalizationProvider tenantId={selectedTenantId} initialLanguage={preferredLanguage}>
       <div className="app-shell">
         <div className="app-container">
+          <TestToolbar
+            tenantOptions={tenantOptions}
+            selectedTenantId={selectedTenantId}
+            defaultTenantName={defaultTenantName}
+            onTenantChange={handleToolbarTenantChange}
+            onResetToDefault={handleToolbarReset}
+            isOverrideActive={isTenantOverrideActive}
+          />
           <header className="app-header">
             <div className="app-header__brand">
               <span className="app-header__title">Agnostic Reservation</span>
