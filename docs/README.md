@@ -32,6 +32,10 @@ This monorepo delivers a macro-service starter kit that pairs a modular .NET 8 b
 * **Web**: React Native Web setup using Expo Router-compatible structure; shares components with mobile via `apps/shared` barrel exports.
 * **Screens**: Authentication, reservation agenda, dashboards by role, admin tools (parameters, cache, documents, theme tokens).
 
+### Troubleshooting
+
+* **Expo / React Native runtime uyumsuzluğu**: `TurboModuleRegistry.getEnforcing('PlatformConstants')` gibi hatalar için [docs/troubleshooting-mobile.md](./troubleshooting-mobile.md) dokümanındaki adımları izleyin.
+
 ## Getting Started
 
 1. **Backend**
