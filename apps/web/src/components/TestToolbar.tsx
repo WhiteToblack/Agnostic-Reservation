@@ -15,13 +15,15 @@ type TestToolbarProps = {
 };
 
 export const TestToolbar: React.FC<TestToolbarProps> = ({
-  tenantOptions,
+  tenantOptions = [],
   selectedTenantId,
   defaultTenantName,
   onTenantChange,
   onResetToDefault,
   isOverrideActive,
 }) => {
+  const hasTenantOptions = tenantOptions.length > 0;
+
   return (
     <div className="test-toolbar" role="region" aria-label="Test toolbar">
       <div className="test-toolbar__group">
@@ -32,12 +34,17 @@ export const TestToolbar: React.FC<TestToolbarProps> = ({
             className="test-toolbar__select"
             value={selectedTenantId}
             onChange={(event) => onTenantChange(event.target.value)}
+            disabled={!hasTenantOptions}
           >
-            {tenantOptions.map((tenant) => (
-              <option key={tenant.id} value={tenant.id}>
-                {tenant.name}
-              </option>
-            ))}
+            {hasTenantOptions ? (
+              tenantOptions.map((tenant) => (
+                <option key={tenant.id} value={tenant.id}>
+                  {tenant.name}
+                </option>
+              ))
+            ) : (
+              <option value="">Tenant bulunamadı</option>
+            )}
           </select>
         </label>
       </div>
