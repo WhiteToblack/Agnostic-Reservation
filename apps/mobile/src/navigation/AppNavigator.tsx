@@ -2,6 +2,9 @@ import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { FC } from 'react';
+import BootstrapScreen from '../screens/Auth/BootstrapScreen';
+import OnboardingScreen from '../screens/Auth/OnboardingScreen';
+import SessionResumeScreen from '../screens/Auth/SessionResumeScreen';
 import SignInScreen from '../screens/Auth/SignInScreen';
 import SignUpScreen from '../screens/Auth/SignUpScreen';
 import DashboardScreen from '../screens/Dashboard/DashboardScreen';
@@ -50,7 +53,10 @@ const AppNavigator: FC = () => {
   const { mode } = useTheme();
   return (
     <NavigationContainer theme={mode === 'dark' ? DarkTheme : DefaultTheme}>
-      <RootStack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Main">
+      <RootStack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Bootstrap">
+        <RootStack.Screen name="Bootstrap" component={BootstrapScreen} />
+        <RootStack.Screen name="Onboarding" component={OnboardingScreen} />
+        <RootStack.Screen name="SessionResume" component={SessionResumeScreen} />
         <RootStack.Screen name="SignIn" component={SignInScreen} />
         <RootStack.Screen name="SignUp" component={SignUpScreen} />
         <RootStack.Screen name="Main" component={AppTabs} />

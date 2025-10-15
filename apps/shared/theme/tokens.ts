@@ -7,6 +7,9 @@ export const baseTokens = {
     warning: '#f59e0b',
     success: '#16a34a',
     text: '#0f172a',
+    muted: '#64748b',
+    surfaceMuted: '#e2e8f0',
+    border: '#cbd5f5',
   },
   spacing: {
     xs: 4,
@@ -37,5 +40,8 @@ export const darkTheme: ThemeTokens = {
     background: '#0f172a',
     surface: '#111827',
     text: '#f8fafc',
+    muted: '#94a3b8',
+    surfaceMuted: '#1f2937',
+    border: '#1e293b',
   },
 };

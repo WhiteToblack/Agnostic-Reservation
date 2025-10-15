@@ -68,6 +68,39 @@ export const CompanyDashboard: React.FC<CompanyDashboardProps> = ({ tenantName, 
     []
   );
 
+  const shopUsageTimeline = useMemo(
+    () => [
+      { label: 'Pzt', utilization: 78 },
+      { label: 'Sal', utilization: 84 },
+      { label: 'Çar', utilization: 89 },
+      { label: 'Per', utilization: 92 },
+      { label: 'Cum', utilization: 95 },
+      { label: 'Cmt', utilization: 88 },
+      { label: 'Paz', utilization: 81 },
+    ],
+    []
+  );
+
+  const shopRevenueTimeline = useMemo(
+    () => [
+      { label: 'Hafta 1', revenue: 820_000 },
+      { label: 'Hafta 2', revenue: 905_000 },
+      { label: 'Hafta 3', revenue: 978_000 },
+      { label: 'Hafta 4', revenue: 1_025_000 },
+    ],
+    []
+  );
+
+  const usageBreakdown = useMemo(
+    () => [
+      { room: 'Oda A', hours: 126, revenue: 420_000 },
+      { room: 'Oda B', hours: 104, revenue: 366_000 },
+      { room: 'Oda C', hours: 98, revenue: 352_000 },
+      { room: 'Toplantı Salonu', hours: 76, revenue: 288_000 },
+    ],
+    []
+  );
+
   const reservationPipeline = useMemo(
     () => [
       { title: 'Yeni Talepler', count: 38, description: 'Kanallardan düşen ve teyit bekleyen rezervasyon talepleri.' },
@@ -107,6 +140,16 @@ export const CompanyDashboard: React.FC<CompanyDashboardProps> = ({ tenantName, 
       revPar: '₺2.987 RevPAR',
       forecast: 'Önümüzdeki 30 gün için %91 doluluk öngörülüyor.',
     }),
+    []
+  );
+
+  const shopParameters = useMemo(
+    () => [
+      { key: 'checkIn', name: 'Check-in başlangıcı', value: '13:00', description: 'Şube bazlı erken giriş limiti' },
+      { key: 'housekeeping', name: 'Housekeeping turu', value: 'Saat 10:30', description: 'Oda temizliği ve denetim saati' },
+      { key: 'maxCapacity', name: 'Maksimum doluluk', value: '%95', description: 'Dinamik doluluk üst sınırı' },
+      { key: 'welcomeKit', name: 'Karşılama seti', value: 'Premium', description: 'Özel misafir segmenti paketi' },
+    ],
     []
   );
 
@@ -239,6 +282,82 @@ export const CompanyDashboard: React.FC<CompanyDashboardProps> = ({ tenantName, 
                 </div>
               </dl>
             </article>
+            <article className="company-dashboard__card">
+              <header>
+                <h2>Kullanım trendi</h2>
+                <p>Haftalık oda doluluk oranları</p>
+              </header>
+              <ul className="company-dashboard__list company-dashboard__list--timeline">
+                {shopUsageTimeline.map((entry) => (
+                  <li key={entry.label}>
+                    <div>
+                      <strong>{entry.label}</strong>
+                      <span>Doluluk</span>
+                    </div>
+                    <div className="company-dashboard__progress">
+                      <span className="company-dashboard__progress-track">
+                        <span
+                          className="company-dashboard__progress-bar"
+                          style={{ width: `${entry.utilization}%` }}
+                        />
+                      </span>
+                      <span className="company-dashboard__value">%{entry.utilization}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </article>
+            <article className="company-dashboard__card">
+              <header>
+                <h2>Gelir zaman çizelgesi</h2>
+                <p>Son 4 haftalık gelir performansı</p>
+              </header>
+              <ul className="company-dashboard__list company-dashboard__list--timeline">
+                {shopRevenueTimeline.map((entry) => (
+                  <li key={entry.label}>
+                    <div>
+                      <strong>{entry.label}</strong>
+                      <span>Toplam gelir</span>
+                    </div>
+                    <div className="company-dashboard__progress">
+                      <span className="company-dashboard__progress-track">
+                        <span
+                          className="company-dashboard__progress-bar company-dashboard__progress-bar--accent"
+                          style={{ width: `${Math.min(100, entry.revenue / 12_000)}%` }}
+                        />
+                      </span>
+                      <span className="company-dashboard__value">
+                        ₺{entry.revenue.toLocaleString('tr-TR')}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </article>
+            <article className="company-dashboard__card">
+              <header>
+                <h2>Kaynak bazlı özet</h2>
+                <p>Oda başına kullanım ve gelir</p>
+              </header>
+              <table className="company-dashboard__table">
+                <thead>
+                  <tr>
+                    <th>Kaynak</th>
+                    <th>Saat</th>
+                    <th>Gelir</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usageBreakdown.map((row) => (
+                    <tr key={row.room}>
+                      <td>{row.room}</td>
+                      <td>{row.hours} saat</td>
+                      <td>₺{row.revenue.toLocaleString('tr-TR')}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </article>
           </div>
         </>
       )}
@@ -309,6 +428,28 @@ export const CompanyDashboard: React.FC<CompanyDashboardProps> = ({ tenantName, 
             <button type="button" className="company-dashboard__action">
               Operasyon raporunu indir
             </button>
+          </article>
+          <article className="company-dashboard__card">
+            <header>
+              <h2>Şube parametreleri</h2>
+              <p>Şubeye özel çalışma kuralları</p>
+            </header>
+            <ul className="company-dashboard__list">
+              {shopParameters.map((parameter) => (
+                <li key={parameter.key}>
+                  <div>
+                    <strong>{parameter.name}</strong>
+                    <span>{parameter.description}</span>
+                  </div>
+                  <div>
+                    <span className="company-dashboard__value">{parameter.value}</span>
+                    <button type="button" className="company-dashboard__action">
+                      Düzenle
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </article>
         </div>
       )}

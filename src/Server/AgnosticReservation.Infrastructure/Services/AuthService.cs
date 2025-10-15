@@ -1,7 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Linq;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using AgnosticReservation.Application.Abstractions;
 using AgnosticReservation.Application.Admin;
 using AgnosticReservation.Application.Auth;
@@ -17,6 +20,7 @@ public class AuthService : IAuthService
     private readonly IRepository<User> _userRepository;
     private readonly IRepository<Tenant> _tenantRepository;
     private readonly IRepository<Role> _roleRepository;
+    private readonly IRepository<UserSession> _sessionRepository;
     private readonly IParameterService _parameterService;
     private readonly ISessionContextAccessor _sessionContextAccessor;
 
@@ -25,13 +29,15 @@ public class AuthService : IAuthService
         IRepository<Tenant> tenantRepository,
         IRepository<Role> roleRepository,
         IParameterService parameterService,
-        ISessionContextAccessor sessionContextAccessor)
+        ISessionContextAccessor sessionContextAccessor,
+        IRepository<UserSession> sessionRepository)
     {
         _userRepository = userRepository;
         _tenantRepository = tenantRepository;
         _roleRepository = roleRepository;
         _parameterService = parameterService;
         _sessionContextAccessor = sessionContextAccessor;
+        _sessionRepository = sessionRepository;
     }
 
     public async Task<AuthResult> SignInAsync(SignInRequest request, CancellationToken cancellationToken = default)
@@ -48,26 +54,16 @@ public class AuthService : IAuthService
         var permissions = role?.Permissions.Select(p => p.Permission).ToArray() ?? Array.Empty<Permission>();
         var shop = await ResolveShopInfoAsync(request.TenantId, request.ShopId, request.ShopName, request.ShopTimeZone, cancellationToken);
 
-        var sessionData = new SessionContextData(
-            new SessionUserInfo(
-                user.Id,
-                user.Email,
-                user.FullName,
-                user.PreferredTheme,
-                user.PreferredLanguage,
-                role?.Name ?? "Unknown",
-                role?.HierarchyLevel ?? 0,
-                role?.IsSuperAdmin ?? false,
-                permissions),
-            new SessionTenantInfo(tenant.Id, tenant.Name, tenant.Domain, tenant.DefaultTheme),
-            shop,
-            settings.RequireTwoFactor);
+        var sessionData = BuildSessionContext(user, tenant, role, shop, settings.RequireTwoFactor, permissions);
 
         _sessionContextAccessor.SetSession(sessionData);
 
         var twoFactorPending = settings.RequireTwoFactor;
         var accessToken = twoFactorPending ? null : GenerateToken(user);
         var refreshToken = twoFactorPending ? null : GenerateToken(user, isRefresh: true);
+
+        var deviceId = NormalizeDeviceId(request.DeviceId);
+        await PersistSessionAsync(user, tenant.Id, deviceId, accessToken, refreshToken, cancellationToken);
 
         return new AuthResult(
             user.Id,
@@ -104,26 +100,16 @@ public class AuthService : IAuthService
 
         var permissions = adminRole.Permissions.Select(p => p.Permission).ToArray();
         var shop = await ResolveShopInfoAsync(request.TenantId, request.ShopId, request.ShopName, request.ShopTimeZone, cancellationToken);
-        var sessionData = new SessionContextData(
-            new SessionUserInfo(
-                user.Id,
-                user.Email,
-                user.FullName,
-                user.PreferredTheme,
-                user.PreferredLanguage,
-                adminRole.Name,
-                adminRole.HierarchyLevel,
-                adminRole.IsSuperAdmin,
-                permissions),
-            new SessionTenantInfo(tenant.Id, tenant.Name, tenant.Domain, tenant.DefaultTheme),
-            shop,
-            settings.RequireTwoFactor);
+        var sessionData = BuildSessionContext(user, tenant, adminRole, shop, settings.RequireTwoFactor, permissions);
 
         _sessionContextAccessor.SetSession(sessionData);
 
         var twoFactorPending = settings.RequireTwoFactor;
         var accessToken = twoFactorPending ? null : GenerateToken(user);
         var refreshToken = twoFactorPending ? null : GenerateToken(user, isRefresh: true);
+
+        var deviceId = NormalizeDeviceId(request.DeviceId);
+        await PersistSessionAsync(user, tenant.Id, deviceId, accessToken, refreshToken, cancellationToken);
 
         return new AuthResult(
             user.Id,
@@ -152,6 +138,53 @@ public class AuthService : IAuthService
         await _userRepository.UpdateAsync(user, cancellationToken);
     }
 
+    public async Task<SessionResume?> GetSessionAsync(Guid tenantId, string deviceId, CancellationToken cancellationToken = default)
+    {
+        var normalizedDeviceId = NormalizeDeviceId(deviceId);
+        var sessions = await _sessionRepository.ListAsync(
+            s => s.TenantId == tenantId && s.DeviceId == normalizedDeviceId,
+            cancellationToken);
+
+        var session = sessions
+            .Where(s => s.IsActive)
+            .OrderByDescending(s => s.LastActivityUtc)
+            .FirstOrDefault();
+
+        if (session is null)
+        {
+            return null;
+        }
+
+        var user = await _userRepository.GetAsync(session.UserId, cancellationToken);
+        var tenant = await _tenantRepository.GetAsync(tenantId, cancellationToken);
+
+        if (user is null || tenant is null)
+        {
+            return null;
+        }
+
+        var role = await _roleRepository.GetAsync(user.RoleId, cancellationToken) ?? user.Role;
+        var permissions = role?.Permissions.Select(p => p.Permission).ToArray() ?? Array.Empty<Permission>();
+        var shop = await ResolveShopInfoAsync(tenantId, null, null, null, cancellationToken);
+        var sessionData = BuildSessionContext(user, tenant, role, shop, false, permissions);
+
+        session.TouchSession();
+        await _sessionRepository.UpdateAsync(session, cancellationToken);
+
+        return new SessionResume(
+            session.Id,
+            user.Id,
+            tenant.Id,
+            user.Email,
+            user.FullName,
+            user.PreferredTheme,
+            user.PreferredLanguage,
+            session.LastActivityUtc,
+            session.AccessToken,
+            session.RefreshToken,
+            sessionData);
+    }
+
     private static string GenerateToken(User user, bool isRefresh = false)
     {
         var payload = $"{user.Id}:{user.TenantId}:{(isRefresh ? "refresh" : "access")}:{DateTime.UtcNow:O}";
@@ -162,6 +195,63 @@ public class AuthService : IAuthService
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
         return Convert.ToBase64String(bytes);
+    }
+
+    private static string NormalizeDeviceId(string? deviceId)
+        => string.IsNullOrWhiteSpace(deviceId) ? "unknown-device" : deviceId.Trim();
+
+    private async Task PersistSessionAsync(
+        User user,
+        Guid tenantId,
+        string deviceId,
+        string? accessToken,
+        string? refreshToken,
+        CancellationToken cancellationToken)
+    {
+        var existingSessions = await _sessionRepository.ListAsync(
+            s => s.UserId == user.Id && s.TenantId == tenantId && s.DeviceId == deviceId,
+            cancellationToken);
+
+        var existing = existingSessions.FirstOrDefault();
+        if (existing is null)
+        {
+            var session = new UserSession(tenantId, user.Id, deviceId, accessToken, refreshToken);
+            await _sessionRepository.AddAsync(session, cancellationToken);
+            return;
+        }
+
+        existing.UpdateTokens(accessToken, refreshToken);
+        await _sessionRepository.UpdateAsync(existing, cancellationToken);
+    }
+
+    private static SessionContextData BuildSessionContext(
+        User user,
+        Tenant tenant,
+        Role? role,
+        SessionShopInfo? shop,
+        bool requireTwoFactor,
+        IReadOnlyCollection<Permission> permissions)
+    {
+        var resolvedRole = role ?? user.Role;
+        var resolvedPermissions = permissions.Count > 0
+            ? permissions
+            : resolvedRole?.Permissions.Select(p => p.Permission).ToArray() ?? Array.Empty<Permission>();
+
+        return new SessionContextData(
+            new SessionUserInfo(
+                user.Id,
+                resolvedRole?.Id ?? Guid.Empty,
+                user.Email,
+                user.FullName,
+                user.PreferredTheme,
+                user.PreferredLanguage,
+                resolvedRole?.Name ?? "Unknown",
+                resolvedRole?.HierarchyLevel ?? 0,
+                resolvedRole?.IsSuperAdmin ?? false,
+                resolvedPermissions),
+            new SessionTenantInfo(tenant.Id, tenant.Name, tenant.Domain, tenant.DefaultTheme),
+            shop,
+            requireTwoFactor);
     }
 
     private async Task<AuthFeatureSettings> GetAuthSettingsAsync(Guid tenantId, CancellationToken cancellationToken)

@@ -1,3 +1,5 @@
+using System;
+
 namespace AgnosticReservation.Domain.Entities;
 
 public class PaymentTransaction : BaseEntity
@@ -8,6 +10,7 @@ public class PaymentTransaction : BaseEntity
     public string Currency { get; private set; }
     public string Provider { get; private set; }
     public string Status { get; private set; }
+    public DateTime? ProcessedAt { get; private set; }
 
     private PaymentTransaction()
     {
@@ -16,16 +19,43 @@ public class PaymentTransaction : BaseEntity
         Status = "Pending";
     }
 
-    public PaymentTransaction(Guid tenantId, Guid reservationId, decimal amount, string currency, string provider)
+    public PaymentTransaction(
+        Guid tenantId,
+        Guid reservationId,
+        decimal amount,
+        string currency,
+        string provider,
+        string status = "Pending",
+        DateTime? createdAt = null)
     {
         TenantId = tenantId;
         ReservationId = reservationId;
         Amount = amount;
         Currency = currency;
         Provider = provider;
-        Status = "Pending";
+        Status = status;
+        CreatedAt = createdAt ?? DateTime.UtcNow;
+        if (string.Equals(status, "Paid", StringComparison.OrdinalIgnoreCase))
+        {
+            ProcessedAt = createdAt ?? DateTime.UtcNow;
+        }
     }
 
-    public void MarkAsPaid() => Status = "Paid";
-    public void MarkAsFailed() => Status = "Failed";
+    public void MarkAsPaid() => MarkAsPaid(DateTime.UtcNow);
+
+    public void MarkAsPaid(DateTime processedAt)
+    {
+        Status = "Paid";
+        ProcessedAt = processedAt;
+        Touch();
+    }
+
+    public void MarkAsFailed() => MarkAsFailed(DateTime.UtcNow);
+
+    public void MarkAsFailed(DateTime processedAt)
+    {
+        Status = "Failed";
+        ProcessedAt = processedAt;
+        Touch();
+    }
 }

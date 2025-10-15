@@ -31,6 +31,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ILocalizationService, LocalizationService>();
         services.AddScoped<ISessionContextAccessor, SessionContextAccessor>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IAdminNavigationService, AdminNavigationService>();
         services.Configure<MongoLoggingOptions>(configuration.GetSection("MongoLogging"));
         services.AddSingleton<MongoRequestLogService>();
         services.AddSingleton<IRequestLogService>(provider => provider.GetRequiredService<MongoRequestLogService>());

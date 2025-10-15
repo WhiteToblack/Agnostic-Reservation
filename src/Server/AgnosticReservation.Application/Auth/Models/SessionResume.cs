@@ -3,14 +3,15 @@ using AgnosticReservation.Application.Context;
 
 namespace AgnosticReservation.Application.Auth.Models;
 
-public record AuthResult(
+public record SessionResume(
+    Guid SessionId,
     Guid UserId,
     Guid TenantId,
     string Email,
-    string? AccessToken,
-    string? RefreshToken,
+    string FullName,
     string PreferredTheme,
     string PreferredLanguage,
-    bool TwoFactorPending,
-    AuthFeatureSettings Features,
+    DateTime LastActivityUtc,
+    string? AccessToken,
+    string? RefreshToken,
     SessionContextData Session);

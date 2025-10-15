@@ -1964,6 +1964,40 @@ body {
   align-items: flex-start;
 }
 
+.company-dashboard__list--timeline li {
+  align-items: center;
+  gap: 18px;
+}
+
+.company-dashboard__progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.company-dashboard__progress-track {
+  position: relative;
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(31, 44, 85, 0.08);
+  overflow: hidden;
+}
+
+.company-dashboard__progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4f6bff, #7f65ff);
+}
+
+.company-dashboard__progress-bar--accent {
+  background: linear-gradient(90deg, #38b5af, #287ac6);
+}
+
 .company-dashboard__value {
   font-weight: 700;
   color: #1f2c55;

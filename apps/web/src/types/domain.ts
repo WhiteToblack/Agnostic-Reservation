@@ -35,6 +35,7 @@ export type RegisteredUser = {
   email: string;
   password: string;
   tenantId: string;
+  role: 'admin' | 'company' | 'user';
   contact: ContactInformation;
   billing: BillingInformation;
   supportHistory: SupportInteraction[];
