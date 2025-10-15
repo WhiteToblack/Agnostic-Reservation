@@ -8,6 +8,8 @@ Proje, .NET 8 tabanlı çok katmanlı bir arka uç ile React Native istemcilerin
 - **TenantParameter**: Kategori ve anahtar bazlı yapılandırma değerlerini saklayarak JSON temaları, rezervasyon kuralları gibi özelleştirmeleri mümkün kılar.【F:src/Server/AgnosticReservation.Domain/Entities/TenantParameter.cs†L3-L28】
 - **Role & Permission**: Yetkiler `Permission` enum’undaki bayraklar ile tanımlanır; roller her bir izin için `RolePermission` kaydı oluşturur.【F:src/Server/AgnosticReservation.Domain/Entities/Role.cs†L5-L37】【F:src/Server/AgnosticReservation.Domain/Enums/Permission.cs†L3-L16】
 - **User**: Tenant ve rol referanslarıyla tema tercihi, MFA bilgisi ve bildirim tercihlerini taşır; yönetim panelleri tema değişimini doğrudan kullanıcı düzeyinde işleyebilir.【F:src/Server/AgnosticReservation.Domain/Entities/User.cs†L5-L49】
+- **UserProfiles & UserPaymentMethods**: Misafirlerin iletişim ve faturalandırma verileri `UserProfiles` ve `UserPaymentMethods` tablolarında tutulur; destek ekipleri bu alanları admin arayüzünden güncelleyecek şekilde indekslenmiştir.【F:docs/sql/agnostic_reservation_mssql.sql†L101-L151】
+- **UserSupportTickets**: Admin destek paneliyle entegre çalışan yeni tablo; kiracı ve kullanıcı bazlı destek kayıtlarının durum, kanal ve zaman bilgisini izler.【F:docs/sql/agnostic_reservation_mssql.sql†L153-L178】
 - **Resource & Reservation**: Kaynaklar tenant’a bağlı mağaza/lot kavramını temsil ederken, rezervasyonlar zaman aralığı doğrulaması ve iptal yetenekleriyle oluşturulur.【F:src/Server/AgnosticReservation.Domain/Entities/Resource.cs†L3-L20】【F:src/Server/AgnosticReservation.Domain/Entities/Reservation.cs†L5-L34】
 
 ## Application Katmanı
@@ -35,3 +37,6 @@ Tüm servisler `AddAgnosticReservationModules` uzantısında DI konteynerine ekl
 
 ## İstemci Yansımaları
 Mobil ve web istemcileri paylaşımlı komponent kütüphanesi üzerinden aynı tema ve widget yapılandırmalarını kullanır; rol bazlı dashboard ve admin ekranları React Native üzerinden servis edilir.【F:docs/README.md†L29-L34】
+
+- Web istemcisinin admin alanına destek konsolu eklendi; operatorler tenant seçimine göre misafir profillerini arayıp iletişim, faturalandırma ve destek notlarını canlı olarak düzenleyebiliyor.【F:apps/web/src/components/AdminSupportPanel.tsx†L1-L263】
+- Misafir dashboard’undaki profil sekmesi artık telefon, adres ve ödeme bilgilerini düzenlenebilir formda sunuyor; kayıtlar admin paneliyle aynı veri modelini kullanacak şekilde `RegisteredUser` tipine eklendi.【F:apps/web/src/components/UserDashboard.tsx†L1-L382】【F:apps/web/src/types/domain.ts†L1-L33】

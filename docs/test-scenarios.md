@@ -164,6 +164,27 @@ Bu doküman, Agnostic Reservation platformunun ana akışlarının uçtan uca do
 * **Adımlar:** `GET /api/admin/logs?tenantId={tenantId}` çağrısı.
 * **Beklenen sonuç:** HTTP 200; önceki API çağrılarının kaydı listelenir.
 
+## 8. Destek ve Misafir Profil Senaryoları
+
+### TC-SUP-01 — Admin Destek Panelinden Misafir Bilgisi Güncelleme
+
+* **Ön koşullar:** Tenant yöneticisi oturumu; `UserProfiles` ve `UserSupportTickets` tabloları mevcut seed verileri içerir.【F:docs/sql/agnostic_reservation_test_seed.sql†L104-L200】
+* **Adımlar:**
+  1. Web admin arayüzünde `Destek merkezi` sekmesine geçin.【F:apps/web/src/components/AdminSupportPanel.tsx†L1-L263】
+  2. Arama alanından `Ayşe Yılmaz` kaydını seçin.
+  3. Telefon ve fatura adresini güncelleyin, ardından “Profil ayarlarımı kaydet” butonuna basın.【F:apps/web/src/components/AdminSupportPanel.tsx†L132-L223】
+  4. Yeni bir destek notu ekleyin ve statüsünü `Yanıtlandı` olarak işaretleyin.
+* **Beklenen sonuç:** UI’da başarı bildirimi görünür; `UserProfiles` tablosunda ilgili alanlar güncellenir, `UserSupportTickets` tablosuna yeni satır eklenir.【F:docs/sql/agnostic_reservation_mssql.sql†L101-L178】
+
+### TC-SUP-02 — Misafir Panelinden Destek Talebi Oluşturma
+
+* **Ön koşullar:** Misafir oturumu (`mert.cengiz@agnostic.com`); kullanıcıya ait rezervasyonlar yüklü.【F:apps/web/src/App.tsx†L98-L206】
+* **Adımlar:**
+  1. Misafir dashboard’unda “Destek” sekmesine geçin.【F:apps/web/src/components/UserDashboard.tsx†L300-L382】
+  2. Konu ve açıklama alanlarını doldurarak yeni bir talep gönderin.
+  3. Profil sekmesine geçip adres ve fatura bilgilerini düzenleyin, kaydedin.【F:apps/web/src/components/UserDashboard.tsx†L206-L298】
+* **Beklenen sonuç:** Destek zaman çizelgesine yeni kayıt eklenir; iletişim ve faturalandırma alanları güncel değerlerle görüntülenir ve admin destek panelinde aynı değişiklikler izlenebilir.【F:apps/web/src/components/UserDashboard.tsx†L206-L382】【F:apps/web/src/components/AdminSupportPanel.tsx†L132-L230】
+
 ## 7. Ek Notlar
 
 * Testler sırasında kullanılan tüm GUID değerleri ve erişim belirteçleri, ilerideki adımlarda yeniden kullanılmak üzere kayıt altına alınmalıdır.

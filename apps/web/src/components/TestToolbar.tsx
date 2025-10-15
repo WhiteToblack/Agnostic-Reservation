@@ -5,7 +5,18 @@ type TenantOption = {
   name: string;
 };
 
+type DomainOption = {
+  id: string;
+  host: string;
+  label: string;
+};
+
 type TestToolbarProps = {
+  domainOptions: DomainOption[];
+  selectedDomainId: string;
+  activeDomainHost: string;
+  activeDomainDescription: string;
+  onDomainChange: (domainId: string) => void;
   tenantOptions: TenantOption[];
   selectedTenantId: string;
   defaultTenantName: string;
@@ -15,6 +26,11 @@ type TestToolbarProps = {
 };
 
 export const TestToolbar: React.FC<TestToolbarProps> = ({
+  domainOptions,
+  selectedDomainId,
+  activeDomainHost,
+  activeDomainDescription,
+  onDomainChange,
   tenantOptions = [],
   selectedTenantId,
   defaultTenantName,
@@ -28,8 +44,32 @@ export const TestToolbar: React.FC<TestToolbarProps> = ({
     <div className="test-toolbar" role="region" aria-label="Test toolbar">
       <div className="test-toolbar__group">
         <span className="test-toolbar__title">Test Toolbar</span>
+        <div className="test-toolbar__stack">
+          <label className="test-toolbar__control">
+            <span className="test-toolbar__label">Alan adı</span>
+            <select
+              className="test-toolbar__select"
+              value={selectedDomainId}
+              onChange={(event) => onDomainChange(event.target.value)}
+            >
+              {domainOptions.map((domain) => (
+                <option key={domain.id} value={domain.id}>
+                  {domain.host} · {domain.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="test-toolbar__meta" aria-live="polite">
+            <span className="test-toolbar__meta-host">{activeDomainHost}</span>
+            <span className="test-toolbar__meta-description">{activeDomainDescription}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="test-toolbar__group">
         <label className="test-toolbar__control">
-          <span className="test-toolbar__label">Sektör tenantı</span>
+          <span className="test-toolbar__label">Tenant seçimi</span>
           <select
             className="test-toolbar__select"
             value={selectedTenantId}
@@ -47,17 +87,17 @@ export const TestToolbar: React.FC<TestToolbarProps> = ({
             )}
           </select>
         </label>
-      </div>
 
-      <div className="test-toolbar__info">
-        <span>
-          Varsayılan tenant: <strong>{defaultTenantName}</strong>
-        </span>
-        {isOverrideActive && (
-          <button type="button" className="test-toolbar__reset" onClick={onResetToDefault}>
-            Varsayılanı kullan
-          </button>
-        )}
+        <div className="test-toolbar__info">
+          <span>
+            Varsayılan tenant: <strong>{defaultTenantName}</strong>
+          </span>
+          {isOverrideActive && (
+            <button type="button" className="test-toolbar__reset" onClick={onResetToDefault}>
+              Varsayılanı kullan
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

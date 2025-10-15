@@ -1,5 +1,10 @@
-import React, { useMemo } from 'react';
-import { Reservation } from '../types/domain';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  BillingInformation,
+  ContactInformation,
+  Reservation,
+  SupportInteraction,
+} from '../types/domain';
 
 type UserDashboardView = 'userReservations' | 'userProfile' | 'userSupport';
 
@@ -9,6 +14,12 @@ type UserDashboardProps = {
   tenantName: string;
   reservations: Reservation[];
   activeView: UserDashboardView;
+  contact: ContactInformation;
+  billing: BillingInformation;
+  supportHistory: SupportInteraction[];
+  tags?: string[];
+  onProfileUpdate: (updates: { contact: ContactInformation; billing: BillingInformation }) => void;
+  onCreateSupportRequest: (subject: string, summary: string) => void;
 };
 
 const formatDateRange = (checkIn: string, checkOut: string) => {
@@ -32,7 +43,33 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   tenantName,
   reservations,
   activeView,
+  contact,
+  billing,
+  supportHistory,
+  tags = [],
+  onProfileUpdate,
+  onCreateSupportRequest,
 }) => {
+  const [contactDraft, setContactDraft] = useState<ContactInformation>(contact);
+  const [billingDraft, setBillingDraft] = useState<BillingInformation>(billing);
+  const [profileMessage, setProfileMessage] = useState<string | null>(null);
+  const [supportSubject, setSupportSubject] = useState('');
+  const [supportSummary, setSupportSummary] = useState('');
+  const [supportMessage, setSupportMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setContactDraft(contact);
+  }, [contact]);
+
+  useEffect(() => {
+    setBillingDraft(billing);
+  }, [billing]);
+
+  useEffect(() => {
+    setProfileMessage(null);
+    setSupportMessage(null);
+  }, [activeView]);
+
   const today = useMemo(() => new Date(), []);
 
   const { upcomingReservations, pastReservations } = useMemo(() => {
@@ -52,17 +89,53 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   const totalNights = reservations.reduce((total, reservation) => total + reservation.nights, 0);
   const totalGuests = reservations.reduce((total, reservation) => total + reservation.guests, 0);
   const totalSpend = reservations.reduce((total, reservation) => total + reservation.totalPrice, 0);
+  const orderedSupportHistory = useMemo(
+    () =>
+      [...supportHistory].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      ),
+    [supportHistory]
+  );
+  const firstName = userName.split(' ')[0];
+
+  const handleProfileSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onProfileUpdate({ contact: contactDraft, billing: billingDraft });
+    setProfileMessage('Profil ayarlarınız kaydedildi.');
+  };
+
+  const handleSupportSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!supportSubject.trim() || !supportSummary.trim()) {
+      setSupportMessage('Lütfen konu ve açıklama alanlarını doldurun.');
+      return;
+    }
+
+    onCreateSupportRequest(supportSubject.trim(), supportSummary.trim());
+    setSupportSubject('');
+    setSupportSummary('');
+    setSupportMessage('Destek talebiniz alındı.');
+  };
 
   return (
     <section className="user-dashboard">
       <header className="user-dashboard__header">
         <div>
           <span className="user-dashboard__badge">{tenantName} misafir hesabı</span>
-          <h1>Merhaba {userName.split(' ')[0]}, seyahatleriniz Agnostic Reservation ile güvende</h1>
+          <h1>Merhaba {firstName}, seyahatleriniz Agnostic Reservation ile güvende</h1>
           <p>
             Rezervasyon detaylarını yönetin, konaklama tercihlerinizin takibini yapın ve destek ekibimizle tek panelden iletişime
             geçin.
           </p>
+          {tags.length > 0 && (
+            <div className="user-dashboard__tags" role="list">
+              {tags.map((tag) => (
+                <span key={tag} role="listitem">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
         <div className="user-dashboard__helper">
           <strong>Alan adı:</strong>
@@ -185,12 +258,12 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
 
       {activeView === 'userProfile' && (
         <div className="user-dashboard__grid user-dashboard__grid--balanced">
-          <article className="user-dashboard__card">
+          <article className="user-dashboard__card user-dashboard__card--form">
             <header>
-              <h2>Hesap bilgileri</h2>
-              <p>Profil ve iletişim tercihleri</p>
+              <h2>Profil ayarları</h2>
+              <p>İletişim ve faturalandırma bilgilerinizi tek panelden güncelleyin.</p>
             </header>
-            <dl className="user-dashboard__definition-list">
+            <dl className="user-dashboard__info-grid">
               <div>
                 <dt>Ad Soyad</dt>
                 <dd>{userName}</dd>
@@ -204,7 +277,185 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
                 <dd>{tenantName}</dd>
               </div>
             </dl>
-            <button type="button">Bilgilerimi güncelle</button>
+            {profileMessage && (
+              <div className="user-dashboard__alert" role="status">
+                {profileMessage}
+                <button type="button" onClick={() => setProfileMessage(null)} aria-label="Bilgilendirmeyi kapat">
+                  ×
+                </button>
+              </div>
+            )}
+            <form className="user-dashboard__settings" onSubmit={handleProfileSubmit}>
+              <section>
+                <h3>İletişim</h3>
+                <label>
+                  <span>Telefon</span>
+                  <input
+                    value={contactDraft.phoneNumber}
+                    onChange={(event) =>
+                      setContactDraft((draft) => ({ ...draft, phoneNumber: event.target.value }))
+                    }
+                    placeholder="+90 5XX XXX XX XX"
+                  />
+                </label>
+                <label>
+                  <span>Adres satırı 1</span>
+                  <input
+                    value={contactDraft.addressLine1}
+                    onChange={(event) =>
+                      setContactDraft((draft) => ({ ...draft, addressLine1: event.target.value }))
+                    }
+                    placeholder="Mahalle, cadde ve numara"
+                  />
+                </label>
+                <label>
+                  <span>Adres satırı 2</span>
+                  <input
+                    value={contactDraft.addressLine2 ?? ''}
+                    onChange={(event) =>
+                      setContactDraft((draft) => ({ ...draft, addressLine2: event.target.value }))
+                    }
+                    placeholder="Daire, ilçe vb."
+                  />
+                </label>
+                <div className="user-dashboard__field-row">
+                  <label>
+                    <span>Şehir</span>
+                    <input
+                      value={contactDraft.city}
+                      onChange={(event) =>
+                        setContactDraft((draft) => ({ ...draft, city: event.target.value }))
+                      }
+                      placeholder="Şehir"
+                    />
+                  </label>
+                  <label>
+                    <span>Posta kodu</span>
+                    <input
+                      value={contactDraft.postalCode}
+                      onChange={(event) =>
+                        setContactDraft((draft) => ({ ...draft, postalCode: event.target.value }))
+                      }
+                      placeholder="00000"
+                    />
+                  </label>
+                </div>
+                <label>
+                  <span>Ülke</span>
+                  <input
+                    value={contactDraft.country}
+                    onChange={(event) =>
+                      setContactDraft((draft) => ({ ...draft, country: event.target.value }))
+                    }
+                    placeholder="Türkiye"
+                  />
+                </label>
+              </section>
+
+              <section>
+                <h3>Ödeme ve fatura</h3>
+                <label>
+                  <span>Kart sahibinin adı</span>
+                  <input
+                    value={billingDraft.cardHolderName}
+                    onChange={(event) =>
+                      setBillingDraft((draft) => ({ ...draft, cardHolderName: event.target.value }))
+                    }
+                    placeholder="Kart üzerindeki isim"
+                  />
+                </label>
+                <div className="user-dashboard__field-row">
+                  <label>
+                    <span>Kart markası</span>
+                    <input
+                      value={billingDraft.cardBrand}
+                      onChange={(event) =>
+                        setBillingDraft((draft) => ({ ...draft, cardBrand: event.target.value }))
+                      }
+                      placeholder="Visa, MasterCard"
+                    />
+                  </label>
+                  <label>
+                    <span>Son dört hane</span>
+                    <input
+                      value={billingDraft.cardLast4}
+                      onChange={(event) =>
+                        setBillingDraft((draft) => ({ ...draft, cardLast4: event.target.value }))
+                      }
+                      placeholder="1234"
+                    />
+                  </label>
+                </div>
+                <div className="user-dashboard__field-row">
+                  <label>
+                    <span>Son kullanma (Ay)</span>
+                    <input
+                      value={billingDraft.expiryMonth}
+                      onChange={(event) =>
+                        setBillingDraft((draft) => ({ ...draft, expiryMonth: event.target.value }))
+                      }
+                      placeholder="08"
+                    />
+                  </label>
+                  <label>
+                    <span>Son kullanma (Yıl)</span>
+                    <input
+                      value={billingDraft.expiryYear}
+                      onChange={(event) =>
+                        setBillingDraft((draft) => ({ ...draft, expiryYear: event.target.value }))
+                      }
+                      placeholder="27"
+                    />
+                  </label>
+                </div>
+                <label>
+                  <span>Fatura adresi</span>
+                  <input
+                    value={billingDraft.billingAddress}
+                    onChange={(event) =>
+                      setBillingDraft((draft) => ({ ...draft, billingAddress: event.target.value }))
+                    }
+                    placeholder="Adres satırı"
+                  />
+                </label>
+                <div className="user-dashboard__field-row">
+                  <label>
+                    <span>Fatura şehri</span>
+                    <input
+                      value={billingDraft.billingCity}
+                      onChange={(event) =>
+                        setBillingDraft((draft) => ({ ...draft, billingCity: event.target.value }))
+                      }
+                      placeholder="İstanbul"
+                    />
+                  </label>
+                  <label>
+                    <span>Fatura posta kodu</span>
+                    <input
+                      value={billingDraft.billingPostalCode}
+                      onChange={(event) =>
+                        setBillingDraft((draft) => ({ ...draft, billingPostalCode: event.target.value }))
+                      }
+                      placeholder="34728"
+                    />
+                  </label>
+                </div>
+                <label>
+                  <span>Fatura ülkesi</span>
+                  <input
+                    value={billingDraft.billingCountry}
+                    onChange={(event) =>
+                      setBillingDraft((draft) => ({ ...draft, billingCountry: event.target.value }))
+                    }
+                    placeholder="Türkiye"
+                  />
+                </label>
+              </section>
+
+              <div className="user-dashboard__form-actions">
+                <button type="submit">Profil ayarlarımı kaydet</button>
+              </div>
+            </form>
           </article>
 
           <article className="user-dashboard__card">
@@ -237,47 +488,69 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       )}
 
       {activeView === 'userSupport' && (
-        <div className="user-dashboard__grid">
-          <article className="user-dashboard__card">
+        <div className="user-dashboard__grid user-dashboard__grid--support">
+          <article className="user-dashboard__card user-dashboard__card--form">
             <header>
-              <h2>Destek talepleri</h2>
-              <p>Son iletişim kayıtlarınız</p>
+              <h2>Destek talebi oluştur</h2>
+              <p>Ekibimize ulaşın; talebiniz tenant destek kuyruğuna iletilir.</p>
             </header>
-            <ul className="user-dashboard__list">
-              <li>
-                <div>
-                  <strong>Geç check-in isteği</strong>
-                  <span>Referans: ST-541</span>
-                </div>
-                <div>
-                  <span>10 Nisan 2024</span>
-                  <span className="user-dashboard__status">Yanıtlandı</span>
-                </div>
-              </li>
-              <li>
-                <div>
-                  <strong>Transfer rezervasyonu</strong>
-                  <span>Referans: ST-538</span>
-                </div>
-                <div>
-                  <span>05 Nisan 2024</span>
-                  <span className="user-dashboard__status">Devam ediyor</span>
-                </div>
-              </li>
-              <li>
-                <div>
-                  <strong>Oda yükseltme talebi</strong>
-                  <span>Referans: ST-527</span>
-                </div>
-                <div>
-                  <span>28 Mart 2024</span>
-                  <span className="user-dashboard__status">Tamamlandı</span>
-                </div>
-              </li>
-            </ul>
+            {supportMessage && (
+              <div className="user-dashboard__alert" role="status">
+                {supportMessage}
+                <button type="button" onClick={() => setSupportMessage(null)} aria-label="Bilgilendirmeyi kapat">
+                  ×
+                </button>
+              </div>
+            )}
+            <form className="user-dashboard__settings user-dashboard__settings--single" onSubmit={handleSupportSubmit}>
+              <label>
+                <span>Konu</span>
+                <input
+                  value={supportSubject}
+                  onChange={(event) => setSupportSubject(event.target.value)}
+                  placeholder="Örneğin: Erken giriş talebi"
+                />
+              </label>
+              <label>
+                <span>Talep detayı</span>
+                <textarea
+                  rows={4}
+                  value={supportSummary}
+                  onChange={(event) => setSupportSummary(event.target.value)}
+                  placeholder="Destek ekibine iletmek istediğiniz açıklamayı yazın"
+                />
+              </label>
+              <div className="user-dashboard__form-actions">
+                <button type="submit">Talebi gönder</button>
+              </div>
+            </form>
           </article>
 
           <article className="user-dashboard__card">
+            <header>
+              <h2>Destek geçmişiniz</h2>
+              <p>Önceki taleplerinizin durumu</p>
+            </header>
+            <ul className="user-dashboard__timeline">
+              {orderedSupportHistory.length === 0 && (
+                <li className="user-dashboard__empty">Henüz destek kaydı bulunmuyor.</li>
+              )}
+              {orderedSupportHistory.map((interaction) => (
+                <li key={interaction.id} className={`user-dashboard__timeline-item status-${interaction.status}`}>
+                  <div>
+                    <strong>{interaction.subject}</strong>
+                    <span className="user-dashboard__timeline-meta">
+                      {interaction.channel} · {formatDate(interaction.createdAt)}
+                    </span>
+                  </div>
+                  <p>{interaction.summary}</p>
+                  <span className="user-dashboard__timeline-status">{interaction.status}</span>
+                </li>
+              ))}
+            </ul>
+          </article>
+
+          <article className="user-dashboard__card user-dashboard__card--highlight">
             <header>
               <h2>Canlı destek</h2>
               <p>7/24 yanınızdayız</p>
@@ -288,21 +561,6 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
               <li>Öncelikli concierge: concierge@agnosticreservation.com</li>
             </ul>
             <button type="button">Canlı sohbeti başlat</button>
-          </article>
-
-          <article className="user-dashboard__card">
-            <header>
-              <h2>Faturalandırma</h2>
-              <p>Resmi evrak ve ödemeleriniz</p>
-            </header>
-            <ul className="user-dashboard__bullets">
-              <li>Son fatura: 15 Mart 2024 · ₺2.850 · Mail ile gönderildi.</li>
-              <li>Kurumsal şirket ünvanı profilinize tanımlandı.</li>
-              <li>Harcamalarınızı PDF ve e-arşiv formatında indirebilirsiniz.</li>
-            </ul>
-            <button type="button" className="user-dashboard__ghost-button">
-              Belgeleri indir
-            </button>
           </article>
         </div>
       )}

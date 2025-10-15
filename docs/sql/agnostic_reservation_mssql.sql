@@ -57,6 +57,7 @@ BEGIN
         TenantId UNIQUEIDENTIFIER NOT NULL,
         RoleId UNIQUEIDENTIFIER NOT NULL,
         Email NVARCHAR(256) NOT NULL,
+        FullName NVARCHAR(200) NOT NULL,
         PasswordHash NVARCHAR(256) NOT NULL,
         PreferredTheme NVARCHAR(50) NOT NULL CONSTRAINT DF_Users_PreferredTheme DEFAULT(N'inherit'),
         PreferredLanguage NVARCHAR(10) NOT NULL CONSTRAINT DF_Users_PreferredLanguage DEFAULT(N'tr-TR'),
@@ -107,6 +108,70 @@ BEGIN
     );
     ALTER TABLE dbo.NotificationPreferences ADD CONSTRAINT FK_NotificationPreferences_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(Id) ON DELETE CASCADE;
     CREATE UNIQUE INDEX IX_NotificationPreferences_UserId ON dbo.NotificationPreferences(UserId);
+END
+GO
+
+IF OBJECT_ID(N'dbo.UserProfiles', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.UserProfiles
+    (
+        Id UNIQUEIDENTIFIER NOT NULL CONSTRAINT PK_UserProfiles PRIMARY KEY,
+        UserId UNIQUEIDENTIFIER NOT NULL,
+        PhoneNumber NVARCHAR(32) NULL,
+        AddressLine1 NVARCHAR(250) NULL,
+        AddressLine2 NVARCHAR(250) NULL,
+        City NVARCHAR(120) NULL,
+        Country NVARCHAR(120) NULL,
+        PostalCode NVARCHAR(20) NULL,
+        CreatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_UserProfiles_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        UpdatedAt DATETIME2(7) NULL
+    );
+    ALTER TABLE dbo.UserProfiles ADD CONSTRAINT FK_UserProfiles_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(Id) ON DELETE CASCADE;
+    CREATE UNIQUE INDEX IX_UserProfiles_UserId ON dbo.UserProfiles(UserId);
+END
+GO
+
+IF OBJECT_ID(N'dbo.UserPaymentMethods', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.UserPaymentMethods
+    (
+        Id UNIQUEIDENTIFIER NOT NULL CONSTRAINT PK_UserPaymentMethods PRIMARY KEY,
+        UserId UNIQUEIDENTIFIER NOT NULL,
+        CardHolderName NVARCHAR(200) NULL,
+        CardBrand NVARCHAR(50) NULL,
+        CardLast4 NVARCHAR(4) NULL,
+        ExpiryMonth NVARCHAR(2) NULL,
+        ExpiryYear NVARCHAR(4) NULL,
+        BillingAddress NVARCHAR(250) NULL,
+        BillingCity NVARCHAR(120) NULL,
+        BillingCountry NVARCHAR(120) NULL,
+        BillingPostalCode NVARCHAR(20) NULL,
+        IsPrimary BIT NOT NULL CONSTRAINT DF_UserPaymentMethods_IsPrimary DEFAULT(1),
+        CreatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_UserPaymentMethods_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        UpdatedAt DATETIME2(7) NULL
+    );
+    ALTER TABLE dbo.UserPaymentMethods ADD CONSTRAINT FK_UserPaymentMethods_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(Id) ON DELETE CASCADE;
+    CREATE INDEX IX_UserPaymentMethods_UserId ON dbo.UserPaymentMethods(UserId);
+END
+GO
+
+IF OBJECT_ID(N'dbo.UserSupportTickets', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.UserSupportTickets
+    (
+        Id UNIQUEIDENTIFIER NOT NULL CONSTRAINT PK_UserSupportTickets PRIMARY KEY,
+        UserId UNIQUEIDENTIFIER NOT NULL,
+        TenantId UNIQUEIDENTIFIER NOT NULL,
+        Subject NVARCHAR(200) NOT NULL,
+        Summary NVARCHAR(1000) NULL,
+        Status NVARCHAR(40) NOT NULL,
+        Channel NVARCHAR(40) NOT NULL,
+        CreatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_UserSupportTickets_CreatedAt DEFAULT (SYSUTCDATETIME()),
+        UpdatedAt DATETIME2(7) NULL
+    );
+    ALTER TABLE dbo.UserSupportTickets ADD CONSTRAINT FK_UserSupportTickets_Users FOREIGN KEY (UserId) REFERENCES dbo.Users(Id) ON DELETE CASCADE;
+    ALTER TABLE dbo.UserSupportTickets ADD CONSTRAINT FK_UserSupportTickets_Tenants FOREIGN KEY (TenantId) REFERENCES dbo.Tenants(Id) ON DELETE CASCADE;
+    CREATE INDEX IX_UserSupportTickets_User ON dbo.UserSupportTickets(UserId, CreatedAt DESC);
 END
 GO
 
