@@ -29,11 +29,18 @@ BEGIN
     SET NOCOUNT ON;
 
     DECLARE @FullTableName NVARCHAR(300) = QUOTENAME(@SchemaName) + N'.' + QUOTENAME(@TableName);
+    DECLARE @TableObjectId INT = OBJECT_ID(@SchemaName + N'.' + @TableName);
+
+    IF @TableObjectId IS NULL
+    BEGIN
+        RAISERROR(N'Table %s.%s does not exist.', 16, 1, @SchemaName, @TableName);
+        RETURN;
+    END;
 
     IF NOT EXISTS (
         SELECT 1
         FROM sys.columns
-        WHERE object_id = OBJECT_ID(@FullTableName)
+        WHERE object_id = @TableObjectId
           AND name = @ColumnName
     )
     BEGIN
@@ -60,7 +67,7 @@ BEGIN
             SELECT @ExistingConstraint = dc.name
             FROM sys.default_constraints dc
                 INNER JOIN sys.columns c ON c.default_object_id = dc.object_id
-            WHERE dc.parent_object_id = OBJECT_ID(@FullTableName)
+            WHERE dc.parent_object_id = @TableObjectId
               AND c.name = @ColumnName;
 
             IF @ExistingConstraint IS NOT NULL
