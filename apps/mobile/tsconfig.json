@@ -14,5 +14,5 @@
     "types": ["react", "react-native", "node"],
     "rootDirs": ["src", "../shared"]
   },
-  "include": ["src", "../shared"]
+  "include": ["App.tsx", "src", "../shared"]
 }

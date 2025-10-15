@@ -1,7 +1,8 @@
 import './utils/polyfills/ensurePlatformConstants';
 import 'react-native-gesture-handler';
-import './utils/setupErrorHandling';
+// eslint-disable-next-line no-duplicate-imports
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import './utils/setupErrorHandling';
 import { ThemeProvider } from './theme/ThemeProvider';
 import AppNavigator from './navigation/AppNavigator';
 import { useThemePreference } from './hooks/useThemePreference';

@@ -6,6 +6,8 @@ import { LogsAdmin } from './logs/LogsAdmin';
 import { NonUserDashboard } from './components/NonUserDashboard';
 import { CompanyDashboard } from './components/CompanyDashboard';
 import { UserDashboard } from './components/UserDashboard';
+import { TestToolbar } from './components/TestToolbar';
+import { appConfig } from './config/appConfig';
 import { RegisteredUser, Reservation } from './types/domain';
 
 type TenantOption = {
@@ -36,6 +38,8 @@ type ActiveView =
   | 'userSupport';
 
 type AuthMode = 'login' | 'signup';
+
+const { defaultTenantId, testToolbarStorageKey } = appConfig;
 
 const fallbackTenantId = '00000000-0000-0000-0000-000000000000';
 const environmentTenantId = (import.meta.env.VITE_TENANT_ID as string | undefined) ?? fallbackTenantId;
@@ -73,7 +77,18 @@ const domainOptions: DomainOption[] = [
   },
 ];
 
-const initialTenantId = environmentTenantId;
+function resolveInitialTenantId() {
+  if (typeof window !== 'undefined') {
+    const persistedTenant = window.localStorage.getItem(testToolbarStorageKey);
+    if (persistedTenant) {
+      return persistedTenant;
+    }
+  }
+
+  return defaultTenantId;
+}
+
+const initialTenantId = resolveInitialTenantId();
 const preferredLanguage = (navigator.languages && navigator.languages[0]) || navigator.language || 'tr-TR';
 
 const createUserKey = (email: string, tenantId: string) => `${email.trim().toLowerCase()}::${tenantId}`;
@@ -191,27 +206,16 @@ const initialReservations: Record<string, Reservation[]> = {
   ],
 };
 
-const resolveInitialTenantId = () => {
-  if (typeof window !== 'undefined') {
-    const persistedTenant = window.localStorage.getItem(appConfig.testToolbarStorageKey);
-    if (persistedTenant) {
-      return persistedTenant;
-    }
-  }
-
-  return appConfig.defaultTenantId;
-};
-
 const persistTenantSelection = (tenantId: string) => {
   if (typeof window === 'undefined') {
     return;
   }
 
   try {
-    if (tenantId === appConfig.defaultTenantId) {
-      window.localStorage.removeItem(appConfig.testToolbarStorageKey);
+    if (tenantId === defaultTenantId) {
+      window.localStorage.removeItem(testToolbarStorageKey);
     } else {
-      window.localStorage.setItem(appConfig.testToolbarStorageKey, tenantId);
+      window.localStorage.setItem(testToolbarStorageKey, tenantId);
     }
   } catch {
     // Silently ignore storage errors (private mode, quota, etc.).
@@ -232,12 +236,12 @@ const App: React.FC = () => {
   const [showAuthPanel, setShowAuthPanel] = useState<boolean>(false);
 
   const baseTenantOptions = useMemo(() => {
-    if (defaultTenantOptions.some((tenant) => tenant.id === appConfig.defaultTenantId)) {
+    if (defaultTenantOptions.some((tenant) => tenant.id === defaultTenantId)) {
       return defaultTenantOptions;
     }
 
-    return [{ id: appConfig.defaultTenantId, name: 'Varsayılan Tenant' }, ...defaultTenantOptions];
-  }, [appConfig.defaultTenantId]);
+    return [{ id: defaultTenantId, name: 'Varsayılan Tenant' }, ...defaultTenantOptions];
+  }, []);
 
   const tenantOptions = useMemo(() => {
     const map = new Map<string, TenantOption>();
@@ -248,18 +252,18 @@ const App: React.FC = () => {
     }
 
     return Array.from(map.values()).map((tenant) => {
-      if (tenant.id === appConfig.defaultTenantId && !tenant.name.includes('(varsayılan)')) {
+      if (tenant.id === defaultTenantId && !tenant.name.includes('(varsayılan)')) {
         return { ...tenant, name: `${tenant.name} (varsayılan)` };
       }
 
       return tenant;
     });
-  }, [appConfig.defaultTenantId, baseTenantOptions, selectedTenantId]);
+  }, [baseTenantOptions, selectedTenantId]);
 
   const defaultTenantName = useMemo(() => {
-    const match = baseTenantOptions.find((tenant) => tenant.id === appConfig.defaultTenantId);
+    const match = baseTenantOptions.find((tenant) => tenant.id === defaultTenantId);
     return match?.name ?? 'Varsayılan Tenant';
-  }, [appConfig.defaultTenantId, baseTenantOptions]);
+  }, [baseTenantOptions]);
 
   useEffect(() => {
     if (selectedDomain === 'admin') {
