@@ -13,3 +13,4 @@
 
 src/Server/AgnosticReservation.Api/bin
 apps/mobile/package-lock.json
+apps/web/dist

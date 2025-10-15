@@ -4,6 +4,8 @@ import { LocalizationProvider } from './localization/LocalizationProvider';
 import { LocalizationAdmin } from './localization/LocalizationAdmin';
 import { LogsAdmin } from './logs/LogsAdmin';
 import { NonUserDashboard } from './components/NonUserDashboard';
+import { TestToolbar } from './components/TestToolbar';
+import { appConfig } from './config/appConfig';
 
 type TenantOption = {
   id: string;
@@ -17,22 +19,12 @@ type RegisteredUser = {
   tenantId: string;
 };
 
-const fallbackTenantId = '00000000-0000-0000-0000-000000000000';
-const environmentTenantId = (import.meta.env.VITE_TENANT_ID as string | undefined) ?? fallbackTenantId;
-
 const defaultTenantOptions: TenantOption[] = [
   { id: '92d4f35e-bc1d-4c48-9c8a-7f8c5f5a2b11', name: 'Agnostic Hospitality Group' },
   { id: '6a1f0c2d-4333-47ba-8fbc-4d8b25c11ec3', name: 'Eurasia City Escapes' },
   { id: '01d2b496-6be4-4ae0-94f4-2eb1b876fae2', name: 'Anatolia Boutique Hotels' },
 ];
 
-const tenantOptions: TenantOption[] = defaultTenantOptions.some((tenant) => tenant.id === environmentTenantId)
-  ? defaultTenantOptions.map((tenant) =>
-      tenant.id === environmentTenantId ? { ...tenant, name: `${tenant.name} (varsayılan)` } : tenant
-    )
-  : [{ id: environmentTenantId, name: 'Varsayılan Tenant' }, ...defaultTenantOptions];
-
-const initialTenantId = environmentTenantId;
 const preferredLanguage = (navigator.languages && navigator.languages[0]) || navigator.language || 'tr-TR';
 
 const createUserKey = (email: string, tenantId: string) => `${email.trim().toLowerCase()}::${tenantId}`;
@@ -41,16 +33,73 @@ type ActiveView = 'dashboard' | 'localization' | 'logs' | 'profile';
 
 type AuthMode = 'login' | 'signup';
 
+const resolveInitialTenantId = () => {
+  if (typeof window !== 'undefined') {
+    const persistedTenant = window.localStorage.getItem(appConfig.testToolbarStorageKey);
+    if (persistedTenant) {
+      return persistedTenant;
+    }
+  }
+
+  return appConfig.defaultTenantId;
+};
+
+const persistTenantSelection = (tenantId: string) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    if (tenantId === appConfig.defaultTenantId) {
+      window.localStorage.removeItem(appConfig.testToolbarStorageKey);
+    } else {
+      window.localStorage.setItem(appConfig.testToolbarStorageKey, tenantId);
+    }
+  } catch {
+    // Silently ignore storage errors (private mode, quota, etc.).
+  }
+};
+
 const App: React.FC = () => {
-  const [selectedTenantId, setSelectedTenantId] = useState<string>(initialTenantId);
+  const [selectedTenantId, setSelectedTenantId] = useState<string>(() => resolveInitialTenantId());
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [authMode, setAuthMode] = useState<AuthMode>('login');
   const [registeredUsers, setRegisteredUsers] = useState<Record<string, RegisteredUser>>({});
   const [user, setUser] = useState<RegisteredUser | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [loginTenantId, setLoginTenantId] = useState<string>(initialTenantId);
-  const [signupTenantId, setSignupTenantId] = useState<string>(initialTenantId);
+  const [loginTenantId, setLoginTenantId] = useState<string>(selectedTenantId);
+  const [signupTenantId, setSignupTenantId] = useState<string>(selectedTenantId);
   const [showAuthPanel, setShowAuthPanel] = useState<boolean>(false);
+
+  const baseTenantOptions = useMemo(() => {
+    if (defaultTenantOptions.some((tenant) => tenant.id === appConfig.defaultTenantId)) {
+      return defaultTenantOptions;
+    }
+
+    return [{ id: appConfig.defaultTenantId, name: 'Varsayılan Tenant' }, ...defaultTenantOptions];
+  }, [appConfig.defaultTenantId]);
+
+  const tenantOptions = useMemo(() => {
+    const map = new Map<string, TenantOption>();
+    baseTenantOptions.forEach((tenant) => map.set(tenant.id, tenant));
+
+    if (selectedTenantId && !map.has(selectedTenantId)) {
+      map.set(selectedTenantId, { id: selectedTenantId, name: 'Seçili Tenant' });
+    }
+
+    return Array.from(map.values()).map((tenant) => {
+      if (tenant.id === appConfig.defaultTenantId && !tenant.name.includes('(varsayılan)')) {
+        return { ...tenant, name: `${tenant.name} (varsayılan)` };
+      }
+
+      return tenant;
+    });
+  }, [appConfig.defaultTenantId, baseTenantOptions, selectedTenantId]);
+
+  const defaultTenantName = useMemo(() => {
+    const match = baseTenantOptions.find((tenant) => tenant.id === appConfig.defaultTenantId);
+    return match?.name ?? 'Varsayılan Tenant';
+  }, [appConfig.defaultTenantId, baseTenantOptions]);
 
   useEffect(() => {
     if (activeView === 'profile' && !user) {
@@ -68,13 +117,16 @@ const App: React.FC = () => {
   const selectedTenantName = useMemo(() => {
     const match = tenantOptions.find((tenant) => tenant.id === selectedTenantId);
     return match?.name ?? 'Seçili tenant';
-  }, [selectedTenantId]);
+  }, [selectedTenantId, tenantOptions]);
 
   const handleTenantChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedTenantId(event.target.value);
+    const tenantId = event.target.value;
+    persistTenantSelection(tenantId);
+    setSelectedTenantId(tenantId);
   };
 
   const handleTenantSelect = (tenantId: string) => {
+    persistTenantSelection(tenantId);
     setSelectedTenantId(tenantId);
   };
 
@@ -141,6 +193,7 @@ const App: React.FC = () => {
 
     setAuthError(null);
     setUser(account);
+    persistTenantSelection(account.tenantId);
     setSelectedTenantId(account.tenantId);
     setActiveView('profile');
     setShowAuthPanel(false);
@@ -176,6 +229,7 @@ const App: React.FC = () => {
     setRegisteredUsers((previous) => ({ ...previous, [key]: newUser }));
     setAuthError(null);
     setUser(newUser);
+    persistTenantSelection(signupTenantId);
     setSelectedTenantId(signupTenantId);
     setActiveView('profile');
     setAuthMode('login');
@@ -189,10 +243,44 @@ const App: React.FC = () => {
     user || showAuthPanel ? 'dashboard-layout--with-aside' : 'dashboard-layout--single',
   ].join(' ');
 
+  const handleToolbarTenantChange = (tenantId: string) => {
+    if (tenantId === selectedTenantId) {
+      return;
+    }
+
+    persistTenantSelection(tenantId);
+
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  };
+
+  const handleToolbarReset = () => {
+    if (selectedTenantId === appConfig.defaultTenantId) {
+      return;
+    }
+
+    persistTenantSelection(appConfig.defaultTenantId);
+
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  };
+
+  const isTenantOverrideActive = selectedTenantId !== appConfig.defaultTenantId;
+
   return (
     <LocalizationProvider tenantId={selectedTenantId} initialLanguage={preferredLanguage}>
       <div className="app-shell">
         <div className="app-container">
+          <TestToolbar
+            tenantOptions={tenantOptions}
+            selectedTenantId={selectedTenantId}
+            defaultTenantName={defaultTenantName}
+            onTenantChange={handleToolbarTenantChange}
+            onResetToDefault={handleToolbarReset}
+            isOverrideActive={isTenantOverrideActive}
+          />
           <header className="app-header">
             <div className="app-header__brand">
               <span className="app-header__title">Agnostic Reservation</span>
