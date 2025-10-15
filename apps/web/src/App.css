@@ -33,6 +33,84 @@ body {
   gap: 32px;
 }
 
+.test-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  padding: 14px 20px;
+  border-radius: 18px;
+  border: 1px dashed rgba(79, 107, 255, 0.35);
+  background: rgba(79, 107, 255, 0.08);
+  color: #1f2c55;
+  font-size: 0.9rem;
+}
+
+.test-toolbar__group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.test-toolbar__title {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: #334077;
+}
+
+.test-toolbar__control {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: #4a5780;
+}
+
+.test-toolbar__select {
+  appearance: none;
+  border: 1px solid #9aa6d1;
+  border-radius: 12px;
+  padding: 8px 14px;
+  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: #1c274c;
+  min-width: 220px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.test-toolbar__select:focus {
+  outline: none;
+  border-color: #4f6bff;
+  box-shadow: 0 0 0 3px rgba(79, 107, 255, 0.25);
+}
+
+.test-toolbar__info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #3a4775;
+}
+
+.test-toolbar__reset {
+  border: none;
+  background: #ffffff;
+  color: #2f3e7d;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(79, 107, 255, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.test-toolbar__reset:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(79, 107, 255, 0.25);
+}
+
 .app-header {
   display: flex;
   flex-wrap: wrap;
