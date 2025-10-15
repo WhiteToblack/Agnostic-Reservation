@@ -1,8 +1,11 @@
+export type UserRole = 'admin' | 'company' | 'user';
+
 export type RegisteredUser = {
   fullName: string;
   email: string;
   password: string;
   tenantId: string;
+  role: UserRole;
 };
 
 export type ReservationStatus = 'Onaylandı' | 'Beklemede' | 'İptal';
