@@ -2,9 +2,29 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   BillingInformation,
   ContactInformation,
-  Reservation,
   SupportInteraction,
 } from '../types/domain';
+
+export type ReservationStatusCode = 'Pending' | 'Confirmed' | 'Cancelled' | 'Completed';
+
+export type ReservationTimelinePoint = {
+  date: string;
+  count: number;
+};
+
+type ReservationRow = {
+  id: string;
+  resourceId: string;
+  resourceName: string;
+  startUtc: string;
+  endUtc: string;
+  status: ReservationStatusCode;
+};
+
+type ResourceOption = {
+  id: string;
+  name: string;
+};
 
 type UserDashboardView = 'userReservations' | 'userProfile' | 'userSupport';
 
@@ -12,50 +32,102 @@ type UserDashboardProps = {
   userName: string;
   userEmail: string;
   tenantName: string;
-  reservations: Reservation[];
+  reservations: ReservationRow[];
+  timeline: ReservationTimelinePoint[];
+  resources: ResourceOption[];
   activeView: UserDashboardView;
   contact: ContactInformation;
   billing: BillingInformation;
   supportHistory: SupportInteraction[];
   tags?: string[];
+  loading?: boolean;
   onProfileUpdate: (updates: { contact: ContactInformation; billing: BillingInformation }) => void;
   onCreateSupportRequest: (subject: string, summary: string) => void;
+  onReservationCreate: (payload: { resourceId: string; startUtc: string; endUtc: string }) => void;
+  onReservationUpdate: (
+    reservationId: string,
+    updates: { startUtc?: string; endUtc?: string; status?: ReservationStatusCode }
+  ) => void;
+  onReservationDelete: (reservationId: string) => void;
 };
 
-const formatDateRange = (checkIn: string, checkOut: string) => {
-  const start = new Date(checkIn);
-  const end = new Date(checkOut);
-  const dateFormatter = new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: 'long' });
-  return `${dateFormatter.format(start)} - ${dateFormatter.format(end)}`;
+const statusLabels: Record<ReservationStatusCode, string> = {
+  Pending: 'Beklemede',
+  Confirmed: 'Onaylandı',
+  Cancelled: 'İptal',
+  Completed: 'Tamamlandı',
 };
 
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: 'long', year: 'numeric', weekday: 'long' }).format(
-    new Date(value)
-  );
+const statusOptions: ReservationStatusCode[] = ['Pending', 'Confirmed', 'Cancelled', 'Completed'];
 
-const formatCurrency = (value: number) =>
-  new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(value);
+const formatDateTimeRange = (startIso: string, endIso: string) => {
+  const start = new Date(startIso);
+  const end = new Date(endIso);
+  const sameDay = start.toDateString() === end.toDateString();
+  const dateFormatter = new Intl.DateTimeFormat('tr-TR', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
+  const timeFormatter = new Intl.DateTimeFormat('tr-TR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const datePart = sameDay
+    ? dateFormatter.format(start)
+    : `${dateFormatter.format(start)} - ${dateFormatter.format(end)}`;
+  return `${datePart} · ${timeFormatter.format(start)} - ${timeFormatter.format(end)}`;
+};
+
+const toDateInputValue = (isoValue: string) => new Date(isoValue).toISOString().split('T')[0];
+const toTimeInputValue = (isoValue: string) => new Date(isoValue).toISOString().split('T')[1]?.slice(0, 5) ?? '09:00';
+
+const computeDurationMinutes = (startIso: string, endIso: string) => {
+  const diff = new Date(endIso).getTime() - new Date(startIso).getTime();
+  return Math.max(30, Math.round(diff / (1000 * 60)));
+};
 
 export const UserDashboard: React.FC<UserDashboardProps> = ({
   userName,
   userEmail,
   tenantName,
   reservations,
+  timeline,
+  resources,
   activeView,
   contact,
   billing,
   supportHistory,
   tags = [],
+  loading = false,
   onProfileUpdate,
   onCreateSupportRequest,
+  onReservationCreate,
+  onReservationUpdate,
+  onReservationDelete,
 }) => {
   const [contactDraft, setContactDraft] = useState<ContactInformation>(contact);
   const [billingDraft, setBillingDraft] = useState<BillingInformation>(billing);
-  const [profileMessage, setProfileMessage] = useState<string | null>(null);
   const [supportSubject, setSupportSubject] = useState('');
   const [supportSummary, setSupportSummary] = useState('');
+  const [profileMessage, setProfileMessage] = useState<string | null>(null);
   const [supportMessage, setSupportMessage] = useState<string | null>(null);
+  const [reservationMessage, setReservationMessage] = useState<
+    { tone: 'success' | 'warning'; text: string } | null
+  >(null);
+  const [newReservationForm, setNewReservationForm] = useState({
+    resourceId: resources[0]?.id ?? '',
+    date: new Date().toISOString().split('T')[0],
+    startTime: '09:00',
+    durationMinutes: 60,
+  });
+  const [editingReservationId, setEditingReservationId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    date: '',
+    startTime: '09:00',
+    durationMinutes: 60,
+    status: 'Confirmed' as ReservationStatusCode,
+  });
 
   useEffect(() => {
     setContactDraft(contact);
@@ -66,42 +138,45 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   }, [billing]);
 
   useEffect(() => {
+    setNewReservationForm((form) => {
+      if (form.resourceId && resources.some((resource) => resource.id === form.resourceId)) {
+        return form;
+      }
+
+      return {
+        ...form,
+        resourceId: resources[0]?.id ?? '',
+      };
+    });
+  }, [resources]);
+
+  useEffect(() => {
     setProfileMessage(null);
     setSupportMessage(null);
-  }, [activeView]);
+    setReservationMessage(null);
+    setEditingReservationId(null);
+  }, [activeView, reservations]);
 
-  const today = useMemo(() => new Date(), []);
-
-  const { upcomingReservations, pastReservations } = useMemo(() => {
-    const upcoming = reservations
-      .filter((reservation) => new Date(reservation.checkOut) >= today)
-      .sort((a, b) => new Date(a.checkIn).getTime() - new Date(b.checkIn).getTime());
-
-    const history = reservations
-      .filter((reservation) => new Date(reservation.checkOut) < today)
-      .sort((a, b) => new Date(b.checkIn).getTime() - new Date(a.checkIn).getTime());
-
-    return { upcomingReservations: upcoming, pastReservations: history };
-  }, [reservations, today]);
-
-  const nextReservation = upcomingReservations[0];
-
-  const totalNights = reservations.reduce((total, reservation) => total + reservation.nights, 0);
-  const totalGuests = reservations.reduce((total, reservation) => total + reservation.guests, 0);
-  const totalSpend = reservations.reduce((total, reservation) => total + reservation.totalPrice, 0);
-  const orderedSupportHistory = useMemo(
+  const sortedReservations = useMemo(
     () =>
-      [...supportHistory].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      [...reservations].sort(
+        (a, b) => new Date(b.startUtc).getTime() - new Date(a.startUtc).getTime()
       ),
-    [supportHistory]
+    [reservations]
   );
-  const firstName = userName.split(' ')[0];
+
+  const nextReservation = useMemo(
+    () =>
+      sortedReservations
+        .filter((reservation) => new Date(reservation.endUtc) > new Date())
+        .sort((a, b) => new Date(a.startUtc).getTime() - new Date(b.startUtc).getTime())[0],
+    [sortedReservations]
+  );
 
   const handleProfileSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     onProfileUpdate({ contact: contactDraft, billing: billingDraft });
-    setProfileMessage('Profil ayarlarınız kaydedildi.');
+    setProfileMessage('Profil bilgileri güncellendi.');
   };
 
   const handleSupportSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -110,11 +185,94 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       setSupportMessage('Lütfen konu ve açıklama alanlarını doldurun.');
       return;
     }
-
     onCreateSupportRequest(supportSubject.trim(), supportSummary.trim());
     setSupportSubject('');
     setSupportSummary('');
     setSupportMessage('Destek talebiniz alındı.');
+  };
+
+  const handleCreateReservation = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!newReservationForm.resourceId) {
+      setReservationMessage({ tone: 'warning', text: 'Lütfen bir kaynak seçin.' });
+      return;
+    }
+
+    const startUtc = new Date(
+      `${newReservationForm.date}T${newReservationForm.startTime}:00`
+    ).toISOString();
+    const endUtc = new Date(
+      new Date(`${newReservationForm.date}T${newReservationForm.startTime}:00`).getTime() +
+        newReservationForm.durationMinutes * 60 * 1000
+    ).toISOString();
+
+    onReservationCreate({
+      resourceId: newReservationForm.resourceId,
+      startUtc,
+      endUtc,
+    });
+    setNewReservationForm((form) => ({ ...form, durationMinutes: 60 }));
+    setReservationMessage({ tone: 'success', text: 'Rezervasyon isteğiniz alındı.' });
+  };
+
+  const beginEditReservation = (reservation: ReservationRow) => {
+    setEditingReservationId(reservation.id);
+    setEditForm({
+      date: toDateInputValue(reservation.startUtc),
+      startTime: toTimeInputValue(reservation.startUtc),
+      durationMinutes: computeDurationMinutes(reservation.startUtc, reservation.endUtc),
+      status: reservation.status,
+    });
+  };
+
+  const handleEditReservationSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editingReservationId) {
+      return;
+    }
+    const startUtc = new Date(`${editForm.date}T${editForm.startTime}:00`).toISOString();
+    const endUtc = new Date(
+      new Date(`${editForm.date}T${editForm.startTime}:00`).getTime() + editForm.durationMinutes * 60 * 1000
+    ).toISOString();
+    onReservationUpdate(editingReservationId, {
+      startUtc,
+      endUtc,
+      status: editForm.status,
+    });
+    setEditingReservationId(null);
+  };
+
+  const timelineMax = useMemo(
+    () => Math.max(...timeline.map((point) => point.count), 1),
+    [timeline]
+  );
+
+  const renderTimeline = () => {
+    if (timeline.length === 0) {
+      return <p className="user-dashboard__empty">Yaklaşan rezervasyon bulunmuyor.</p>;
+    }
+
+    return (
+      <ul className="user-dashboard__timeline" role="list">
+        {timeline.map((point) => {
+          const width = `${Math.max(10, (point.count / timelineMax) * 100)}%`;
+          return (
+            <li key={point.date} className="user-dashboard__timeline-item">
+              <span className="user-dashboard__timeline-date">
+                {new Date(`${point.date}T00:00:00Z`).toLocaleDateString('tr-TR', {
+                  day: '2-digit',
+                  month: 'short',
+                })}
+              </span>
+              <div className="user-dashboard__timeline-bar" aria-hidden>
+                <span style={{ width }} />
+              </div>
+              <span className="user-dashboard__timeline-count">{point.count} randevu</span>
+            </li>
+          );
+        })}
+      </ul>
+    );
   };
 
   return (
@@ -122,10 +280,10 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
       <header className="user-dashboard__header">
         <div>
           <span className="user-dashboard__badge">{tenantName} misafir hesabı</span>
-          <h1>Merhaba {firstName}, seyahatleriniz Agnostic Reservation ile güvende</h1>
+          <h1>Merhaba {userName.split(' ')[0]}, rezervasyonlarını tek panelden yönet</h1>
           <p>
-            Rezervasyon detaylarını yönetin, konaklama tercihlerinizin takibini yapın ve destek ekibimizle tek panelden iletişime
-            geçin.
+            Ajandandaki tüm rezervasyonları görüntüle, yeni talep oluştur ve iletişim bilgilerini güncel tut.
+            Agnostic Reservation, deneyimini uçtan uca destekler.
           </p>
           {tags.length > 0 && (
             <div className="user-dashboard__tags" role="list">
@@ -138,429 +296,372 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           )}
         </div>
         <div className="user-dashboard__helper">
-          <strong>Alan adı:</strong>
-          <span>user.agnostic.com</span>
-          <p>Bu ekran yalnızca son kullanıcı (misafir) deneyimi için sunulmaktadır.</p>
+          <strong>E-posta</strong>
+          <span>{userEmail}</span>
+          <strong>Aktif tenant</strong>
+          <span>{tenantName}</span>
         </div>
       </header>
 
       {activeView === 'userReservations' && (
-        <>
-          {nextReservation ? (
-            <article className="user-dashboard__card user-dashboard__card--highlight">
-              <header>
-                <h2>Bir sonraki konaklamanız hazır</h2>
-                <span className="user-dashboard__status">{nextReservation.status}</span>
-              </header>
-              <div className="user-dashboard__card-body">
-                <div>
-                  <strong>{nextReservation.propertyName}</strong>
-                  <p>{formatDateRange(nextReservation.checkIn, nextReservation.checkOut)}</p>
-                  <p>
-                    {nextReservation.guests} misafir · {nextReservation.nights} gece · {nextReservation.channel} kanalı
-                  </p>
-                  {nextReservation.notes && <p className="user-dashboard__note">Not: {nextReservation.notes}</p>}
-                </div>
-                <div className="user-dashboard__price">
-                  <span>Toplam tutar</span>
-                  <strong>{formatCurrency(nextReservation.totalPrice)}</strong>
-                </div>
-              </div>
-              <footer>
-                <button type="button">Giriş çıkış bilgilerini görüntüle</button>
-                <button type="button" className="user-dashboard__ghost-button">
-                  Rezervasyonu yönet
-                </button>
-              </footer>
-            </article>
-          ) : (
-            <article className="user-dashboard__card user-dashboard__card--empty">
-              <h2>Henüz yaklaşan bir rezervasyonunuz yok</h2>
-              <p>Yeni bir seyahat planlamak için destek ekibimizle iletişime geçebilir veya sadakat programınızı inceleyebilirsiniz.</p>
-              <button type="button">Yeni rezervasyon talebi oluştur</button>
-            </article>
-          )}
-
-          <div className="user-dashboard__grid">
-            <article className="user-dashboard__card">
-              <header>
-                <h2>Rezervasyon özetiniz</h2>
-                <p>Hesabınız üzerinden yapılan tüm işlemler</p>
-              </header>
-              <dl className="user-dashboard__definition-list">
-                <div>
-                  <dt>Toplam gece</dt>
-                  <dd>{totalNights}</dd>
-                </div>
-                <div>
-                  <dt>Toplam misafir</dt>
-                  <dd>{totalGuests}</dd>
-                </div>
-                <div>
-                  <dt>Toplam harcama</dt>
-                  <dd>{formatCurrency(totalSpend)}</dd>
-                </div>
-              </dl>
-            </article>
-
-            <article className="user-dashboard__card">
-              <header>
-                <h2>Yaklaşan seyahatler</h2>
-                <p>Onaylanmış rezervasyonlarınız</p>
-              </header>
-              {upcomingReservations.length > 0 ? (
-                <ul className="user-dashboard__list">
-                  {upcomingReservations.map((reservation) => (
-                    <li key={reservation.id}>
-                      <div>
-                        <strong>{reservation.propertyName}</strong>
-                        <span>{reservation.channel}</span>
-                      </div>
-                      <div>
-                        <span>{formatDate(reservation.checkIn)}</span>
-                        <span className="user-dashboard__status">{reservation.status}</span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="user-dashboard__empty">Yaklaşan rezervasyon bulunmuyor.</p>
-              )}
-            </article>
-          </div>
-
-          <article className="user-dashboard__card">
+        <div className="user-dashboard__content">
+          <article className="user-dashboard__card user-dashboard__card--highlight">
             <header>
-              <h2>Geçmiş konaklamalar</h2>
-              <p>Son seyahatlerinizin özeti</p>
+              <h2>Rezervasyon zaman çizelgesi</h2>
+              <p>Önümüzdeki günlerde planlanmış randevuların yoğunluğunu inceleyin.</p>
             </header>
-            {pastReservations.length > 0 ? (
-              <ul className="user-dashboard__list user-dashboard__list--history">
-                {pastReservations.map((reservation) => (
-                  <li key={reservation.id}>
-                    <div>
-                      <strong>{reservation.propertyName}</strong>
-                      <span>{formatDateRange(reservation.checkIn, reservation.checkOut)}</span>
-                    </div>
-                    <div>
-                      <span>{reservation.guests} misafir</span>
-                      <span>{formatCurrency(reservation.totalPrice)}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="user-dashboard__empty">Geçmiş kayıt bulunamadı.</p>
+            {renderTimeline()}
+            {nextReservation && (
+              <footer>
+                <strong>Sonraki rezervasyon</strong>
+                <span>{formatDateTimeRange(nextReservation.startUtc, nextReservation.endUtc)}</span>
+                <span>{nextReservation.resourceName} · {statusLabels[nextReservation.status]}</span>
+              </footer>
             )}
           </article>
-        </>
+
+          <div className="user-dashboard__grid-layout">
+            <article className="user-dashboard__card">
+              <header>
+                <h2>Yeni rezervasyon ekle</h2>
+                <p>Uygun bir kaynağı seçin ve istediğiniz saat aralığını kaydedin.</p>
+              </header>
+              <form className="user-dashboard__form" onSubmit={handleCreateReservation}>
+                <label>
+                  <span>Kaynak</span>
+                  <select
+                    value={newReservationForm.resourceId}
+                    onChange={(event) =>
+                      setNewReservationForm((form) => ({ ...form, resourceId: event.target.value }))
+                    }
+                    disabled={loading}
+                  >
+                    <option value="">Kaynak seçin</option>
+                    {resources.map((resource) => (
+                      <option key={resource.id} value={resource.id}>
+                        {resource.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="user-dashboard__form-row">
+                  <label>
+                    <span>Tarih</span>
+                    <input
+                      type="date"
+                      value={newReservationForm.date}
+                      onChange={(event) =>
+                        setNewReservationForm((form) => ({ ...form, date: event.target.value }))
+                      }
+                      disabled={loading}
+                    />
+                  </label>
+                  <label>
+                    <span>Başlangıç</span>
+                    <input
+                      type="time"
+                      value={newReservationForm.startTime}
+                      onChange={(event) =>
+                        setNewReservationForm((form) => ({ ...form, startTime: event.target.value }))
+                      }
+                      disabled={loading}
+                    />
+                  </label>
+                  <label>
+                    <span>Süre (dakika)</span>
+                    <input
+                      type="number"
+                      min={30}
+                      step={15}
+                      value={newReservationForm.durationMinutes}
+                      onChange={(event) =>
+                        setNewReservationForm((form) => ({
+                          ...form,
+                          durationMinutes: Number(event.target.value) || 60,
+                        }))
+                      }
+                      disabled={loading}
+                    />
+                  </label>
+                </div>
+                <div className="user-dashboard__form-actions">
+                  <button type="submit" disabled={loading}>
+                    Ekle
+                  </button>
+                </div>
+                {reservationMessage && (
+                  <p
+                    className={`user-dashboard__feedback${
+                      reservationMessage.tone === 'warning' ? ' user-dashboard__feedback--warning' : ''
+                    }`}
+                  >
+                    {reservationMessage.text}
+                  </p>
+                )}
+              </form>
+            </article>
+
+            <article className="user-dashboard__card user-dashboard__card--table">
+              <header>
+                <h2>Rezervasyon listesi</h2>
+                <p>En yeni işlemler üstte olacak şekilde sıralanmıştır.</p>
+              </header>
+              <div className="user-dashboard__table-wrapper" role="region" aria-live="polite">
+                {sortedReservations.length === 0 ? (
+                  <p className="user-dashboard__empty">Henüz kayıtlı bir rezervasyon yok.</p>
+                ) : (
+                  <table className="user-dashboard__table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Kaynak</th>
+                        <th scope="col">Zaman</th>
+                        <th scope="col">Durum</th>
+                        <th scope="col" className="user-dashboard__table-actions">İşlemler</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedReservations.map((reservation) => {
+                        const isEditing = editingReservationId === reservation.id;
+                        return (
+                          <tr key={reservation.id}>
+                            <td data-label="Kaynak">{reservation.resourceName}</td>
+                            <td data-label="Zaman">{formatDateTimeRange(reservation.startUtc, reservation.endUtc)}</td>
+                            <td data-label="Durum">{statusLabels[reservation.status]}</td>
+                            <td className="user-dashboard__table-actions">
+                              {isEditing ? (
+                                <form onSubmit={handleEditReservationSubmit} className="user-dashboard__inline-form">
+                                  <input
+                                    type="date"
+                                    value={editForm.date}
+                                    onChange={(event) =>
+                                      setEditForm((form) => ({ ...form, date: event.target.value }))
+                                    }
+                                    disabled={loading}
+                                  />
+                                  <input
+                                    type="time"
+                                    value={editForm.startTime}
+                                    onChange={(event) =>
+                                      setEditForm((form) => ({ ...form, startTime: event.target.value }))
+                                    }
+                                    disabled={loading}
+                                  />
+                                  <input
+                                    type="number"
+                                    min={30}
+                                    step={15}
+                                    value={editForm.durationMinutes}
+                                    onChange={(event) =>
+                                      setEditForm((form) => ({
+                                        ...form,
+                                        durationMinutes: Number(event.target.value) || 60,
+                                      }))
+                                    }
+                                    disabled={loading}
+                                  />
+                                  <select
+                                    value={editForm.status}
+                                    onChange={(event) =>
+                                      setEditForm((form) => ({
+                                        ...form,
+                                        status: event.target.value as ReservationStatusCode,
+                                      }))
+                                    }
+                                    disabled={loading}
+                                  >
+                                    {statusOptions.map((option) => (
+                                      <option key={option} value={option}>
+                                        {statusLabels[option]}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <button type="submit" disabled={loading}>
+                                    Kaydet
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="user-dashboard__ghost-button"
+                                    onClick={() => setEditingReservationId(null)}
+                                  >
+                                    İptal
+                                  </button>
+                                </form>
+                              ) : (
+                                <div className="user-dashboard__action-group">
+                                  <button type="button" onClick={() => beginEditReservation(reservation)} disabled={loading}>
+                                    Güncelle
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="user-dashboard__ghost-button"
+                                    onClick={() => onReservationDelete(reservation.id)}
+                                    disabled={loading}
+                                  >
+                                    Sil
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </article>
+          </div>
+        </div>
       )}
 
       {activeView === 'userProfile' && (
-        <div className="user-dashboard__grid user-dashboard__grid--balanced">
-          <article className="user-dashboard__card user-dashboard__card--form">
+        <div className="user-dashboard__content">
+          <article className="user-dashboard__card">
             <header>
-              <h2>Profil ayarları</h2>
-              <p>İletişim ve faturalandırma bilgilerinizi tek panelden güncelleyin.</p>
+              <h2>İletişim bilgileri</h2>
+              <p>Rezervasyon onayları ve bildirimler için kullanılacak iletişim adresleri.</p>
             </header>
-            <dl className="user-dashboard__info-grid">
-              <div>
-                <dt>Ad Soyad</dt>
-                <dd>{userName}</dd>
-              </div>
-              <div>
-                <dt>E-posta</dt>
-                <dd>{userEmail}</dd>
-              </div>
-              <div>
-                <dt>Bağlı tenant</dt>
-                <dd>{tenantName}</dd>
-              </div>
-            </dl>
-            {profileMessage && (
-              <div className="user-dashboard__alert" role="status">
-                {profileMessage}
-                <button type="button" onClick={() => setProfileMessage(null)} aria-label="Bilgilendirmeyi kapat">
-                  ×
-                </button>
-              </div>
-            )}
-            <form className="user-dashboard__settings" onSubmit={handleProfileSubmit}>
-              <section>
-                <h3>İletişim</h3>
+            <form className="user-dashboard__form" onSubmit={handleProfileSubmit}>
+              <label>
+                <span>Telefon</span>
+                <input
+                  value={contactDraft.phoneNumber}
+                  onChange={(event) => setContactDraft((draft) => ({ ...draft, phoneNumber: event.target.value }))}
+                />
+              </label>
+              <label>
+                <span>Adres satırı 1</span>
+                <input
+                  value={contactDraft.addressLine1}
+                  onChange={(event) => setContactDraft((draft) => ({ ...draft, addressLine1: event.target.value }))}
+                />
+              </label>
+              <label>
+                <span>Adres satırı 2</span>
+                <input
+                  value={contactDraft.addressLine2 ?? ''}
+                  onChange={(event) => setContactDraft((draft) => ({ ...draft, addressLine2: event.target.value }))}
+                />
+              </label>
+              <div className="user-dashboard__form-row">
                 <label>
-                  <span>Telefon</span>
+                  <span>Şehir</span>
                   <input
-                    value={contactDraft.phoneNumber}
-                    onChange={(event) =>
-                      setContactDraft((draft) => ({ ...draft, phoneNumber: event.target.value }))
-                    }
-                    placeholder="+90 5XX XXX XX XX"
+                    value={contactDraft.city}
+                    onChange={(event) => setContactDraft((draft) => ({ ...draft, city: event.target.value }))}
                   />
                 </label>
-                <label>
-                  <span>Adres satırı 1</span>
-                  <input
-                    value={contactDraft.addressLine1}
-                    onChange={(event) =>
-                      setContactDraft((draft) => ({ ...draft, addressLine1: event.target.value }))
-                    }
-                    placeholder="Mahalle, cadde ve numara"
-                  />
-                </label>
-                <label>
-                  <span>Adres satırı 2</span>
-                  <input
-                    value={contactDraft.addressLine2 ?? ''}
-                    onChange={(event) =>
-                      setContactDraft((draft) => ({ ...draft, addressLine2: event.target.value }))
-                    }
-                    placeholder="Daire, ilçe vb."
-                  />
-                </label>
-                <div className="user-dashboard__field-row">
-                  <label>
-                    <span>Şehir</span>
-                    <input
-                      value={contactDraft.city}
-                      onChange={(event) =>
-                        setContactDraft((draft) => ({ ...draft, city: event.target.value }))
-                      }
-                      placeholder="Şehir"
-                    />
-                  </label>
-                  <label>
-                    <span>Posta kodu</span>
-                    <input
-                      value={contactDraft.postalCode}
-                      onChange={(event) =>
-                        setContactDraft((draft) => ({ ...draft, postalCode: event.target.value }))
-                      }
-                      placeholder="00000"
-                    />
-                  </label>
-                </div>
                 <label>
                   <span>Ülke</span>
                   <input
                     value={contactDraft.country}
-                    onChange={(event) =>
-                      setContactDraft((draft) => ({ ...draft, country: event.target.value }))
-                    }
-                    placeholder="Türkiye"
+                    onChange={(event) => setContactDraft((draft) => ({ ...draft, country: event.target.value }))}
                   />
                 </label>
-              </section>
+                <label>
+                  <span>Posta kodu</span>
+                  <input
+                    value={contactDraft.postalCode}
+                    onChange={(event) => setContactDraft((draft) => ({ ...draft, postalCode: event.target.value }))}
+                  />
+                </label>
+              </div>
 
-              <section>
-                <h3>Ödeme ve fatura</h3>
+              <header>
+                <h3>Faturalandırma</h3>
+              </header>
+              <label>
+                <span>Fatura unvanı</span>
+                <input
+                  value={billingDraft.billingName}
+                  onChange={(event) => setBillingDraft((draft) => ({ ...draft, billingName: event.target.value }))}
+                />
+              </label>
+              <label>
+                <span>Vergi numarası</span>
+                <input
+                  value={billingDraft.billingTaxNumber}
+                  onChange={(event) => setBillingDraft((draft) => ({ ...draft, billingTaxNumber: event.target.value }))}
+                />
+              </label>
+              <label>
+                <span>Fatura adresi</span>
+                <input
+                  value={billingDraft.billingAddress}
+                  onChange={(event) => setBillingDraft((draft) => ({ ...draft, billingAddress: event.target.value }))}
+                />
+              </label>
+              <div className="user-dashboard__form-row">
                 <label>
-                  <span>Kart sahibinin adı</span>
+                  <span>Şehir</span>
                   <input
-                    value={billingDraft.cardHolderName}
-                    onChange={(event) =>
-                      setBillingDraft((draft) => ({ ...draft, cardHolderName: event.target.value }))
-                    }
-                    placeholder="Kart üzerindeki isim"
+                    value={billingDraft.billingCity}
+                    onChange={(event) => setBillingDraft((draft) => ({ ...draft, billingCity: event.target.value }))}
                   />
                 </label>
-                <div className="user-dashboard__field-row">
-                  <label>
-                    <span>Kart markası</span>
-                    <input
-                      value={billingDraft.cardBrand}
-                      onChange={(event) =>
-                        setBillingDraft((draft) => ({ ...draft, cardBrand: event.target.value }))
-                      }
-                      placeholder="Visa, MasterCard"
-                    />
-                  </label>
-                  <label>
-                    <span>Son dört hane</span>
-                    <input
-                      value={billingDraft.cardLast4}
-                      onChange={(event) =>
-                        setBillingDraft((draft) => ({ ...draft, cardLast4: event.target.value }))
-                      }
-                      placeholder="1234"
-                    />
-                  </label>
-                </div>
-                <div className="user-dashboard__field-row">
-                  <label>
-                    <span>Son kullanma (Ay)</span>
-                    <input
-                      value={billingDraft.expiryMonth}
-                      onChange={(event) =>
-                        setBillingDraft((draft) => ({ ...draft, expiryMonth: event.target.value }))
-                      }
-                      placeholder="08"
-                    />
-                  </label>
-                  <label>
-                    <span>Son kullanma (Yıl)</span>
-                    <input
-                      value={billingDraft.expiryYear}
-                      onChange={(event) =>
-                        setBillingDraft((draft) => ({ ...draft, expiryYear: event.target.value }))
-                      }
-                      placeholder="27"
-                    />
-                  </label>
-                </div>
                 <label>
-                  <span>Fatura adresi</span>
-                  <input
-                    value={billingDraft.billingAddress}
-                    onChange={(event) =>
-                      setBillingDraft((draft) => ({ ...draft, billingAddress: event.target.value }))
-                    }
-                    placeholder="Adres satırı"
-                  />
-                </label>
-                <div className="user-dashboard__field-row">
-                  <label>
-                    <span>Fatura şehri</span>
-                    <input
-                      value={billingDraft.billingCity}
-                      onChange={(event) =>
-                        setBillingDraft((draft) => ({ ...draft, billingCity: event.target.value }))
-                      }
-                      placeholder="İstanbul"
-                    />
-                  </label>
-                  <label>
-                    <span>Fatura posta kodu</span>
-                    <input
-                      value={billingDraft.billingPostalCode}
-                      onChange={(event) =>
-                        setBillingDraft((draft) => ({ ...draft, billingPostalCode: event.target.value }))
-                      }
-                      placeholder="34728"
-                    />
-                  </label>
-                </div>
-                <label>
-                  <span>Fatura ülkesi</span>
+                  <span>Ülke</span>
                   <input
                     value={billingDraft.billingCountry}
-                    onChange={(event) =>
-                      setBillingDraft((draft) => ({ ...draft, billingCountry: event.target.value }))
-                    }
-                    placeholder="Türkiye"
+                    onChange={(event) => setBillingDraft((draft) => ({ ...draft, billingCountry: event.target.value }))}
                   />
                 </label>
-              </section>
+                <label>
+                  <span>Posta kodu</span>
+                  <input
+                    value={billingDraft.billingPostalCode}
+                    onChange={(event) => setBillingDraft((draft) => ({ ...draft, billingPostalCode: event.target.value }))}
+                  />
+                </label>
+              </div>
 
               <div className="user-dashboard__form-actions">
-                <button type="submit">Profil ayarlarımı kaydet</button>
+                <button type="submit">Profili kaydet</button>
               </div>
+              {profileMessage && <p className="user-dashboard__feedback">{profileMessage}</p>}
             </form>
-          </article>
-
-          <article className="user-dashboard__card">
-            <header>
-              <h2>Konaklama tercihleri</h2>
-              <p>Sık kullanılan istekleriniz</p>
-            </header>
-            <ul className="user-dashboard__bullets">
-              <li>Üst kat ve sessiz oda tercihi kaydedildi.</li>
-              <li>Glutensiz kahvaltı menüsü isteği profilinize işlendi.</li>
-              <li>Geç çıkış önceliği uygun müsaitlik olduğunda otomatik uygulanır.</li>
-            </ul>
-          </article>
-
-          <article className="user-dashboard__card user-dashboard__card--highlight">
-            <header>
-              <h2>Sadakat durumu</h2>
-              <p>Misafir kulübü avantajlarınız</p>
-            </header>
-            <ul className="user-dashboard__bullets">
-              <li>Seviye: Platinum · Yıllık 24 gece</li>
-              <li>Her konaklamada %15 indirim ve oda upgrade garantisi</li>
-              <li>Öncelikli resepsiyon ve özel concierge hattı</li>
-            </ul>
-            <button type="button" className="user-dashboard__ghost-button">
-              Tüm avantajları görüntüle
-            </button>
           </article>
         </div>
       )}
 
       {activeView === 'userSupport' && (
-        <div className="user-dashboard__grid user-dashboard__grid--support">
-          <article className="user-dashboard__card user-dashboard__card--form">
-            <header>
-              <h2>Destek talebi oluştur</h2>
-              <p>Ekibimize ulaşın; talebiniz tenant destek kuyruğuna iletilir.</p>
-            </header>
-            {supportMessage && (
-              <div className="user-dashboard__alert" role="status">
-                {supportMessage}
-                <button type="button" onClick={() => setSupportMessage(null)} aria-label="Bilgilendirmeyi kapat">
-                  ×
-                </button>
-              </div>
-            )}
-            <form className="user-dashboard__settings user-dashboard__settings--single" onSubmit={handleSupportSubmit}>
-              <label>
-                <span>Konu</span>
-                <input
-                  value={supportSubject}
-                  onChange={(event) => setSupportSubject(event.target.value)}
-                  placeholder="Örneğin: Erken giriş talebi"
-                />
-              </label>
-              <label>
-                <span>Talep detayı</span>
-                <textarea
-                  rows={4}
-                  value={supportSummary}
-                  onChange={(event) => setSupportSummary(event.target.value)}
-                  placeholder="Destek ekibine iletmek istediğiniz açıklamayı yazın"
-                />
-              </label>
-              <div className="user-dashboard__form-actions">
-                <button type="submit">Talebi gönder</button>
-              </div>
-            </form>
-          </article>
-
+        <div className="user-dashboard__content">
           <article className="user-dashboard__card">
             <header>
-              <h2>Destek geçmişiniz</h2>
-              <p>Önceki taleplerinizin durumu</p>
+              <h2>Destek geçmişi</h2>
+              <p>Son iletişimlerinizin özetini ve durumlarını inceleyin.</p>
             </header>
             <ul className="user-dashboard__timeline">
-              {orderedSupportHistory.length === 0 && (
-                <li className="user-dashboard__empty">Henüz destek kaydı bulunmuyor.</li>
+              {supportHistory.length === 0 && (
+                <li className="user-dashboard__empty">Henüz destek kaydı oluşturmadınız.</li>
               )}
-              {orderedSupportHistory.map((interaction) => (
+              {supportHistory.map((interaction) => (
                 <li key={interaction.id} className={`user-dashboard__timeline-item status-${interaction.status}`}>
                   <div>
                     <strong>{interaction.subject}</strong>
                     <span className="user-dashboard__timeline-meta">
-                      {interaction.channel} · {formatDate(interaction.createdAt)}
+                      {interaction.channel} · {new Date(interaction.createdAt).toLocaleDateString('tr-TR')}
                     </span>
                   </div>
                   <p>{interaction.summary}</p>
-                  <span className="user-dashboard__timeline-status">{interaction.status}</span>
+                  <span className="user-dashboard__timeline-count">{interaction.status}</span>
                 </li>
               ))}
             </ul>
-          </article>
-
-          <article className="user-dashboard__card user-dashboard__card--highlight">
-            <header>
-              <h2>Canlı destek</h2>
-              <p>7/24 yanınızdayız</p>
-            </header>
-            <ul className="user-dashboard__bullets">
-              <li>WhatsApp hattı: +90 (555) 000 12 34</li>
-              <li>E-posta: destek@agnosticreservation.com</li>
-              <li>Öncelikli concierge: concierge@agnosticreservation.com</li>
-            </ul>
-            <button type="button">Canlı sohbeti başlat</button>
+            <form className="user-dashboard__form" onSubmit={handleSupportSubmit}>
+              <label>
+                <span>Konu</span>
+                <input value={supportSubject} onChange={(event) => setSupportSubject(event.target.value)} />
+              </label>
+              <label>
+                <span>Açıklama</span>
+                <textarea value={supportSummary} onChange={(event) => setSupportSummary(event.target.value)} />
+              </label>
+              <div className="user-dashboard__form-actions">
+                <button type="submit">Destek talebi gönder</button>
+              </div>
+              {supportMessage && <p className="user-dashboard__feedback">{supportMessage}</p>}
+            </form>
           </article>
         </div>
       )}

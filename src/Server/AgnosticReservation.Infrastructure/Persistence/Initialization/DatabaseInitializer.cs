@@ -258,6 +258,20 @@ public static class DatabaseInitializer
 
         user = new User(tenant.Id, email, passwordHash, role, tenant.DefaultTheme, fullName);
         user.EnableMultiFactor(true);
+        user.UpdateContact(
+            phoneNumber: "+90 212 000 00 00",
+            addressLine1: "Teknopark İstanbul",
+            addressLine2: "B2 Blok",
+            city: "İstanbul",
+            country: "Türkiye",
+            postalCode: "34906");
+        user.UpdateBilling(
+            billingName: fullName,
+            taxNumber: "1234567890",
+            billingAddress: "Teknopark İstanbul B2 Blok",
+            billingCity: "İstanbul",
+            billingCountry: "Türkiye",
+            billingPostalCode: "34906");
 
         context.Users.Add(user);
         context.NotificationPreferences.Add(user.Preference);
