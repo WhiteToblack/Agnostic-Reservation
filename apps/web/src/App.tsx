@@ -1,4 +1,4 @@
-import React, { FormEvent, useEffect, useMemo, useState } from 'react';
+import React, { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import './App.css';
 import { LocalizationProvider } from './localization/LocalizationProvider';
 import { LocalizationAdmin } from './localization/LocalizationAdmin';
@@ -7,8 +7,15 @@ import { NonUserDashboard } from './components/NonUserDashboard';
 import { CompanyDashboard } from './components/CompanyDashboard';
 import { UserDashboard } from './components/UserDashboard';
 import { TestToolbar } from './components/TestToolbar';
+import { AdminSupportPanel } from './components/AdminSupportPanel';
 import { appConfig } from './config/appConfig';
-import { RegisteredUser, Reservation } from './types/domain';
+import {
+  BillingInformation,
+  ContactInformation,
+  RegisteredUser,
+  Reservation,
+  SupportInteraction,
+} from './types/domain';
 
 type TenantOption = {
   id: string;
@@ -29,6 +36,7 @@ type ActiveView =
   | 'localization'
   | 'logs'
   | 'profile'
+  | 'supportCenter'
   | 'companyOverview'
   | 'companyReservations'
   | 'companyOperations'
@@ -94,6 +102,53 @@ const preferredLanguage = (navigator.languages && navigator.languages[0]) || nav
 const createUserKey = (email: string, tenantId: string) => `${email.trim().toLowerCase()}::${tenantId}`;
 
 const getTenantName = (tenantId: string) => tenantOptions.find((tenant) => tenant.id === tenantId)?.name ?? 'Seçili tenant';
+
+const createEmptyContactInformation = (): ContactInformation => ({
+  phoneNumber: '',
+  addressLine1: '',
+  addressLine2: '',
+  city: '',
+  country: '',
+  postalCode: '',
+});
+
+const createEmptyBillingInformation = (): BillingInformation => ({
+  cardHolderName: '',
+  cardBrand: 'VISA',
+  cardLast4: '',
+  expiryMonth: '',
+  expiryYear: '',
+  billingAddress: '',
+  billingCity: '',
+  billingCountry: '',
+  billingPostalCode: '',
+});
+
+const mergeUser = (current: RegisteredUser, updates: Partial<RegisteredUser>): RegisteredUser => ({
+  ...current,
+  ...updates,
+  contact: { ...current.contact, ...updates.contact },
+  billing: { ...current.billing, ...updates.billing },
+  supportHistory: updates.supportHistory ?? current.supportHistory,
+  tags: updates.tags ?? current.tags,
+});
+
+const createSupportInteraction = (
+  subject: string,
+  summary: string,
+  channel: SupportInteraction['channel'],
+  status: SupportInteraction['status'] = 'Alındı'
+): SupportInteraction => ({
+  id:
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `SUP-${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
+  subject,
+  summary,
+  status,
+  channel,
+  createdAt: new Date().toISOString(),
+});
 
 const toISODate = (date: Date) => date.toISOString().split('T')[0];
 
@@ -168,21 +223,44 @@ const initialRegisteredUsers: Record<string, RegisteredUser> = {
     email: seededUserEmail,
     password: 'agnostic123',
     tenantId: seededTenant.id,
-    role: 'user',
-  },
-  [seededAdminKey]: {
-    fullName: 'Aylin Demir',
-    email: seededAdminEmail,
-    password: 'admin123',
-    tenantId: seededTenant.id,
-    role: 'admin',
-  },
-  [seededCompanyKey]: {
-    fullName: 'Selim Kaya',
-    email: seededCompanyEmail,
-    password: 'company123',
-    tenantId: companyTenant.id,
-    role: 'company',
+    contact: {
+      phoneNumber: '+90 532 000 12 34',
+      addressLine1: 'Bağdat Caddesi No:42',
+      addressLine2: 'Daire 8',
+      city: 'İstanbul',
+      country: 'Türkiye',
+      postalCode: '34728',
+    },
+    billing: {
+      cardHolderName: 'Mert Cengiz',
+      cardBrand: 'VISA',
+      cardLast4: '4242',
+      expiryMonth: '08',
+      expiryYear: '27',
+      billingAddress: 'Bağdat Caddesi No:42 Daire 8',
+      billingCity: 'İstanbul',
+      billingCountry: 'Türkiye',
+      billingPostalCode: '34728',
+    },
+    supportHistory: [
+      {
+        id: 'SUP-1945',
+        subject: 'Sadakat puanlarının aktarımı',
+        summary: 'Eski rezervasyonlardan kazanılan puanların yeni hesaba taşınması sağlandı.',
+        status: 'Çözüldü',
+        channel: 'Portal',
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 'SUP-1832',
+        subject: 'Fatura ünvanı güncellemesi',
+        summary: 'Şirket bilgilerinin faturaya yansıması için muhasebe ekibi bilgilendirildi.',
+        status: 'Yanıtlandı',
+        channel: 'E-posta',
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14).toISOString(),
+      },
+    ],
+    tags: ['VIP', 'Kurumsal'],
   },
 };
 
@@ -304,11 +382,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (selectedDomain === 'admin') {
-      const allowedAdminViews = isAdminUser
-        ? ['dashboard', 'localization', 'logs', 'profile']
-        : ['dashboard'];
-
-      if (!allowedAdminViews.includes(activeView)) {
+      if (!['dashboard', 'localization', 'logs', 'profile', 'supportCenter'].includes(activeView)) {
         setActiveView('dashboard');
       }
     } else if (selectedDomain === 'company') {
@@ -355,14 +429,8 @@ const App: React.FC = () => {
     [selectedDomain]
   );
 
-  const handleDomainChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const nextDomain = event.target.value as Domain;
-
-    if (user && !isAdminUser && nextDomain !== user.role) {
-      return;
-    }
-
-    setSelectedDomain(nextDomain);
+  const handleDomainChange = (domainId: string) => {
+    setSelectedDomain(domainId as Domain);
   };
 
   const handleTenantChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -386,6 +454,38 @@ const App: React.FC = () => {
 
   const isTenantOverrideActive = selectedTenantId !== defaultTenantId;
 
+  const updateRegisteredUser = useCallback(
+    (userKey: string, apply: (current: RegisteredUser) => RegisteredUser) => {
+      setRegisteredUsers((previous) => {
+        const existing = previous[userKey];
+        if (!existing) {
+          return previous;
+        }
+
+        const updated = apply(existing);
+        if (updated === existing) {
+          return previous;
+        }
+
+        return { ...previous, [userKey]: updated };
+      });
+
+      setUser((current) => {
+        if (!current) {
+          return current;
+        }
+
+        const currentKey = createUserKey(current.email, current.tenantId);
+        if (currentKey !== userKey) {
+          return current;
+        }
+
+        return apply(current);
+      });
+    },
+    [setRegisteredUsers, setUser]
+  );
+
   const handleGoToLocalization = () => {
     if (!isAdminUser) {
       return;
@@ -405,6 +505,68 @@ const App: React.FC = () => {
     setActiveView('logs');
     setShowAuthPanel(false);
   };
+
+  const handleCurrentUserProfileUpdate = useCallback(
+    (profileUpdates: { contact?: ContactInformation; billing?: BillingInformation }) => {
+      if (!user) {
+        return;
+      }
+
+      const updates: Partial<RegisteredUser> = {};
+      if (profileUpdates.contact) {
+        updates.contact = profileUpdates.contact;
+      }
+      if (profileUpdates.billing) {
+        updates.billing = profileUpdates.billing;
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return;
+      }
+
+      const key = createUserKey(user.email, user.tenantId);
+      updateRegisteredUser(key, (current) => mergeUser(current, updates));
+    },
+    [updateRegisteredUser, user]
+  );
+
+  const handleCurrentUserSupportRequest = useCallback(
+    (subject: string, summary: string) => {
+      if (!user) {
+        return;
+      }
+
+      const interaction = createSupportInteraction(subject, summary, 'Portal');
+      const key = createUserKey(user.email, user.tenantId);
+      updateRegisteredUser(key, (current) =>
+        mergeUser(current, { supportHistory: [interaction, ...current.supportHistory] })
+      );
+    },
+    [updateRegisteredUser, user]
+  );
+
+  const handleSupportCenterUpdate = useCallback(
+    (userKey: string, updates: Partial<RegisteredUser>) => {
+      updateRegisteredUser(userKey, (current) => mergeUser(current, updates));
+    },
+    [updateRegisteredUser]
+  );
+
+  const handleSupportCenterInteraction = useCallback(
+    (
+      userKey: string,
+      subject: string,
+      summary: string,
+      status: SupportInteraction['status'],
+      channel: SupportInteraction['channel']
+    ) => {
+      const interaction = createSupportInteraction(subject, summary, channel, status);
+      updateRegisteredUser(userKey, (current) =>
+        mergeUser(current, { supportHistory: [interaction, ...current.supportHistory] })
+      );
+    },
+    [updateRegisteredUser]
+  );
 
   const handleCloseAuthPanel = () => {
     setShowAuthPanel(false);
@@ -518,7 +680,10 @@ const App: React.FC = () => {
       email,
       password,
       tenantId: signupTenantId,
-      role: 'user',
+      contact: createEmptyContactInformation(),
+      billing: createEmptyBillingInformation(),
+      supportHistory: [],
+      tags: ['Yeni'],
     };
 
     const tenantName = getTenantName(signupTenantId);
@@ -549,12 +714,26 @@ const App: React.FC = () => {
 
   const userReservationKey = user ? createUserKey(user.email, user.tenantId) : null;
   const reservationsForUser = userReservationKey ? reservationsByUser[userReservationKey] ?? [] : [];
+  const resolvedUserView: 'userReservations' | 'userProfile' | 'userSupport' =
+    activeView === 'userProfile' ? 'userProfile' : activeView === 'userSupport' ? 'userSupport' : 'userReservations';
+  const supportDirectory = useMemo(
+    () =>
+      Object.entries(registeredUsers)
+        .filter(([, userRecord]) => userRecord.tenantId === selectedTenantId)
+        .map(([key, userRecord]) => ({ key, user: userRecord })),
+    [registeredUsers, selectedTenantId]
+  );
 
   return (
     <LocalizationProvider tenantId={selectedTenantId} initialLanguage={preferredLanguage}>
       <div className="app-shell">
         <div className="app-container">
           <TestToolbar
+            domainOptions={domainOptions}
+            selectedDomainId={selectedDomain}
+            activeDomainHost={activeDomain.host}
+            activeDomainDescription={activeDomain.description}
+            onDomainChange={handleDomainChange}
             tenantOptions={tenantOptions}
             selectedTenantId={selectedTenantId}
             defaultTenantName={defaultTenantName}
@@ -582,45 +761,57 @@ const App: React.FC = () => {
                   >
                     Ana sayfa
                   </button>
-                  {isAdminUser && (
-                    <>
-                      <button
-                        type="button"
-                        className={
-                          activeView === 'localization'
-                            ? 'app-header__nav-button app-header__nav-button--active'
-                            : 'app-header__nav-button'
-                        }
-                        onClick={() => setActiveView('localization')}
-                      >
-                        Lokalizasyon
-                      </button>
-                      <button
-                        type="button"
-                        className={
-                          activeView === 'logs'
-                            ? 'app-header__nav-button app-header__nav-button--active'
-                            : 'app-header__nav-button'
-                        }
-                        onClick={() => setActiveView('logs')}
-                      >
-                        Log yönetimi
-                      </button>
-                      <button
-                        type="button"
-                        className={
-                          activeView === 'profile'
-                            ? 'app-header__nav-button app-header__nav-button--active'
-                            : 'app-header__nav-button'
-                        }
-                        onClick={() => {
-                          setActiveView('profile');
-                          setShowAuthPanel(false);
-                        }}
-                      >
-                        Profilim
-                      </button>
-                    </>
+                  <button
+                    type="button"
+                    className={
+                      activeView === 'localization'
+                        ? 'app-header__nav-button app-header__nav-button--active'
+                        : 'app-header__nav-button'
+                    }
+                    onClick={() => setActiveView('localization')}
+                  >
+                    Lokalizasyon
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      activeView === 'logs'
+                        ? 'app-header__nav-button app-header__nav-button--active'
+                        : 'app-header__nav-button'
+                    }
+                    onClick={() => setActiveView('logs')}
+                  >
+                    Log yönetimi
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      activeView === 'supportCenter'
+                        ? 'app-header__nav-button app-header__nav-button--active'
+                        : 'app-header__nav-button'
+                    }
+                    onClick={() => {
+                      setActiveView('supportCenter');
+                      setShowAuthPanel(false);
+                    }}
+                  >
+                    Destek merkezi
+                  </button>
+                  {user && (
+                    <button
+                      type="button"
+                      className={
+                        activeView === 'profile'
+                          ? 'app-header__nav-button app-header__nav-button--active'
+                          : 'app-header__nav-button'
+                      }
+                      onClick={() => {
+                        setActiveView('profile');
+                        setShowAuthPanel(false);
+                      }}
+                    >
+                      Profilim
+                    </button>
                   )}
                 </>
               )}
@@ -705,36 +896,6 @@ const App: React.FC = () => {
             </div>
 
             <div className="app-header__controls">
-              <div className="app-header__domain">
-                <span className="app-header__domain-label">Alan adı</span>
-                <label className="domain-select">
-                  <span className="sr-only">Alan adı seçimi</span>
-                  <select
-                    value={selectedDomain}
-                    onChange={handleDomainChange}
-                    disabled={Boolean(user) && !isAdminUser}
-                  >
-                    {availableDomains.map((domain) => (
-                      <option key={domain.id} value={domain.id}>
-                        {domain.host}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <span className="app-header__domain-description">{activeDomain.description}</span>
-              </div>
-
-              <label className="tenant-select">
-                <span>Tenant seçimi</span>
-                <select value={selectedTenantId} onChange={handleTenantChange}>
-                  {tenantOptions.map((tenant) => (
-                    <option key={tenant.id} value={tenant.id}>
-                      {tenant.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
               {user ? (
                 <div className="user-chip">
                   <span className="user-chip__avatar" aria-hidden>
@@ -943,11 +1104,13 @@ const App: React.FC = () => {
                   </section>
                 )}
 
-                {activeView === 'profile' && !adminUser && (
-                  <section className="restricted-card">
-                    <h2>Yalnızca yöneticilere açık</h2>
-                    <p>Profil yönetimi alanı, yönetici yetkisine sahip hesaplarla görüntülenebilir.</p>
-                  </section>
+                {activeView === 'supportCenter' && (
+                  <AdminSupportPanel
+                    tenantName={selectedTenantName}
+                    users={supportDirectory}
+                    onUpdateUser={handleSupportCenterUpdate}
+                    onCreateInteraction={handleSupportCenterInteraction}
+                  />
                 )}
 
                 {(activeView === 'localization' || activeView === 'logs') && (
@@ -1006,7 +1169,13 @@ const App: React.FC = () => {
                     userEmail={user.email}
                     tenantName={selectedTenantName}
                     reservations={reservationsForUser}
-                    activeView={activeView === 'userHome' ? 'userReservations' : (activeView as 'userReservations' | 'userProfile' | 'userSupport')}
+                    activeView={resolvedUserView}
+                    contact={user.contact}
+                    billing={user.billing}
+                    supportHistory={user.supportHistory}
+                    tags={user.tags ?? []}
+                    onProfileUpdate={handleCurrentUserProfileUpdate}
+                    onCreateSupportRequest={handleCurrentUserSupportRequest}
                   />
                 ) : (
                   <section className="user-access">

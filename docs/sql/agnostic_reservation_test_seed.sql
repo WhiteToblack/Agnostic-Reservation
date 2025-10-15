@@ -122,6 +122,59 @@ WHEN NOT MATCHED THEN
     VALUES (NEWID(), source.UserId, source.PushEnabled, source.EmailEnabled, source.SmsEnabled, @EmailChannel, @Now);
 ;
 
+MERGE dbo.UserProfiles AS target
+USING (VALUES
+    (@BeautyCustomer1, N'+90 532 000 12 34', N'İstiklal Caddesi No:56', N'Daire 7', N'İstanbul', N'Türkiye', N'34000'),
+    (@BeautyCustomer2, N'+90 533 111 22 33', N'Bebek Mahallesi No:18', NULL, N'İstanbul', N'Türkiye', N'34342')
+) AS source(UserId, PhoneNumber, AddressLine1, AddressLine2, City, Country, PostalCode)
+ON target.UserId = source.UserId
+WHEN MATCHED THEN
+    UPDATE SET PhoneNumber = source.PhoneNumber,
+               AddressLine1 = source.AddressLine1,
+               AddressLine2 = source.AddressLine2,
+               City = source.City,
+               Country = source.Country,
+               PostalCode = source.PostalCode,
+               UpdatedAt = @Now
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, PhoneNumber, AddressLine1, AddressLine2, City, Country, PostalCode, CreatedAt)
+    VALUES (NEWID(), source.UserId, source.PhoneNumber, source.AddressLine1, source.AddressLine2, source.City, source.Country, source.PostalCode, @Now);
+;
+
+MERGE dbo.UserPaymentMethods AS target
+USING (VALUES
+    (@BeautyCustomer1, N'Ayşe Yılmaz', N'VISA', N'4242', N'08', N'27', N'İstiklal Caddesi No:56 Daire 7', N'İstanbul', N'Türkiye', N'34000'),
+    (@BeautyCustomer2, N'Melis Karaca', N'Mastercard', N'5522', N'11', N'26', N'Bebek Mahallesi No:18', N'İstanbul', N'Türkiye', N'34342')
+) AS source(UserId, CardHolderName, CardBrand, CardLast4, ExpiryMonth, ExpiryYear, BillingAddress, BillingCity, BillingCountry, BillingPostalCode)
+ON target.UserId = source.UserId AND target.IsPrimary = 1
+WHEN MATCHED THEN
+    UPDATE SET CardHolderName = source.CardHolderName,
+               CardBrand = source.CardBrand,
+               CardLast4 = source.CardLast4,
+               ExpiryMonth = source.ExpiryMonth,
+               ExpiryYear = source.ExpiryYear,
+               BillingAddress = source.BillingAddress,
+               BillingCity = source.BillingCity,
+               BillingCountry = source.BillingCountry,
+               BillingPostalCode = source.BillingPostalCode,
+               UpdatedAt = @Now
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, CardHolderName, CardBrand, CardLast4, ExpiryMonth, ExpiryYear, BillingAddress, BillingCity, BillingCountry, BillingPostalCode, IsPrimary, CreatedAt)
+    VALUES (NEWID(), source.UserId, source.CardHolderName, source.CardBrand, source.CardLast4, source.ExpiryMonth, source.ExpiryYear, source.BillingAddress, source.BillingCity, source.BillingCountry, source.BillingPostalCode, 1, @Now);
+;
+
+MERGE dbo.UserSupportTickets AS target
+USING (VALUES
+    (NEWID(), @BeautyCustomer1, @TenantBeauty, N'Spa randevu teyidi', N'Konaklama öncesi spa rezervasyon saatini onaylamak istiyor.', N'Yanıtlandı', N'E-posta', DATEADD(DAY, -5, @Now)),
+    (NEWID(), @BeautyCustomer1, @TenantBeauty, N'Kurumsal fatura talebi', N'Son konaklama faturası şirket ünvanı ile gönderildi.', N'Çözüldü', N'Portal', DATEADD(DAY, -12, @Now)),
+    (NEWID(), @BeautyCustomer2, @TenantBeauty, N'Paket yükseltme', N'Çift kişilik paket yerine deluxe paket tercih edilmek istendi.', N'Alındı', N'Telefon', DATEADD(DAY, -2, @Now))
+) AS source(Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+ON target.Id = source.Id
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+    VALUES (source.Id, source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
+;
+
 MERGE dbo.TenantParameters AS target
 USING (VALUES
     ('auth', 'requireKvkk', 'true', 0),
@@ -248,6 +301,58 @@ WHEN MATCHED THEN
 WHEN NOT MATCHED THEN
     INSERT (Id, UserId, PushEnabled, EmailEnabled, SmsEnabled, PreferredChannel, CreatedAt)
     VALUES (NEWID(), source.UserId, source.PushEnabled, source.EmailEnabled, source.SmsEnabled, @EmailChannel, @Now);
+;
+
+MERGE dbo.UserProfiles AS target
+USING (VALUES
+    (@AutoCustomer1, N'+90 534 222 33 44', N'Bağdat Caddesi No:120', NULL, N'İstanbul', N'Türkiye', N'34718'),
+    (@AutoCustomer2, N'+90 535 444 55 66', N'Ankara Bulvarı No:45', N'Kat 3', N'Ankara', N'Türkiye', N'06520')
+) AS source(UserId, PhoneNumber, AddressLine1, AddressLine2, City, Country, PostalCode)
+ON target.UserId = source.UserId
+WHEN MATCHED THEN
+    UPDATE SET PhoneNumber = source.PhoneNumber,
+               AddressLine1 = source.AddressLine1,
+               AddressLine2 = source.AddressLine2,
+               City = source.City,
+               Country = source.Country,
+               PostalCode = source.PostalCode,
+               UpdatedAt = @Now
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, PhoneNumber, AddressLine1, AddressLine2, City, Country, PostalCode, CreatedAt)
+    VALUES (NEWID(), source.UserId, source.PhoneNumber, source.AddressLine1, source.AddressLine2, source.City, source.Country, source.PostalCode, @Now);
+;
+
+MERGE dbo.UserPaymentMethods AS target
+USING (VALUES
+    (@AutoCustomer1, N'Ömer Aksoy', N'VISA', N'1111', N'09', N'28', N'Bağdat Caddesi No:120', N'İstanbul', N'Türkiye', N'34718'),
+    (@AutoCustomer2, N'Selin Öztürk', N'Mastercard', N'7788', N'04', N'26', N'Ankara Bulvarı No:45 Kat 3', N'Ankara', N'Türkiye', N'06520')
+) AS source(UserId, CardHolderName, CardBrand, CardLast4, ExpiryMonth, ExpiryYear, BillingAddress, BillingCity, BillingCountry, BillingPostalCode)
+ON target.UserId = source.UserId AND target.IsPrimary = 1
+WHEN MATCHED THEN
+    UPDATE SET CardHolderName = source.CardHolderName,
+               CardBrand = source.CardBrand,
+               CardLast4 = source.CardLast4,
+               ExpiryMonth = source.ExpiryMonth,
+               ExpiryYear = source.ExpiryYear,
+               BillingAddress = source.BillingAddress,
+               BillingCity = source.BillingCity,
+               BillingCountry = source.BillingCountry,
+               BillingPostalCode = source.BillingPostalCode,
+               UpdatedAt = @Now
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, CardHolderName, CardBrand, CardLast4, ExpiryMonth, ExpiryYear, BillingAddress, BillingCity, BillingCountry, BillingPostalCode, IsPrimary, CreatedAt)
+    VALUES (NEWID(), source.UserId, source.CardHolderName, source.CardBrand, source.CardLast4, source.ExpiryMonth, source.ExpiryYear, source.BillingAddress, source.BillingCity, source.BillingCountry, source.BillingPostalCode, 1, @Now);
+;
+
+MERGE dbo.UserSupportTickets AS target
+USING (VALUES
+    (NEWID(), @AutoCustomer1, @TenantAuto, N'Lastik değişim randevusu', N'Yedek lastik stok bilgisi talep edildi.', N'Yanıtlandı', N'Telefon', DATEADD(DAY, -3, @Now)),
+    (NEWID(), @AutoCustomer2, @TenantAuto, N'Mobil servis talebi', N'Ankara ofisine mobil ekip yönlendirme isteği alındı.', N'Alındı', N'Portal', DATEADD(DAY, -1, @Now))
+) AS source(Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+ON target.Id = source.Id
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+    VALUES (source.Id, source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
 ;
 
 MERGE dbo.TenantParameters AS target
@@ -378,6 +483,58 @@ WHEN NOT MATCHED THEN
     VALUES (NEWID(), source.UserId, source.PushEnabled, source.EmailEnabled, source.SmsEnabled, @EmailChannel, @Now);
 ;
 
+MERGE dbo.UserProfiles AS target
+USING (VALUES
+    (@FitnessCustomer1, N'+90 536 123 45 67', N'Nişantaşı Spor Sokak No:9', NULL, N'İstanbul', N'Türkiye', N'34365'),
+    (@FitnessCustomer2, N'+90 537 987 65 43', N'Caddebostan Sahil Yolu No:30', N'Daire 2', N'İstanbul', N'Türkiye', N'34728')
+) AS source(UserId, PhoneNumber, AddressLine1, AddressLine2, City, Country, PostalCode)
+ON target.UserId = source.UserId
+WHEN MATCHED THEN
+    UPDATE SET PhoneNumber = source.PhoneNumber,
+               AddressLine1 = source.AddressLine1,
+               AddressLine2 = source.AddressLine2,
+               City = source.City,
+               Country = source.Country,
+               PostalCode = source.PostalCode,
+               UpdatedAt = @Now
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, PhoneNumber, AddressLine1, AddressLine2, City, Country, PostalCode, CreatedAt)
+    VALUES (NEWID(), source.UserId, source.PhoneNumber, source.AddressLine1, source.AddressLine2, source.City, source.Country, source.PostalCode, @Now);
+;
+
+MERGE dbo.UserPaymentMethods AS target
+USING (VALUES
+    (@FitnessCustomer1, N'Zeynep Korkmaz', N'VISA', N'9001', N'05', N'29', N'Nişantaşı Spor Sokak No:9', N'İstanbul', N'Türkiye', N'34365'),
+    (@FitnessCustomer2, N'Berk Güneş', N'Mastercard', N'6620', N'12', N'26', N'Caddebostan Sahil Yolu No:30 Daire 2', N'İstanbul', N'Türkiye', N'34728')
+) AS source(UserId, CardHolderName, CardBrand, CardLast4, ExpiryMonth, ExpiryYear, BillingAddress, BillingCity, BillingCountry, BillingPostalCode)
+ON target.UserId = source.UserId AND target.IsPrimary = 1
+WHEN MATCHED THEN
+    UPDATE SET CardHolderName = source.CardHolderName,
+               CardBrand = source.CardBrand,
+               CardLast4 = source.CardLast4,
+               ExpiryMonth = source.ExpiryMonth,
+               ExpiryYear = source.ExpiryYear,
+               BillingAddress = source.BillingAddress,
+               BillingCity = source.BillingCity,
+               BillingCountry = source.BillingCountry,
+               BillingPostalCode = source.BillingPostalCode,
+               UpdatedAt = @Now
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, CardHolderName, CardBrand, CardLast4, ExpiryMonth, ExpiryYear, BillingAddress, BillingCity, BillingCountry, BillingPostalCode, IsPrimary, CreatedAt)
+    VALUES (NEWID(), source.UserId, source.CardHolderName, source.CardBrand, source.CardLast4, source.ExpiryMonth, source.ExpiryYear, source.BillingAddress, source.BillingCity, source.BillingCountry, source.BillingPostalCode, 1, @Now);
+;
+
+MERGE dbo.UserSupportTickets AS target
+USING (VALUES
+    (NEWID(), @FitnessCustomer1, @TenantFitness, N'Grup dersi kontenjanı', N'Spinning dersi kontenjanı artırılması talep edildi.', N'Çözüldü', N'Portal', DATEADD(DAY, -7, @Now)),
+    (NEWID(), @FitnessCustomer2, @TenantFitness, N'Kişisel antrenör talebi', N'Yeni program için koç ataması istendi.', N'Yanıtlandı', N'E-posta', DATEADD(DAY, -4, @Now))
+) AS source(Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+ON target.Id = source.Id
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+    VALUES (source.Id, source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
+;
+
 MERGE dbo.TenantParameters AS target
 USING (VALUES
     ('auth', 'requireKvkk', 'true', 0),
@@ -506,6 +663,58 @@ WHEN NOT MATCHED THEN
     VALUES (NEWID(), source.UserId, source.PushEnabled, source.EmailEnabled, source.SmsEnabled, @EmailChannel, @Now);
 ;
 
+MERGE dbo.UserProfiles AS target
+USING (VALUES
+    (@EduCustomer1, N'+90 538 210 98 76', N'Kampüs Caddesi No:5', N'Daire 12', N'İzmir', N'Türkiye', N'35210'),
+    (@EduCustomer2, N'+90 539 765 43 21', N'Atatürk Bulvarı No:88', NULL, N'Eskişehir', N'Türkiye', N'26010')
+) AS source(UserId, PhoneNumber, AddressLine1, AddressLine2, City, Country, PostalCode)
+ON target.UserId = source.UserId
+WHEN MATCHED THEN
+    UPDATE SET PhoneNumber = source.PhoneNumber,
+               AddressLine1 = source.AddressLine1,
+               AddressLine2 = source.AddressLine2,
+               City = source.City,
+               Country = source.Country,
+               PostalCode = source.PostalCode,
+               UpdatedAt = @Now
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, PhoneNumber, AddressLine1, AddressLine2, City, Country, PostalCode, CreatedAt)
+    VALUES (NEWID(), source.UserId, source.PhoneNumber, source.AddressLine1, source.AddressLine2, source.City, source.Country, source.PostalCode, @Now);
+;
+
+MERGE dbo.UserPaymentMethods AS target
+USING (VALUES
+    (@EduCustomer1, N'Veli Demir', N'VISA', N'3434', N'03', N'29', N'Kampüs Caddesi No:5 Daire 12', N'İzmir', N'Türkiye', N'35210'),
+    (@EduCustomer2, N'Veli Çetin', N'Mastercard', N'2211', N'10', N'27', N'Atatürk Bulvarı No:88', N'Eskişehir', N'Türkiye', N'26010')
+) AS source(UserId, CardHolderName, CardBrand, CardLast4, ExpiryMonth, ExpiryYear, BillingAddress, BillingCity, BillingCountry, BillingPostalCode)
+ON target.UserId = source.UserId AND target.IsPrimary = 1
+WHEN MATCHED THEN
+    UPDATE SET CardHolderName = source.CardHolderName,
+               CardBrand = source.CardBrand,
+               CardLast4 = source.CardLast4,
+               ExpiryMonth = source.ExpiryMonth,
+               ExpiryYear = source.ExpiryYear,
+               BillingAddress = source.BillingAddress,
+               BillingCity = source.BillingCity,
+               BillingCountry = source.BillingCountry,
+               BillingPostalCode = source.BillingPostalCode,
+               UpdatedAt = @Now
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, CardHolderName, CardBrand, CardLast4, ExpiryMonth, ExpiryYear, BillingAddress, BillingCity, BillingCountry, BillingPostalCode, IsPrimary, CreatedAt)
+    VALUES (NEWID(), source.UserId, source.CardHolderName, source.CardBrand, source.CardLast4, source.ExpiryMonth, source.ExpiryYear, source.BillingAddress, source.BillingCity, source.BillingCountry, source.BillingPostalCode, 1, @Now);
+;
+
+MERGE dbo.UserSupportTickets AS target
+USING (VALUES
+    (NEWID(), @EduCustomer1, @TenantEdu, N'Online ders kaydı', N'Yeni STEM sınıfı için kontenjan soruldu.', N'Yanıtlandı', N'Portal', DATEADD(DAY, -6, @Now)),
+    (NEWID(), @EduCustomer2, @TenantEdu, N'Sertifika talebi', N'Tamamlanan eğitim için sertifika e-postası tekrar istendi.', N'Çözüldü', N'E-posta', DATEADD(DAY, -3, @Now))
+) AS source(Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+ON target.Id = source.Id
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+    VALUES (source.Id, source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
+;
+
 MERGE dbo.TenantParameters AS target
 USING (VALUES
     ('auth', 'requireKvkk', 'true', 0),
@@ -632,6 +841,58 @@ WHEN MATCHED THEN
 WHEN NOT MATCHED THEN
     INSERT (Id, UserId, PushEnabled, EmailEnabled, SmsEnabled, PreferredChannel, CreatedAt)
     VALUES (NEWID(), source.UserId, source.PushEnabled, source.EmailEnabled, source.SmsEnabled, @EmailChannel, @Now);
+;
+
+MERGE dbo.UserProfiles AS target
+USING (VALUES
+    (@PetCustomer1, N'+90 540 111 22 11', N'Erenköy Veteriner Sokak No:3', NULL, N'İstanbul', N'Türkiye', N'34742'),
+    (@PetCustomer2, N'+90 541 333 44 55', N'Alsancak Sahil Sokak No:19', N'Daire 5', N'İzmir', N'Türkiye', N'35220')
+) AS source(UserId, PhoneNumber, AddressLine1, AddressLine2, City, Country, PostalCode)
+ON target.UserId = source.UserId
+WHEN MATCHED THEN
+    UPDATE SET PhoneNumber = source.PhoneNumber,
+               AddressLine1 = source.AddressLine1,
+               AddressLine2 = source.AddressLine2,
+               City = source.City,
+               Country = source.Country,
+               PostalCode = source.PostalCode,
+               UpdatedAt = @Now
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, PhoneNumber, AddressLine1, AddressLine2, City, Country, PostalCode, CreatedAt)
+    VALUES (NEWID(), source.UserId, source.PhoneNumber, source.AddressLine1, source.AddressLine2, source.City, source.Country, source.PostalCode, @Now);
+;
+
+MERGE dbo.UserPaymentMethods AS target
+USING (VALUES
+    (@PetCustomer1, N'Mert Arı', N'VISA', N'7007', N'02', N'29', N'Erenköy Veteriner Sokak No:3', N'İstanbul', N'Türkiye', N'34742'),
+    (@PetCustomer2, N'İrem Sönmez', N'Mastercard', N'8899', N'07', N'27', N'Alsancak Sahil Sokak No:19 Daire 5', N'İzmir', N'Türkiye', N'35220')
+) AS source(UserId, CardHolderName, CardBrand, CardLast4, ExpiryMonth, ExpiryYear, BillingAddress, BillingCity, BillingCountry, BillingPostalCode)
+ON target.UserId = source.UserId AND target.IsPrimary = 1
+WHEN MATCHED THEN
+    UPDATE SET CardHolderName = source.CardHolderName,
+               CardBrand = source.CardBrand,
+               CardLast4 = source.CardLast4,
+               ExpiryMonth = source.ExpiryMonth,
+               ExpiryYear = source.ExpiryYear,
+               BillingAddress = source.BillingAddress,
+               BillingCity = source.BillingCity,
+               BillingCountry = source.BillingCountry,
+               BillingPostalCode = source.BillingPostalCode,
+               UpdatedAt = @Now
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, CardHolderName, CardBrand, CardLast4, ExpiryMonth, ExpiryYear, BillingAddress, BillingCity, BillingCountry, BillingPostalCode, IsPrimary, CreatedAt)
+    VALUES (NEWID(), source.UserId, source.CardHolderName, source.CardBrand, source.CardLast4, source.ExpiryMonth, source.ExpiryYear, source.BillingAddress, source.BillingCity, source.BillingCountry, source.BillingPostalCode, 1, @Now);
+;
+
+MERGE dbo.UserSupportTickets AS target
+USING (VALUES
+    (NEWID(), @PetCustomer1, @TenantPet, N'Evcil hayvan transferi', N'Ankara çıkışlı uçuş için transfer desteği talep edildi.', N'Yanıtlandı', N'E-posta', DATEADD(DAY, -8, @Now)),
+    (NEWID(), @PetCustomer2, @TenantPet, N'Ödeme planı sorusu', N'Yıllık bakım paketi için taksit bilgisi istendi.', N'Alındı', N'Portal', DATEADD(DAY, -2, @Now))
+) AS source(Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+ON target.Id = source.Id
+WHEN NOT MATCHED THEN
+    INSERT (Id, UserId, TenantId, Subject, Summary, Status, Channel, CreatedAt)
+    VALUES (source.Id, source.UserId, source.TenantId, source.Subject, source.Summary, source.Status, source.Channel, source.CreatedAt);
 ;
 
 MERGE dbo.TenantParameters AS target
