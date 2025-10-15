@@ -47,6 +47,17 @@ const ensurePlatformConstants = () => {
       patchedProxy.__agnosticPatched__ = true;
       globalScope.__turboModuleProxy = patchedProxy;
     }
+  } else {
+    const patchedProxy: TurboModuleProxy = (moduleName: string) => {
+      if (moduleName === 'PlatformConstants') {
+        return fallbackModule;
+      }
+
+      return undefined;
+    };
+
+    patchedProxy.__agnosticPatched__ = true;
+    globalScope.__turboModuleProxy = patchedProxy;
   }
 
   globalScope.__agnosticPlatformConstantsPatched__ = true;
