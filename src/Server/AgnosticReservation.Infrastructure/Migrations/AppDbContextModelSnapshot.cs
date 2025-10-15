@@ -635,10 +635,10 @@ namespace AgnosticReservation.Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("AgnosticReservation.Domain.Entities.TenantParameterChangeRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
+            {
+                b.Property<Guid>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("ApprovedAt")
                         .HasColumnType("datetime2");
@@ -691,14 +691,65 @@ namespace AgnosticReservation.Infrastructure.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("UpdatedAt")
+                    .HasColumnType("datetime2");
+
+                b.Property<Guid?>("UpdatedBy")
+                    .HasColumnType("uniqueidentifier");
+
+                b.HasKey("Id");
+
+                b.ToTable("TenantParameterChangeRequests");
+            });
+
+            modelBuilder.Entity("AgnosticReservation.Domain.Entities.UserSupportTicket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Channel")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Summary")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
-                    b.ToTable("TenantParameterChangeRequests");
+                    b.HasIndex("TenantId", "UserId", "CreatedAt")
+                        .HasDatabaseName("IX_UserSupportTickets_Tenant_User");
+
+                    b.ToTable("UserSupportTickets");
                 });
 
             modelBuilder.Entity("AgnosticReservation.Domain.Entities.User", b =>

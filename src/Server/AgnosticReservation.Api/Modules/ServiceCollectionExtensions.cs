@@ -7,6 +7,7 @@ using AgnosticReservation.Application.Localization;
 using AgnosticReservation.Application.Dashboard;
 using AgnosticReservation.Application.Notifications;
 using AgnosticReservation.Application.Reservations;
+using AgnosticReservation.Application.Support;
 using AgnosticReservation.Application.Users;
 using AgnosticReservation.Infrastructure.Logging;
 using AgnosticReservation.Infrastructure.Persistence.Repositories;
@@ -29,6 +30,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IReservationService, ReservationService>();
+        services.AddScoped<IUserSupportService, UserSupportService>();
         services.AddScoped<ILocalizationService, LocalizationService>();
         services.AddScoped<ISessionContextAccessor, SessionContextAccessor>();
         services.AddScoped<IDashboardService, DashboardService>();

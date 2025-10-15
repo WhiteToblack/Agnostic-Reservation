@@ -28,10 +28,13 @@ import {
   createReservation as apiCreateReservation,
   updateReservation as apiUpdateReservation,
   deleteReservation as apiDeleteReservation,
+  fetchSupportTickets,
+  createSupportTicket,
   type UserProfile as ApiUserProfile,
   type UserReservationsOverview,
   type ResourceDto,
   type UpdateUserProfilePayload,
+  type SupportTicketDto,
 } from './services/api';
 
 type TenantOption = {
@@ -212,6 +215,19 @@ const createSupportInteraction = (
   createdAt: new Date().toISOString(),
 });
 
+const mapTicketToInteraction = (ticket: SupportTicketDto): SupportInteraction => ({
+  id: ticket.id,
+  subject: ticket.subject,
+  summary: ticket.summary ?? '',
+  status: (['Alındı', 'Yanıtlandı', 'Çözüldü'].includes(ticket.status)
+    ? (ticket.status as SupportInteraction['status'])
+    : 'Alındı'),
+  channel: (['Portal', 'E-posta', 'Telefon', 'Canlı Sohbet'].includes(ticket.channel)
+    ? (ticket.channel as SupportInteraction['channel'])
+    : 'Portal'),
+  createdAt: ticket.createdAt,
+});
+
 const primaryTenantId = defaultTenantOptions[0]?.id ?? tenantOptions[0].id;
 const seededTenant = tenantOptions.find((tenant) => tenant.id === primaryTenantId) ?? tenantOptions[0];
 const seededUserEmail = 'mert.cengiz@agnostic.com';
@@ -366,17 +382,24 @@ const App: React.FC = () => {
     async (tenantId: string, userId: string) => {
       setLoadingUserData(true);
       try {
-        const [profile, reservations, resources] = await Promise.all([
+        const [profile, reservations, resources, tickets] = await Promise.all([
           fetchUserProfile(userId),
           fetchUserReservations(tenantId, userId),
           fetchResources(tenantId),
+          fetchSupportTickets(tenantId, userId),
         ]);
 
         setUserProfileData(profile);
         setUserReservationsOverview(reservations);
         setResourceOptions(resources);
 
-        const mappedUser = mapProfileToRegisteredUser(profile, user ?? undefined);
+        const supportHistory = tickets
+          .map(mapTicketToInteraction)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const mappedUser = {
+          ...mapProfileToRegisteredUser(profile, user ?? undefined),
+          supportHistory,
+        };
         const userKey = createUserKey(profile.email, tenantId);
         setRegisteredUsers((previous) => ({ ...previous, [userKey]: mappedUser }));
         setUser(mappedUser);
@@ -635,18 +658,34 @@ const App: React.FC = () => {
   );
 
   const handleCurrentUserSupportRequest = useCallback(
-    (subject: string, summary: string) => {
-      if (!user) {
+    async (subject: string, summary: string) => {
+      if (!user || !authSession) {
         return;
       }
 
-      const interaction = createSupportInteraction(subject, summary, 'Portal');
-      const key = createUserKey(user.email, user.tenantId);
-      updateRegisteredUser(key, (current) =>
-        mergeUser(current, { supportHistory: [interaction, ...current.supportHistory] })
-      );
+      try {
+        await createSupportTicket({
+          tenantId: authSession.tenantId,
+          userId: authSession.userId,
+          subject,
+          summary,
+          status: 'Alındı',
+          channel: 'Portal',
+        });
+
+        const tickets = await fetchSupportTickets(authSession.tenantId, authSession.userId);
+        const supportHistory = tickets
+          .map(mapTicketToInteraction)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        const key = createUserKey(user.email, user.tenantId);
+        updateRegisteredUser(key, (current) => mergeUser(current, { supportHistory }));
+      } catch (error) {
+        console.error('Support request create failed', error);
+        setAuthError('Destek talebi kaydedilemedi. Lütfen tekrar deneyin.');
+      }
     },
-    [updateRegisteredUser, user]
+    [authSession, updateRegisteredUser, user]
   );
 
   const handleReservationCreate = useCallback(
@@ -720,19 +759,43 @@ const App: React.FC = () => {
   );
 
   const handleSupportCenterInteraction = useCallback(
-    (
+    async (
       userKey: string,
       subject: string,
       summary: string,
       status: SupportInteraction['status'],
       channel: SupportInteraction['channel']
     ) => {
-      const interaction = createSupportInteraction(subject, summary, channel, status);
+      const targetUser = registeredUsers[userKey];
+
+      if (targetUser?.id) {
+        try {
+          const ticket = await createSupportTicket({
+            tenantId: targetUser.tenantId,
+            userId: targetUser.id,
+            subject,
+            summary,
+            status,
+            channel,
+          });
+
+          const interaction = mapTicketToInteraction(ticket);
+          updateRegisteredUser(userKey, (current) =>
+            mergeUser(current, { supportHistory: [interaction, ...current.supportHistory] })
+          );
+          return;
+        } catch (error) {
+          console.error('Support interaction create failed', error);
+          setAuthError('Destek kaydı oluşturulamadı.');
+        }
+      }
+
+      const fallback = createSupportInteraction(subject, summary, channel, status);
       updateRegisteredUser(userKey, (current) =>
-        mergeUser(current, { supportHistory: [interaction, ...current.supportHistory] })
+        mergeUser(current, { supportHistory: [fallback, ...current.supportHistory] })
       );
     },
-    [updateRegisteredUser]
+    [registeredUsers, updateRegisteredUser]
   );
 
   const handleCloseAuthPanel = () => {
