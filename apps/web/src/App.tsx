@@ -211,6 +211,11 @@ const primaryTenantId = defaultTenantOptions[0]?.id ?? tenantOptions[0].id;
 const seededTenant = tenantOptions.find((tenant) => tenant.id === primaryTenantId) ?? tenantOptions[0];
 const seededUserEmail = 'mert.cengiz@agnostic.com';
 const seededUserKey = createUserKey(seededUserEmail, seededTenant.id);
+const seededAdminEmail = 'aylin.demir@agnostic.com';
+const seededAdminKey = createUserKey(seededAdminEmail, seededTenant.id);
+const companyTenant = defaultTenantOptions[1] ?? seededTenant;
+const seededCompanyEmail = 'selim.kaya@eurasiaescapes.com';
+const seededCompanyKey = createUserKey(seededCompanyEmail, companyTenant.id);
 
 const initialRegisteredUsers: Record<string, RegisteredUser> = {
   [seededUserKey]: {
@@ -328,6 +333,9 @@ const App: React.FC = () => {
   const [signupTenantId, setSignupTenantId] = useState<string>(selectedTenantId);
   const [showAuthPanel, setShowAuthPanel] = useState<boolean>(false);
 
+  const isAdminUser = user?.role === 'admin';
+  const adminUser = isAdminUser ? user : null;
+
   const baseTenantOptions = useMemo(() => {
     if (defaultTenantOptions.some((tenant) => tenant.id === defaultTenantId)) {
       return defaultTenantOptions;
@@ -358,6 +366,20 @@ const App: React.FC = () => {
     return match?.name ?? 'Varsayılan Tenant';
   }, [baseTenantOptions]);
 
+  const availableDomains = useMemo(() => {
+    if (!user || isAdminUser) {
+      return domainOptions;
+    }
+
+    return domainOptions.filter((option) => option.id === user.role);
+  }, [user, isAdminUser]);
+
+  useEffect(() => {
+    if (user && !isAdminUser && selectedDomain !== user.role) {
+      setSelectedDomain(user.role);
+    }
+  }, [user, isAdminUser, selectedDomain]);
+
   useEffect(() => {
     if (selectedDomain === 'admin') {
       if (!['dashboard', 'localization', 'logs', 'profile', 'supportCenter'].includes(activeView)) {
@@ -376,17 +398,17 @@ const App: React.FC = () => {
         setActiveView('userHome');
       }
     }
-  }, [selectedDomain, activeView, user]);
+  }, [selectedDomain, activeView, user, isAdminUser]);
 
   useEffect(() => {
-    if (activeView === 'profile' && !user) {
+    if (activeView === 'profile' && (!user || !isAdminUser)) {
       setActiveView('dashboard');
     }
 
     if (!user && ['userReservations', 'userProfile', 'userSupport'].includes(activeView)) {
       setActiveView('userHome');
     }
-  }, [activeView, user]);
+  }, [activeView, user, isAdminUser]);
 
   useEffect(() => {
     if (!user) {
@@ -465,12 +487,20 @@ const App: React.FC = () => {
   );
 
   const handleGoToLocalization = () => {
+    if (!isAdminUser) {
+      return;
+    }
+
     setSelectedDomain('admin');
     setActiveView('localization');
     setShowAuthPanel(false);
   };
 
   const handleGoToLogs = () => {
+    if (!isAdminUser) {
+      return;
+    }
+
     setSelectedDomain('admin');
     setActiveView('logs');
     setShowAuthPanel(false);
@@ -569,11 +599,8 @@ const App: React.FC = () => {
     setUser(null);
     setAuthError(null);
     setAuthMode('login');
-    if (selectedDomain === 'user') {
-      setActiveView('userHome');
-    } else {
-      setActiveView('dashboard');
-    }
+    setSelectedDomain('admin');
+    setActiveView('dashboard');
     setShowAuthPanel(false);
   };
 
@@ -605,8 +632,18 @@ const App: React.FC = () => {
     setUser(account);
     persistTenantSelection(account.tenantId);
     setSelectedTenantId(account.tenantId);
-    setSelectedDomain('user');
-    setActiveView('userReservations');
+
+    const nextDomain: Domain = account.role;
+    setSelectedDomain(nextDomain);
+
+    if (account.role === 'admin') {
+      setActiveView('dashboard');
+    } else if (account.role === 'company') {
+      setActiveView('companyOverview');
+    } else {
+      setActiveView('userReservations');
+    }
+
     setShowAuthPanel(false);
     (event.currentTarget as HTMLFormElement).reset();
 
@@ -670,7 +707,9 @@ const App: React.FC = () => {
 
   const dashboardLayoutClassName = [
     'dashboard-layout',
-    user || (showAuthPanel && selectedDomain === 'admin') ? 'dashboard-layout--with-aside' : 'dashboard-layout--single',
+    isAdminUser || (showAuthPanel && selectedDomain === 'admin')
+      ? 'dashboard-layout--with-aside'
+      : 'dashboard-layout--single',
   ].join(' ');
 
   const userReservationKey = user ? createUserKey(user.email, user.tenantId) : null;
@@ -889,24 +928,20 @@ const App: React.FC = () => {
                   <div className={dashboardLayoutClassName}>
                     <NonUserDashboard
                       selectedTenantName={selectedTenantName}
-                      tenantOptions={tenantOptions}
-                      selectedTenantId={selectedTenantId}
-                      onSelectTenant={handleTenantSelect}
-                      onExploreLocalization={handleGoToLocalization}
-                      onExploreLogs={handleGoToLogs}
-                      onLogin={handleOpenLogin}
-                      onSignup={handleOpenSignup}
+                      isAdmin={isAdminUser}
+                      onExploreLocalization={isAdminUser ? handleGoToLocalization : undefined}
+                      onExploreLogs={isAdminUser ? handleGoToLogs : undefined}
                     />
 
-                    {user ? (
+                    {adminUser ? (
                       <aside className="profile-summary">
                         <h2>Tekrar hoş geldiniz</h2>
                         <p>
-                          {user.fullName} olarak <strong>{selectedTenantName}</strong> tenant’ı üzerinde çalışıyorsunuz. Profil
+                          {adminUser.fullName} olarak <strong>{selectedTenantName}</strong> tenant’ı üzerinde çalışıyorsunuz. Profil
                           sayfanız üzerinden kişisel bilgilerinizi yönetin ve uygulama özelliklerine erişin.
                         </p>
                         <div className="profile-summary__details">
-                          <span>{user.email}</span>
+                          <span>{adminUser.email}</span>
                           <span>Tenant: {selectedTenantName}</span>
                         </div>
                         <div className="profile-summary__actions">
@@ -1023,28 +1058,24 @@ const App: React.FC = () => {
                       </aside>
                     ) : (
                       <aside className="welcome-card">
-                        <h2>Keşfetmeye hemen başlayın</h2>
+                        <h2>Panel özetini keşfedin</h2>
                         <p>
-                          Platform özelliklerini gezinebilir, tenant seçicisi üzerinden farklı işletmeler arasında geçiş yapabilir ve
-                          dilediğiniz an giriş ya da kayıt işlemini başlatabilirsiniz.
+                          Üst menüdeki tenant ve oturum kontrolleri sadeleştirildi. Yönetici yetkisine sahip değilseniz, burada
+                          yalnızca platformun genel kabiliyetlerine dair bir ön izleme görürsünüz.
                         </p>
-                        <div className="welcome-card__actions">
-                          <button type="button" onClick={handleOpenLogin}>
-                            Giriş yap
-                          </button>
-                          <button type="button" onClick={handleOpenSignup}>
-                            Kayıt ol
-                          </button>
-                        </div>
+                        <p>
+                          Yönetici olarak oturum açmak için üst bardaki <strong>Giriş</strong> bağlantısını kullanabilir veya
+                          yetkili ekip ile iletişime geçebilirsiniz.
+                        </p>
                       </aside>
                     )}
                   </div>
                 )}
 
-                {activeView === 'profile' && user && (
+                {activeView === 'profile' && adminUser && (
                   <section className="profile-card">
                     <header>
-                      <h1>{user.fullName}</h1>
+                      <h1>{adminUser.fullName}</h1>
                       <p>
                         Hesabınıza bağlı tenant: <strong>{selectedTenantName}</strong>. Kişisel bilgilerinizi güncelleyin ve
                         platform deneyiminizi yönetin.
@@ -1054,7 +1085,7 @@ const App: React.FC = () => {
                       <article>
                         <h2>Hesap bilgileri</h2>
                         <ul>
-                          <li>E-posta: {user.email}</li>
+                          <li>E-posta: {adminUser.email}</li>
                           <li>Tenant: {selectedTenantName}</li>
                         </ul>
                       </article>
@@ -1083,38 +1114,45 @@ const App: React.FC = () => {
                 )}
 
                 {(activeView === 'localization' || activeView === 'logs') && (
-                  <div className="admin-layout">
-                    <nav className="admin-layout__tabs" aria-label="Yönetim sekmeleri">
-                      <button
-                        type="button"
-                        className={
-                          activeView === 'localization'
-                            ? 'admin-layout__tab admin-layout__tab--active'
-                            : 'admin-layout__tab'
-                        }
-                        onClick={() => setActiveView('localization')}
-                      >
-                        Lokalizasyon
-                      </button>
-                      <button
-                        type="button"
-                        className={
-                          activeView === 'logs' ? 'admin-layout__tab admin-layout__tab--active' : 'admin-layout__tab'
-                        }
-                        onClick={() => setActiveView('logs')}
-                      >
-                        Mongo Logları
-                      </button>
-                    </nav>
+                  isAdminUser ? (
+                    <div className="admin-layout">
+                      <nav className="admin-layout__tabs" aria-label="Yönetim sekmeleri">
+                        <button
+                          type="button"
+                          className={
+                            activeView === 'localization'
+                              ? 'admin-layout__tab admin-layout__tab--active'
+                              : 'admin-layout__tab'
+                          }
+                          onClick={() => setActiveView('localization')}
+                        >
+                          Lokalizasyon
+                        </button>
+                        <button
+                          type="button"
+                          className={
+                            activeView === 'logs' ? 'admin-layout__tab admin-layout__tab--active' : 'admin-layout__tab'
+                          }
+                          onClick={() => setActiveView('logs')}
+                        >
+                          Mongo Logları
+                        </button>
+                      </nav>
 
-                    <div className="admin-layout__content">
-                      {activeView === 'localization' ? (
-                        <LocalizationAdmin tenantId={selectedTenantId} />
-                      ) : (
-                        <LogsAdmin tenantId={selectedTenantId} />
-                      )}
+                      <div className="admin-layout__content">
+                        {activeView === 'localization' ? (
+                          <LocalizationAdmin tenantId={selectedTenantId} />
+                        ) : (
+                          <LogsAdmin tenantId={selectedTenantId} />
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <section className="restricted-card">
+                      <h2>Erişim kısıtlandı</h2>
+                      <p>Log izleme ve lokalizasyon ekranları yalnızca yönetici rolündeki kullanıcılar için etkinleştirilir.</p>
+                    </section>
+                  )
                 )}
               </>
             )}

@@ -2,26 +2,28 @@ import React from 'react';
 
 type NonUserDashboardProps = {
   selectedTenantName: string;
-  tenantOptions: { id: string; name: string }[];
-  selectedTenantId: string;
-  onSelectTenant: (tenantId: string) => void;
-  onExploreLocalization: () => void;
-  onExploreLogs: () => void;
-  onLogin: () => void;
-  onSignup: () => void;
+  isAdmin: boolean;
+  onExploreLocalization?: () => void;
+  onExploreLogs?: () => void;
 };
 
 export const NonUserDashboard: React.FC<NonUserDashboardProps> = ({
   selectedTenantName,
-  tenantOptions = [],
-  selectedTenantId,
-  onSelectTenant,
+  isAdmin,
   onExploreLocalization,
   onExploreLogs,
-  onLogin,
-  onSignup,
 }) => {
-  const hasTenantOptions = tenantOptions.length > 0;
+  const handleExploreLocalization = () => {
+    if (onExploreLocalization) {
+      onExploreLocalization();
+    }
+  };
+
+  const handleExploreLogs = () => {
+    if (onExploreLogs) {
+      onExploreLogs();
+    }
+  };
 
   return (
     <section className="non-user-dashboard">
@@ -35,46 +37,30 @@ export const NonUserDashboard: React.FC<NonUserDashboardProps> = ({
             Lokasyon ve kanal bağımsız çalışan platformumuz sayesinde, içerik çevirilerinden operasyon loglarına kadar tüm
             süreçleri merkezi olarak yönetebilir, ekiplerinizi tek bir dijital oturumda buluşturabilirsiniz.
           </p>
-          <div className="non-user-dashboard__tenant-picker">
-            <label>
-              <span>Tenant seçimi</span>
-              <select
-                value={selectedTenantId}
-                onChange={(event) => onSelectTenant(event.target.value)}
-                disabled={!hasTenantOptions}
+          <p className="non-user-dashboard__tenant-summary">
+            Şu anda <strong>{selectedTenantName}</strong> işletmesi için yönetim panelini
+            inceliyorsunuz. Tenant seçimi ve oturum bilgileri artık üst menüde yer alıyor; böylece gösterge paneli
+            yalnızca operasyonel içgörülere odaklanıyor.
+          </p>
+          {isAdmin ? (
+            <div className="non-user-dashboard__cta">
+              <button
+                type="button"
+                className="cta-button cta-button--primary"
+                onClick={handleExploreLocalization}
               >
-                {hasTenantOptions ? (
-                  tenantOptions.map((tenant) => (
-                    <option key={tenant.id} value={tenant.id}>
-                      {tenant.name}
-                    </option>
-                  ))
-                ) : (
-                  <option value="">Tenant bulunamadı</option>
-                )}
-              </select>
-            </label>
-            <p>Seçili tenant: {selectedTenantName}</p>
-          </div>
-          <div className="non-user-dashboard__cta">
-            <button type="button" className="cta-button cta-button--primary" onClick={onExploreLocalization}>
-              Lokalizasyonu incele
-            </button>
-            <button type="button" className="cta-button" onClick={onExploreLogs}>
-              Operasyon loglarını gör
-            </button>
-          </div>
-        </div>
-        <div className="non-user-dashboard__auth-links">
-          <p>Hesabınız hazır mı?</p>
-          <div>
-            <button type="button" onClick={onLogin}>
-              Giriş Yap
-            </button>
-            <button type="button" onClick={onSignup}>
-              Kayıt Ol
-            </button>
-          </div>
+                Lokalizasyonu incele
+              </button>
+              <button type="button" className="cta-button" onClick={handleExploreLogs}>
+                Operasyon loglarını gör
+              </button>
+            </div>
+          ) : (
+            <p className="non-user-dashboard__hint">
+              Log izleme ve lokalizasyon yönetimi gibi ileri seviye yönetim araçları yalnızca yönetici hesapları için
+              etkinleştirilmiştir. Lütfen yönetici olarak giriş yapın veya yetkili kişiyle iletişime geçin.
+            </p>
+          )}
         </div>
       </header>
 

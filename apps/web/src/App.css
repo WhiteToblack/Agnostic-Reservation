@@ -424,37 +424,19 @@ body {
   line-height: 1.6;
 }
 
-.non-user-dashboard__tenant-picker {
+
+.non-user-dashboard__tenant-summary {
   margin-top: 18px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-  align-items: center;
+  max-width: 620px;
+  background: rgba(79, 107, 255, 0.08);
+  border-radius: 18px;
+  padding: 16px 20px;
+  color: #3a4770;
+  line-height: 1.6;
 }
 
-.non-user-dashboard__tenant-picker label {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 0.85rem;
-  color: #4f5b78;
-}
-
-.non-user-dashboard__tenant-picker select {
-  appearance: none;
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid #c6cce2;
-  font-size: 0.95rem;
-  background: #f7f8ff;
-  color: #1c274c;
-  min-width: 220px;
-}
-
-.non-user-dashboard__tenant-picker p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #495781;
+.non-user-dashboard__tenant-summary strong {
+  color: #1f2c55;
 }
 
 .non-user-dashboard__cta {
@@ -464,28 +446,15 @@ body {
   margin-top: 18px;
 }
 
-.non-user-dashboard__auth-links {
-  min-width: 220px;
-  background: rgba(79, 107, 255, 0.08);
-  border-radius: 20px;
-  padding: 18px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  color: #32406e;
-}
-
-.non-user-dashboard__auth-links button {
-  border: none;
-  background: transparent;
-  color: #32406e;
-  font-weight: 600;
-  cursor: pointer;
-  text-align: left;
-}
-
-.non-user-dashboard__auth-links button:hover {
-  color: #1f2c55;
+.non-user-dashboard__hint {
+  margin-top: 18px;
+  max-width: 620px;
+  background: rgba(255, 149, 120, 0.16);
+  border-radius: 18px;
+  padding: 16px 20px;
+  color: #663421;
+  line-height: 1.6;
+  font-weight: 500;
 }
 
 .non-user-dashboard__grid {
@@ -698,25 +667,6 @@ body {
   line-height: 1.6;
 }
 
-.welcome-card__actions {
-  display: flex;
-  gap: 12px;
-}
-
-.welcome-card__actions button {
-  border: none;
-  padding: 10px 18px;
-  border-radius: 14px;
-  background: rgba(79, 107, 255, 0.12);
-  color: #2a3770;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.welcome-card__actions button:hover {
-  background: rgba(79, 107, 255, 0.2);
-}
-
 .profile-summary {
   background: rgba(255, 255, 255, 0.95);
   border-radius: 24px;
@@ -754,6 +704,27 @@ body {
 
 .profile-summary__actions button:hover {
   background: rgba(79, 107, 255, 0.18);
+}
+
+.restricted-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 24px;
+  padding: 28px;
+  text-align: center;
+  box-shadow: 0 24px 48px rgba(34, 48, 92, 0.12);
+  border: 1px dashed rgba(79, 107, 255, 0.3);
+  color: #2c3963;
+}
+
+.restricted-card h2 {
+  margin: 0 0 12px;
+  font-size: 1.4rem;
+}
+
+.restricted-card p {
+  margin: 0;
+  color: #4f5b78;
+  line-height: 1.5;
 }
 
 .profile-card {
