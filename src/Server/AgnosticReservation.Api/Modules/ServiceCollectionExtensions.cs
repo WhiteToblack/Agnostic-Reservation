@@ -35,7 +35,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAdminNavigationService, AdminNavigationService>();
         services.AddScoped<IUserProfileService, UserProfileService>();
         services.Configure<MongoLoggingOptions>(configuration.GetSection("MongoLogging"));
-        services.Configure<SessionOptions>(configuration.GetSection("Session"));
+        services.Configure<AgnosticReservation.Application.Auth.SessionOptions>(configuration.GetSection("Session"));
         services.AddSingleton<MongoRequestLogService>();
         services.AddSingleton<IRequestLogService>(provider => provider.GetRequiredService<MongoRequestLogService>());
         services.AddSingleton<IRequestLogReader>(provider => provider.GetRequiredService<MongoRequestLogService>());
