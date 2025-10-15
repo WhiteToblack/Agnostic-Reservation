@@ -4,20 +4,41 @@ import { LocalizationProvider } from './localization/LocalizationProvider';
 import { LocalizationAdmin } from './localization/LocalizationAdmin';
 import { LogsAdmin } from './logs/LogsAdmin';
 import { NonUserDashboard } from './components/NonUserDashboard';
-import { TestToolbar } from './components/TestToolbar';
-import { appConfig } from './config/appConfig';
+import { CompanyDashboard } from './components/CompanyDashboard';
+import { UserDashboard } from './components/UserDashboard';
+import { RegisteredUser, Reservation } from './types/domain';
 
 type TenantOption = {
   id: string;
   name: string;
 };
 
-type RegisteredUser = {
-  fullName: string;
-  email: string;
-  password: string;
-  tenantId: string;
+type Domain = 'admin' | 'company' | 'user';
+
+type DomainOption = {
+  id: Domain;
+  label: string;
+  host: string;
+  description: string;
 };
+
+type ActiveView =
+  | 'dashboard'
+  | 'localization'
+  | 'logs'
+  | 'profile'
+  | 'companyOverview'
+  | 'companyReservations'
+  | 'companyOperations'
+  | 'userHome'
+  | 'userReservations'
+  | 'userProfile'
+  | 'userSupport';
+
+type AuthMode = 'login' | 'signup';
+
+const fallbackTenantId = '00000000-0000-0000-0000-000000000000';
+const environmentTenantId = (import.meta.env.VITE_TENANT_ID as string | undefined) ?? fallbackTenantId;
 
 const defaultTenantOptions: TenantOption[] = [
   { id: '92d4f35e-bc1d-4c48-9c8a-7f8c5f5a2b11', name: 'Agnostic Hospitality Group' },
@@ -25,13 +46,150 @@ const defaultTenantOptions: TenantOption[] = [
   { id: '01d2b496-6be4-4ae0-94f4-2eb1b876fae2', name: 'Anatolia Boutique Hotels' },
 ];
 
+const tenantOptions: TenantOption[] = defaultTenantOptions.some((tenant) => tenant.id === environmentTenantId)
+  ? defaultTenantOptions.map((tenant) =>
+      tenant.id === environmentTenantId ? { ...tenant, name: `${tenant.name} (varsayılan)` } : tenant
+    )
+  : [{ id: environmentTenantId, name: 'Varsayılan Tenant' }, ...defaultTenantOptions];
+
+const domainOptions: DomainOption[] = [
+  {
+    id: 'admin',
+    label: 'Merkezi yönetim',
+    host: 'admin.agnostic.com',
+    description: 'Çok kiracılı altyapı ve teknik ekip özellikleri',
+  },
+  {
+    id: 'company',
+    label: 'Şirket paneli',
+    host: 'company.agnostic.com',
+    description: 'Operasyon, rezervasyon ve gelir yönetimi',
+  },
+  {
+    id: 'user',
+    label: 'Misafir hesabı',
+    host: 'user.agnostic.com',
+    description: 'Rezervasyon takibi ve destek',
+  },
+];
+
+const initialTenantId = environmentTenantId;
 const preferredLanguage = (navigator.languages && navigator.languages[0]) || navigator.language || 'tr-TR';
 
 const createUserKey = (email: string, tenantId: string) => `${email.trim().toLowerCase()}::${tenantId}`;
 
-type ActiveView = 'dashboard' | 'localization' | 'logs' | 'profile';
+const getTenantName = (tenantId: string) => tenantOptions.find((tenant) => tenant.id === tenantId)?.name ?? 'Seçili tenant';
 
-type AuthMode = 'login' | 'signup';
+const toISODate = (date: Date) => date.toISOString().split('T')[0];
+
+const addDays = (date: Date, days: number) => {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+};
+
+const generateSampleReservations = (tenantName: string, fullName: string): Reservation[] => {
+  const base = new Date();
+  const firstStart = addDays(base, 18);
+  const firstEnd = addDays(firstStart, 3);
+  const secondStart = addDays(base, 45);
+  const secondEnd = addDays(secondStart, 4);
+  const pastStart = addDays(base, -26);
+  const pastEnd = addDays(pastStart, 2);
+  const guestShortName = fullName.split(' ')[0];
+
+  return [
+    {
+      id: `AR-${firstStart.getTime().toString().slice(-4)}`,
+      propertyName: `${tenantName} · Panorama Süit`,
+      checkIn: toISODate(firstStart),
+      checkOut: toISODate(firstEnd),
+      nights: 3,
+      guests: 2,
+      status: 'Onaylandı',
+      totalPrice: 7200,
+      channel: 'Web Sitesi',
+      notes: `${guestShortName} için özel karşılama kartı`,
+    },
+    {
+      id: `AR-${secondStart.getTime().toString().slice(-4)}`,
+      propertyName: `${tenantName} · Executive Oda`,
+      checkIn: toISODate(secondStart),
+      checkOut: toISODate(secondEnd),
+      nights: 4,
+      guests: 2,
+      status: 'Beklemede',
+      totalPrice: 8600,
+      channel: 'Mobil Uygulama',
+    },
+    {
+      id: `AR-${pastStart.getTime().toString().slice(-4)}`,
+      propertyName: `${tenantName} · Deluxe Oda`,
+      checkIn: toISODate(pastStart),
+      checkOut: toISODate(pastEnd),
+      nights: 2,
+      guests: 1,
+      status: 'İptal',
+      totalPrice: 3400,
+      channel: 'Çağrı Merkezi',
+      notes: 'Misafir isteği ile ücretsiz iptal yapıldı.',
+    },
+  ];
+};
+
+const primaryTenantId = defaultTenantOptions[0]?.id ?? tenantOptions[0].id;
+const seededTenant = tenantOptions.find((tenant) => tenant.id === primaryTenantId) ?? tenantOptions[0];
+const seededUserEmail = 'mert.cengiz@agnostic.com';
+const seededUserKey = createUserKey(seededUserEmail, seededTenant.id);
+
+const initialRegisteredUsers: Record<string, RegisteredUser> = {
+  [seededUserKey]: {
+    fullName: 'Mert Cengiz',
+    email: seededUserEmail,
+    password: 'agnostic123',
+    tenantId: seededTenant.id,
+  },
+};
+
+const initialReservations: Record<string, Reservation[]> = {
+  [seededUserKey]: [
+    {
+      id: 'AR-4521',
+      propertyName: `${seededTenant.name} · Superior Oda`,
+      checkIn: '2024-04-18',
+      checkOut: '2024-04-21',
+      nights: 3,
+      guests: 2,
+      status: 'Onaylandı',
+      totalPrice: 6800,
+      channel: 'Mobil Uygulama',
+      notes: 'Geç giriş talebi onaylandı.',
+    },
+    {
+      id: 'AR-4396',
+      propertyName: `${seededTenant.name} · City View Suite`,
+      checkIn: '2024-05-02',
+      checkOut: '2024-05-05',
+      nights: 3,
+      guests: 2,
+      status: 'Beklemede',
+      totalPrice: 7400,
+      channel: 'Web Sitesi',
+    },
+    {
+      id: 'AR-4102',
+      propertyName: `${seededTenant.name} · Corner Oda`,
+      checkIn: '2024-03-08',
+      checkOut: '2024-03-10',
+      nights: 2,
+      guests: 1,
+      status: 'İptal',
+      totalPrice: 3150,
+      channel: 'Çağrı Merkezi',
+      notes: 'Konaklama tarihi değişikliği nedeniyle iptal edildi.',
+    },
+  ],
+};
 
 const resolveInitialTenantId = () => {
   if (typeof window !== 'undefined') {
@@ -61,10 +219,12 @@ const persistTenantSelection = (tenantId: string) => {
 };
 
 const App: React.FC = () => {
-  const [selectedTenantId, setSelectedTenantId] = useState<string>(() => resolveInitialTenantId());
+  const [selectedDomain, setSelectedDomain] = useState<Domain>('admin');
+  const [selectedTenantId, setSelectedTenantId] = useState<string>(initialTenantId);
   const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [authMode, setAuthMode] = useState<AuthMode>('login');
-  const [registeredUsers, setRegisteredUsers] = useState<Record<string, RegisteredUser>>({});
+  const [registeredUsers, setRegisteredUsers] = useState<Record<string, RegisteredUser>>(initialRegisteredUsers);
+  const [reservationsByUser, setReservationsByUser] = useState<Record<string, Reservation[]>>(initialReservations);
   const [user, setUser] = useState<RegisteredUser | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [loginTenantId, setLoginTenantId] = useState<string>(selectedTenantId);
@@ -102,8 +262,32 @@ const App: React.FC = () => {
   }, [appConfig.defaultTenantId, baseTenantOptions]);
 
   useEffect(() => {
+    if (selectedDomain === 'admin') {
+      if (!['dashboard', 'localization', 'logs', 'profile'].includes(activeView)) {
+        setActiveView('dashboard');
+      }
+    } else if (selectedDomain === 'company') {
+      if (!['companyOverview', 'companyReservations', 'companyOperations'].includes(activeView)) {
+        setActiveView('companyOverview');
+      }
+    } else if (selectedDomain === 'user') {
+      if (user) {
+        if (!['userReservations', 'userProfile', 'userSupport'].includes(activeView)) {
+          setActiveView('userReservations');
+        }
+      } else if (activeView !== 'userHome') {
+        setActiveView('userHome');
+      }
+    }
+  }, [selectedDomain, activeView, user]);
+
+  useEffect(() => {
     if (activeView === 'profile' && !user) {
       setActiveView('dashboard');
+    }
+
+    if (!user && ['userReservations', 'userProfile', 'userSupport'].includes(activeView)) {
+      setActiveView('userHome');
     }
   }, [activeView, user]);
 
@@ -114,10 +298,21 @@ const App: React.FC = () => {
     }
   }, [selectedTenantId, user]);
 
-  const selectedTenantName = useMemo(() => {
-    const match = tenantOptions.find((tenant) => tenant.id === selectedTenantId);
-    return match?.name ?? 'Seçili tenant';
-  }, [selectedTenantId, tenantOptions]);
+  useEffect(() => {
+    if (selectedDomain !== 'admin') {
+      setShowAuthPanel(false);
+    }
+  }, [selectedDomain]);
+
+  const selectedTenantName = useMemo(() => getTenantName(selectedTenantId), [selectedTenantId]);
+  const activeDomain = useMemo(
+    () => domainOptions.find((option) => option.id === selectedDomain) ?? domainOptions[0],
+    [selectedDomain]
+  );
+
+  const handleDomainChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedDomain(event.target.value as Domain);
+  };
 
   const handleTenantChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const tenantId = event.target.value;
@@ -131,11 +326,13 @@ const App: React.FC = () => {
   };
 
   const handleGoToLocalization = () => {
+    setSelectedDomain('admin');
     setActiveView('localization');
     setShowAuthPanel(false);
   };
 
   const handleGoToLogs = () => {
+    setSelectedDomain('admin');
     setActiveView('logs');
     setShowAuthPanel(false);
   };
@@ -146,24 +343,36 @@ const App: React.FC = () => {
   };
 
   const handleOpenLogin = () => {
-    setActiveView('dashboard');
     setAuthMode('login');
     setAuthError(null);
-    setShowAuthPanel(true);
+    if (selectedDomain === 'admin') {
+      setActiveView('dashboard');
+      setShowAuthPanel(true);
+    } else if (selectedDomain === 'user') {
+      setActiveView(user ? 'userReservations' : 'userHome');
+    }
   };
 
   const handleOpenSignup = () => {
-    setActiveView('dashboard');
     setAuthMode('signup');
     setAuthError(null);
-    setShowAuthPanel(true);
+    if (selectedDomain === 'admin') {
+      setActiveView('dashboard');
+      setShowAuthPanel(true);
+    } else if (selectedDomain === 'user') {
+      setActiveView('userHome');
+    }
   };
 
   const handleLogout = () => {
     setUser(null);
     setAuthError(null);
     setAuthMode('login');
-    setActiveView('dashboard');
+    if (selectedDomain === 'user') {
+      setActiveView('userHome');
+    } else {
+      setActiveView('dashboard');
+    }
     setShowAuthPanel(false);
   };
 
@@ -195,9 +404,18 @@ const App: React.FC = () => {
     setUser(account);
     persistTenantSelection(account.tenantId);
     setSelectedTenantId(account.tenantId);
-    setActiveView('profile');
+    setSelectedDomain('user');
+    setActiveView('userReservations');
     setShowAuthPanel(false);
     (event.currentTarget as HTMLFormElement).reset();
+
+    const tenantName = getTenantName(account.tenantId);
+    setReservationsByUser((previous) => {
+      if (previous[key]) {
+        return previous;
+      }
+      return { ...previous, [key]: generateSampleReservations(tenantName, account.fullName) };
+    });
   };
 
   const handleSignup = (event: FormEvent<HTMLFormElement>) => {
@@ -226,12 +444,19 @@ const App: React.FC = () => {
       tenantId: signupTenantId,
     };
 
+    const tenantName = getTenantName(signupTenantId);
+
     setRegisteredUsers((previous) => ({ ...previous, [key]: newUser }));
+    setReservationsByUser((previous) => ({
+      ...previous,
+      [key]: generateSampleReservations(tenantName, fullName),
+    }));
     setAuthError(null);
     setUser(newUser);
     persistTenantSelection(signupTenantId);
     setSelectedTenantId(signupTenantId);
-    setActiveView('profile');
+    setSelectedDomain('user');
+    setActiveView('userReservations');
     setAuthMode('login');
     setLoginTenantId(signupTenantId);
     setShowAuthPanel(false);
@@ -240,34 +465,11 @@ const App: React.FC = () => {
 
   const dashboardLayoutClassName = [
     'dashboard-layout',
-    user || showAuthPanel ? 'dashboard-layout--with-aside' : 'dashboard-layout--single',
+    user || (showAuthPanel && selectedDomain === 'admin') ? 'dashboard-layout--with-aside' : 'dashboard-layout--single',
   ].join(' ');
 
-  const handleToolbarTenantChange = (tenantId: string) => {
-    if (tenantId === selectedTenantId) {
-      return;
-    }
-
-    persistTenantSelection(tenantId);
-
-    if (typeof window !== 'undefined') {
-      window.location.reload();
-    }
-  };
-
-  const handleToolbarReset = () => {
-    if (selectedTenantId === appConfig.defaultTenantId) {
-      return;
-    }
-
-    persistTenantSelection(appConfig.defaultTenantId);
-
-    if (typeof window !== 'undefined') {
-      window.location.reload();
-    }
-  };
-
-  const isTenantOverrideActive = selectedTenantId !== appConfig.defaultTenantId;
+  const userReservationKey = user ? createUserKey(user.email, user.tenantId) : null;
+  const reservationsForUser = userReservationKey ? reservationsByUser[userReservationKey] ?? [] : [];
 
   return (
     <LocalizationProvider tenantId={selectedTenantId} initialLanguage={preferredLanguage}>
@@ -284,46 +486,159 @@ const App: React.FC = () => {
           <header className="app-header">
             <div className="app-header__brand">
               <span className="app-header__title">Agnostic Reservation</span>
-              <span className="app-header__subtitle">Çok kiracılı rezervasyon yönetimi</span>
+              <span className="app-header__subtitle">Çok kiracılı rezervasyon yönetimi platformu</span>
             </div>
 
-            <nav className="app-header__nav" aria-label="Temel gezinme">
-              <button
-                type="button"
-                className={activeView === 'dashboard' ? 'app-header__nav-button app-header__nav-button--active' : 'app-header__nav-button'}
-                onClick={() => setActiveView('dashboard')}
-              >
-                Ana sayfa
-              </button>
-              <button
-                type="button"
-                className={activeView === 'localization' ? 'app-header__nav-button app-header__nav-button--active' : 'app-header__nav-button'}
-                onClick={handleGoToLocalization}
-              >
-                Lokalizasyon
-              </button>
-              <button
-                type="button"
-                className={activeView === 'logs' ? 'app-header__nav-button app-header__nav-button--active' : 'app-header__nav-button'}
-                onClick={handleGoToLogs}
-              >
-                Log yönetimi
-              </button>
-              {user && (
-                <button
-                  type="button"
-                  className={activeView === 'profile' ? 'app-header__nav-button app-header__nav-button--active' : 'app-header__nav-button'}
-                  onClick={() => {
-                    setActiveView('profile');
-                    setShowAuthPanel(false);
-                  }}
-                >
-                  Profilim
-                </button>
+            <div className="app-header__nav" aria-label="Ana gezinme">
+              {selectedDomain === 'admin' && (
+                <>
+                  <button
+                    type="button"
+                    className={
+                      activeView === 'dashboard'
+                        ? 'app-header__nav-button app-header__nav-button--active'
+                        : 'app-header__nav-button'
+                    }
+                    onClick={() => setActiveView('dashboard')}
+                  >
+                    Ana sayfa
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      activeView === 'localization'
+                        ? 'app-header__nav-button app-header__nav-button--active'
+                        : 'app-header__nav-button'
+                    }
+                    onClick={() => setActiveView('localization')}
+                  >
+                    Lokalizasyon
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      activeView === 'logs'
+                        ? 'app-header__nav-button app-header__nav-button--active'
+                        : 'app-header__nav-button'
+                    }
+                    onClick={() => setActiveView('logs')}
+                  >
+                    Log yönetimi
+                  </button>
+                  {user && (
+                    <button
+                      type="button"
+                      className={
+                        activeView === 'profile'
+                          ? 'app-header__nav-button app-header__nav-button--active'
+                          : 'app-header__nav-button'
+                      }
+                      onClick={() => {
+                        setActiveView('profile');
+                        setShowAuthPanel(false);
+                      }}
+                    >
+                      Profilim
+                    </button>
+                  )}
+                </>
               )}
-            </nav>
+
+              {selectedDomain === 'company' && (
+                <>
+                  <button
+                    type="button"
+                    className={
+                      activeView === 'companyOverview'
+                        ? 'app-header__nav-button app-header__nav-button--active'
+                        : 'app-header__nav-button'
+                    }
+                    onClick={() => setActiveView('companyOverview')}
+                  >
+                    Genel bakış
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      activeView === 'companyReservations'
+                        ? 'app-header__nav-button app-header__nav-button--active'
+                        : 'app-header__nav-button'
+                    }
+                    onClick={() => setActiveView('companyReservations')}
+                  >
+                    Rezervasyon akışı
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      activeView === 'companyOperations'
+                        ? 'app-header__nav-button app-header__nav-button--active'
+                        : 'app-header__nav-button'
+                    }
+                    onClick={() => setActiveView('companyOperations')}
+                  >
+                    Operasyonlar
+                  </button>
+                </>
+              )}
+
+              {selectedDomain === 'user' && (
+                <>
+                  <button
+                    type="button"
+                    className={
+                      activeView === 'userReservations'
+                        ? 'app-header__nav-button app-header__nav-button--active'
+                        : 'app-header__nav-button'
+                    }
+                    onClick={() => setActiveView(user ? 'userReservations' : 'userHome')}
+                  >
+                    Rezervasyonlarım
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      activeView === 'userProfile'
+                        ? 'app-header__nav-button app-header__nav-button--active'
+                        : 'app-header__nav-button'
+                    }
+                    onClick={() => user && setActiveView('userProfile')}
+                    disabled={!user}
+                  >
+                    Profilim
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      activeView === 'userSupport'
+                        ? 'app-header__nav-button app-header__nav-button--active'
+                        : 'app-header__nav-button'
+                    }
+                    onClick={() => user && setActiveView('userSupport')}
+                    disabled={!user}
+                  >
+                    Destek
+                  </button>
+                </>
+              )}
+            </div>
 
             <div className="app-header__controls">
+              <div className="app-header__domain">
+                <span className="app-header__domain-label">Alan adı</span>
+                <label className="domain-select">
+                  <span className="sr-only">Alan adı seçimi</span>
+                  <select value={selectedDomain} onChange={handleDomainChange}>
+                    {domainOptions.map((domain) => (
+                      <option key={domain.id} value={domain.id}>
+                        {domain.host}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <span className="app-header__domain-description">{activeDomain.description}</span>
+              </div>
+
               <label className="tenant-select">
                 <span>Tenant seçimi</span>
                 <select value={selectedTenantId} onChange={handleTenantChange}>
@@ -361,217 +676,341 @@ const App: React.FC = () => {
           </header>
 
           <main className="app-main">
-            {activeView === 'dashboard' && (
-              <div className={dashboardLayoutClassName}>
-                <NonUserDashboard
-                  selectedTenantName={selectedTenantName}
-                  tenantOptions={tenantOptions}
-                  selectedTenantId={selectedTenantId}
-                  onSelectTenant={handleTenantSelect}
-                  onExploreLocalization={handleGoToLocalization}
-                  onExploreLogs={handleGoToLogs}
-                  onLogin={handleOpenLogin}
-                  onSignup={handleOpenSignup}
-                />
+            {selectedDomain === 'admin' && (
+              <>
+                {activeView === 'dashboard' && (
+                  <div className={dashboardLayoutClassName}>
+                    <NonUserDashboard
+                      selectedTenantName={selectedTenantName}
+                      tenantOptions={tenantOptions}
+                      selectedTenantId={selectedTenantId}
+                      onSelectTenant={handleTenantSelect}
+                      onExploreLocalization={handleGoToLocalization}
+                      onExploreLogs={handleGoToLogs}
+                      onLogin={handleOpenLogin}
+                      onSignup={handleOpenSignup}
+                    />
 
-                {user ? (
-                  <aside className="profile-summary">
-                    <h2>Tekrar hoş geldiniz</h2>
-                    <p>
-                      {user.fullName} olarak <strong>{selectedTenantName}</strong> tenant’ı üzerinde çalışıyorsunuz. Profil
-                      sayfanız üzerinden kişisel bilgilerinizi yönetin ve uygulama özelliklerine erişin.
-                    </p>
-                    <div className="profile-summary__details">
-                      <span>{user.email}</span>
-                      <span>Tenant: {selectedTenantName}</span>
-                    </div>
-                    <div className="profile-summary__actions">
-                      <button type="button" onClick={() => setActiveView('profile')}>
-                        Profilime git
-                      </button>
-                      <button type="button" onClick={() => setActiveView('localization')}>
-                        Lokalizasyonu yönet
-                      </button>
-                      <button type="button" onClick={() => setActiveView('logs')}>
-                        Logları incele
-                      </button>
-                    </div>
-                  </aside>
-                ) : showAuthPanel ? (
-                  <aside className="auth-card">
-                    <div className="auth-card__header">
-                      <h2>Hesabınıza giriş yapın</h2>
-                      <button
-                        type="button"
-                        className="auth-card__close"
-                        onClick={handleCloseAuthPanel}
-                        aria-label="Kimlik doğrulama panelini kapat"
-                      >
-                        ×
-                      </button>
-                    </div>
-                    <div className="auth-card__tabs" role="tablist" aria-label="Kimlik doğrulama">
-                      <button
-                        type="button"
-                        role="tab"
-                        aria-selected={authMode === 'login'}
-                        className={authMode === 'login' ? 'auth-card__tab auth-card__tab--active' : 'auth-card__tab'}
-                        onClick={() => {
-                          setAuthMode('login');
-                          setAuthError(null);
-                        }}
-                      >
-                        Giriş Yap
-                      </button>
-                      <button
-                        type="button"
-                        role="tab"
-                        aria-selected={authMode === 'signup'}
-                        className={authMode === 'signup' ? 'auth-card__tab auth-card__tab--active' : 'auth-card__tab'}
-                        onClick={() => {
-                          setAuthMode('signup');
-                          setAuthError(null);
-                        }}
-                      >
-                        Kayıt Ol
-                      </button>
-                    </div>
+                    {user ? (
+                      <aside className="profile-summary">
+                        <h2>Tekrar hoş geldiniz</h2>
+                        <p>
+                          {user.fullName} olarak <strong>{selectedTenantName}</strong> tenant’ı üzerinde çalışıyorsunuz. Profil
+                          sayfanız üzerinden kişisel bilgilerinizi yönetin ve uygulama özelliklerine erişin.
+                        </p>
+                        <div className="profile-summary__details">
+                          <span>{user.email}</span>
+                          <span>Tenant: {selectedTenantName}</span>
+                        </div>
+                        <div className="profile-summary__actions">
+                          <button type="button" onClick={() => setActiveView('profile')}>
+                            Profilime git
+                          </button>
+                          <button type="button" onClick={() => setActiveView('localization')}>
+                            Lokalizasyonu yönet
+                          </button>
+                          <button type="button" onClick={() => setActiveView('logs')}>
+                            Logları incele
+                          </button>
+                        </div>
+                      </aside>
+                    ) : showAuthPanel ? (
+                      <aside className="auth-card">
+                        <div className="auth-card__header">
+                          <h2>Hesabınıza giriş yapın</h2>
+                          <button
+                            type="button"
+                            className="auth-card__close"
+                            onClick={handleCloseAuthPanel}
+                            aria-label="Kimlik doğrulama panelini kapat"
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <div className="auth-card__tabs" role="tablist" aria-label="Kimlik doğrulama">
+                          <button
+                            type="button"
+                            role="tab"
+                            aria-selected={authMode === 'login'}
+                            className={
+                              authMode === 'login' ? 'auth-card__tab auth-card__tab--active' : 'auth-card__tab'
+                            }
+                            onClick={() => {
+                              setAuthMode('login');
+                              setAuthError(null);
+                            }}
+                          >
+                            Giriş Yap
+                          </button>
+                          <button
+                            type="button"
+                            role="tab"
+                            aria-selected={authMode === 'signup'}
+                            className={
+                              authMode === 'signup' ? 'auth-card__tab auth-card__tab--active' : 'auth-card__tab'
+                            }
+                            onClick={() => {
+                              setAuthMode('signup');
+                              setAuthError(null);
+                            }}
+                          >
+                            Kayıt Ol
+                          </button>
+                        </div>
 
-                    {authMode === 'login' ? (
-                      <form className="auth-card__form" onSubmit={handleLogin}>
-                        <label>
-                          <span>Tenant</span>
-                          <select value={loginTenantId} onChange={(event) => setLoginTenantId(event.target.value)}>
-                            {tenantOptions.map((tenant) => (
-                              <option key={tenant.id} value={tenant.id}>
-                                {tenant.name}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label>
-                          <span>E-posta</span>
-                          <input type="email" name="email" placeholder="ornek@tesis.com" required />
-                        </label>
-                        <label>
-                          <span>Şifre</span>
-                          <input type="password" name="password" placeholder="••••••••" required />
-                        </label>
-                        <button type="submit" className="auth-card__submit">
-                          Giriş yap
-                        </button>
-                      </form>
+                        {authMode === 'login' ? (
+                          <form className="auth-card__form" onSubmit={handleLogin}>
+                            <label>
+                              <span>Tenant</span>
+                              <select value={loginTenantId} onChange={(event) => setLoginTenantId(event.target.value)}>
+                                {tenantOptions.map((tenant) => (
+                                  <option key={tenant.id} value={tenant.id}>
+                                    {tenant.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label>
+                              <span>E-posta</span>
+                              <input type="email" name="email" placeholder="ornek@tesis.com" required />
+                            </label>
+                            <label>
+                              <span>Şifre</span>
+                              <input type="password" name="password" placeholder="••••••••" required />
+                            </label>
+                            <button type="submit" className="auth-card__submit">
+                              Giriş yap
+                            </button>
+                          </form>
+                        ) : (
+                          <form className="auth-card__form" onSubmit={handleSignup}>
+                            <label>
+                              <span>Ad Soyad</span>
+                              <input type="text" name="fullName" placeholder="Adınız Soyadınız" required />
+                            </label>
+                            <label>
+                              <span>Tenant</span>
+                              <select value={signupTenantId} onChange={(event) => setSignupTenantId(event.target.value)}>
+                                {tenantOptions.map((tenant) => (
+                                  <option key={tenant.id} value={tenant.id}>
+                                    {tenant.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label>
+                              <span>E-posta</span>
+                              <input type="email" name="email" placeholder="ornek@tesis.com" required />
+                            </label>
+                            <label>
+                              <span>Şifre</span>
+                              <input type="password" name="password" placeholder="En az 6 karakter" required minLength={6} />
+                            </label>
+                            <button type="submit" className="auth-card__submit">
+                              Hesap oluştur
+                            </button>
+                          </form>
+                        )}
+
+                        {authError && <p className="auth-card__error">{authError}</p>}
+                      </aside>
                     ) : (
-                      <form className="auth-card__form" onSubmit={handleSignup}>
-                        <label>
-                          <span>Ad Soyad</span>
-                          <input type="text" name="fullName" placeholder="Adınız Soyadınız" required />
-                        </label>
-                        <label>
-                          <span>Tenant</span>
-                          <select value={signupTenantId} onChange={(event) => setSignupTenantId(event.target.value)}>
-                            {tenantOptions.map((tenant) => (
-                              <option key={tenant.id} value={tenant.id}>
-                                {tenant.name}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <label>
-                          <span>E-posta</span>
-                          <input type="email" name="email" placeholder="ornek@tesis.com" required />
-                        </label>
-                        <label>
-                          <span>Şifre</span>
-                          <input type="password" name="password" placeholder="En az 6 karakter" required minLength={6} />
-                        </label>
-                        <button type="submit" className="auth-card__submit">
-                          Hesap oluştur
-                        </button>
-                      </form>
+                      <aside className="welcome-card">
+                        <h2>Keşfetmeye hemen başlayın</h2>
+                        <p>
+                          Platform özelliklerini gezinebilir, tenant seçicisi üzerinden farklı işletmeler arasında geçiş yapabilir ve
+                          dilediğiniz an giriş ya da kayıt işlemini başlatabilirsiniz.
+                        </p>
+                        <div className="welcome-card__actions">
+                          <button type="button" onClick={handleOpenLogin}>
+                            Giriş yap
+                          </button>
+                          <button type="button" onClick={handleOpenSignup}>
+                            Kayıt ol
+                          </button>
+                        </div>
+                      </aside>
                     )}
-
-                    {authError && <p className="auth-card__error">{authError}</p>}
-                  </aside>
-                ) : (
-                  <aside className="welcome-card">
-                    <h2>Keşfetmeye hemen başlayın</h2>
-                    <p>
-                      Platform özelliklerini gezinebilir, tenant seçicisi üzerinden farklı işletmeler arasında geçiş yapabilir ve
-                      dilediğiniz an giriş ya da kayıt işlemini başlatabilirsiniz.
-                    </p>
-                    <div className="welcome-card__actions">
-                      <button type="button" onClick={handleOpenLogin}>
-                        Giriş yap
-                      </button>
-                      <button type="button" onClick={handleOpenSignup}>
-                        Kayıt ol
-                      </button>
-                    </div>
-                  </aside>
+                  </div>
                 )}
-              </div>
-            )}
 
-            {activeView === 'profile' && user && (
-              <section className="profile-card">
-                <header>
-                  <h1>{user.fullName}</h1>
-                  <p>
-                    Hesabınıza bağlı tenant: <strong>{selectedTenantName}</strong>. Kişisel bilgilerinizi güncelleyin ve
-                    platform deneyiminizi yönetin.
-                  </p>
-                </header>
-                <div className="profile-card__grid">
-                  <article>
-                    <h2>Hesap bilgileri</h2>
-                    <ul>
-                      <li>E-posta: {user.email}</li>
-                      <li>Tenant: {selectedTenantName}</li>
-                    </ul>
-                  </article>
-                  <article>
-                    <h2>Hızlı işlemler</h2>
-                    <div className="profile-card__actions">
-                      <button type="button" onClick={() => setActiveView('localization')}>
-                        Lokalizasyon yönetimine geç
-                      </button>
-                      <button type="button" onClick={() => setActiveView('logs')}>
-                        Log yönetimini aç
-                      </button>
+                {activeView === 'profile' && user && (
+                  <section className="profile-card">
+                    <header>
+                      <h1>{user.fullName}</h1>
+                      <p>
+                        Hesabınıza bağlı tenant: <strong>{selectedTenantName}</strong>. Kişisel bilgilerinizi güncelleyin ve
+                        platform deneyiminizi yönetin.
+                      </p>
+                    </header>
+                    <div className="profile-card__grid">
+                      <article>
+                        <h2>Hesap bilgileri</h2>
+                        <ul>
+                          <li>E-posta: {user.email}</li>
+                          <li>Tenant: {selectedTenantName}</li>
+                        </ul>
+                      </article>
+                      <article>
+                        <h2>Hızlı işlemler</h2>
+                        <div className="profile-card__actions">
+                          <button type="button" onClick={() => setActiveView('localization')}>
+                            Lokalizasyon yönetimine geç
+                          </button>
+                          <button type="button" onClick={() => setActiveView('logs')}>
+                            Log yönetimini aç
+                          </button>
+                        </div>
+                      </article>
                     </div>
-                  </article>
-                </div>
-              </section>
+                  </section>
+                )}
+
+                {(activeView === 'localization' || activeView === 'logs') && (
+                  <div className="admin-layout">
+                    <nav className="admin-layout__tabs" aria-label="Yönetim sekmeleri">
+                      <button
+                        type="button"
+                        className={
+                          activeView === 'localization'
+                            ? 'admin-layout__tab admin-layout__tab--active'
+                            : 'admin-layout__tab'
+                        }
+                        onClick={() => setActiveView('localization')}
+                      >
+                        Lokalizasyon
+                      </button>
+                      <button
+                        type="button"
+                        className={
+                          activeView === 'logs' ? 'admin-layout__tab admin-layout__tab--active' : 'admin-layout__tab'
+                        }
+                        onClick={() => setActiveView('logs')}
+                      >
+                        Mongo Logları
+                      </button>
+                    </nav>
+
+                    <div className="admin-layout__content">
+                      {activeView === 'localization' ? (
+                        <LocalizationAdmin tenantId={selectedTenantId} />
+                      ) : (
+                        <LogsAdmin tenantId={selectedTenantId} />
+                      )}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
-            {(activeView === 'localization' || activeView === 'logs') && (
-              <div className="admin-layout">
-                <nav className="admin-layout__tabs" aria-label="Yönetim sekmeleri">
-                  <button
-                    type="button"
-                    className={activeView === 'localization' ? 'admin-layout__tab admin-layout__tab--active' : 'admin-layout__tab'}
-                    onClick={() => setActiveView('localization')}
-                  >
-                    Lokalizasyon
-                  </button>
-                  <button
-                    type="button"
-                    className={activeView === 'logs' ? 'admin-layout__tab admin-layout__tab--active' : 'admin-layout__tab'}
-                    onClick={() => setActiveView('logs')}
-                  >
-                    Mongo Logları
-                  </button>
-                </nav>
+            {selectedDomain === 'company' && (
+              <CompanyDashboard tenantName={selectedTenantName} activeView={activeView} />
+            )}
 
-                <div className="admin-layout__content">
-                  {activeView === 'localization' ? (
-                    <LocalizationAdmin tenantId={selectedTenantId} />
-                  ) : (
-                    <LogsAdmin tenantId={selectedTenantId} />
-                  )}
-                </div>
-              </div>
+            {selectedDomain === 'user' && (
+              <>
+                {user ? (
+                  <UserDashboard
+                    userName={user.fullName}
+                    userEmail={user.email}
+                    tenantName={selectedTenantName}
+                    reservations={reservationsForUser}
+                    activeView={activeView === 'userHome' ? 'userReservations' : (activeView as 'userReservations' | 'userProfile' | 'userSupport')}
+                  />
+                ) : (
+                  <section className="user-access">
+                    <div className="user-access__hero">
+                      <span className="user-access__badge">user.agnostic.com</span>
+                      <h1>Misafir paneline hoş geldiniz</h1>
+                      <p>
+                        Rezervasyonlarınızı takip etmek, sadakat avantajlarınızı görmek ve destek ekibiyle iletişime geçmek için
+                        hesabınıza giriş yapın. Test ortamı için hazır kullanıcı: <strong>mert.cengiz@agnostic.com</strong> /{' '}
+                        <strong>agnostic123</strong>
+                      </p>
+                    </div>
+                    <div className="user-access__card">
+                      <div className="user-access__tabs" role="tablist" aria-label="Misafir kimlik doğrulama">
+                        <button
+                          type="button"
+                          role="tab"
+                          aria-selected={authMode === 'login'}
+                          className={authMode === 'login' ? 'user-access__tab user-access__tab--active' : 'user-access__tab'}
+                          onClick={() => {
+                            setAuthMode('login');
+                            setAuthError(null);
+                          }}
+                        >
+                          Giriş Yap
+                        </button>
+                        <button
+                          type="button"
+                          role="tab"
+                          aria-selected={authMode === 'signup'}
+                          className={authMode === 'signup' ? 'user-access__tab user-access__tab--active' : 'user-access__tab'}
+                          onClick={() => {
+                            setAuthMode('signup');
+                            setAuthError(null);
+                          }}
+                        >
+                          Kayıt Ol
+                        </button>
+                      </div>
+
+                      {authMode === 'login' ? (
+                        <form className="user-access__form" onSubmit={handleLogin}>
+                          <label>
+                            <span>Tenant</span>
+                            <select value={loginTenantId} onChange={(event) => setLoginTenantId(event.target.value)}>
+                              {tenantOptions.map((tenant) => (
+                                <option key={tenant.id} value={tenant.id}>
+                                  {tenant.name}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label>
+                            <span>E-posta</span>
+                            <input type="email" name="email" placeholder="ornek@tesis.com" required />
+                          </label>
+                          <label>
+                            <span>Şifre</span>
+                            <input type="password" name="password" placeholder="••••••••" required />
+                          </label>
+                          <button type="submit">Giriş yap</button>
+                        </form>
+                      ) : (
+                        <form className="user-access__form" onSubmit={handleSignup}>
+                          <label>
+                            <span>Ad Soyad</span>
+                            <input type="text" name="fullName" placeholder="Adınız Soyadınız" required />
+                          </label>
+                          <label>
+                            <span>Tenant</span>
+                            <select value={signupTenantId} onChange={(event) => setSignupTenantId(event.target.value)}>
+                              {tenantOptions.map((tenant) => (
+                                <option key={tenant.id} value={tenant.id}>
+                                  {tenant.name}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label>
+                            <span>E-posta</span>
+                            <input type="email" name="email" placeholder="ornek@tesis.com" required />
+                          </label>
+                          <label>
+                            <span>Şifre</span>
+                            <input type="password" name="password" placeholder="En az 6 karakter" required minLength={6} />
+                          </label>
+                          <button type="submit">Hesap oluştur</button>
+                        </form>
+                      )}
+
+                      {authError && <p className="user-access__error">{authError}</p>}
+                    </div>
+                  </section>
+                )}
+              </>
             )}
           </main>
         </div>
