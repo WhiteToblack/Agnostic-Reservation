@@ -1,3 +1,5 @@
+using System;
+
 namespace AgnosticReservation.Domain.Entities;
 
 public class Tenant : BaseEntity
@@ -23,8 +25,23 @@ public class Tenant : BaseEntity
         DefaultTheme = defaultTheme;
     }
 
+    public Tenant(Guid id, string name, string? domain, string defaultTheme = "light")
+    {
+        Id = id == Guid.Empty ? Guid.NewGuid() : id;
+        Name = name;
+        Domain = domain;
+        DefaultTheme = defaultTheme;
+    }
+
     public void UpdateTheme(string theme)
     {
         DefaultTheme = theme;
+    }
+
+    public void UpdateDetails(string name, string? domain, string defaultTheme)
+    {
+        Name = name;
+        Domain = domain;
+        DefaultTheme = defaultTheme;
     }
 }

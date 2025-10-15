@@ -14,6 +14,26 @@ namespace AgnosticReservation.Infrastructure.Persistence.Initialization;
 
 public static class DatabaseInitializer
 {
+    private static readonly TenantSeed PrimaryTenant = new(
+        Guid.Parse("92d4f35e-bc1d-4c48-9c8a-7f8c5f5a2b11"),
+        "Agnostic Hospitality Group",
+        "platform.agnostic.local",
+        "agnostic-dark");
+
+    private static readonly TenantSeed[] SupplementaryTenants =
+    {
+        new(
+            Guid.Parse("6a1f0c2d-4333-47ba-8fbc-4d8b25c11ec3"),
+            "Eurasia City Escapes",
+            "eurasia.agnostic.local",
+            "agnostic-light"),
+        new(
+            Guid.Parse("01d2b496-6be4-4ae0-94f4-2eb1b876fae2"),
+            "Anatolia Boutique Hotels",
+            "anatolia.agnostic.local",
+            "agnostic-light")
+    };
+
     public static async Task InitializeAsync(AppDbContext context, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -24,6 +44,7 @@ public static class DatabaseInitializer
         await context.SaveChangesAsync(cancellationToken);
 
         var (defaultTenant, defaultResource) = await EnsureDefaultTenantAsync(context, cancellationToken);
+        await EnsureSupplementaryTenantsAsync(context, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
 
         await EnsureDefaultParametersAsync(context, defaultTenant, defaultResource, cancellationToken);
@@ -165,12 +186,16 @@ public static class DatabaseInitializer
     private static async Task<(Tenant Tenant, Resource DefaultResource)> EnsureDefaultTenantAsync(AppDbContext context, CancellationToken cancellationToken)
     {
         var tenant = await context.Tenants
-            .FirstOrDefaultAsync(t => t.Domain == "platform.agnostic.local", cancellationToken);
+            .FirstOrDefaultAsync(t => t.Id == PrimaryTenant.Id, cancellationToken);
 
         if (tenant is null)
         {
-            tenant = new Tenant("Agnostic Platform", "platform.agnostic.local", "agnostic-dark");
+            tenant = new Tenant(PrimaryTenant.Id, PrimaryTenant.Name, PrimaryTenant.Domain, PrimaryTenant.DefaultTheme);
             context.Tenants.Add(tenant);
+        }
+        else
+        {
+            tenant.UpdateDetails(PrimaryTenant.Name, PrimaryTenant.Domain, PrimaryTenant.DefaultTheme);
         }
 
         var resource = await context.Resources
@@ -184,6 +209,25 @@ public static class DatabaseInitializer
 
         return (tenant, resource);
     }
+
+    private static async Task EnsureSupplementaryTenantsAsync(AppDbContext context, CancellationToken cancellationToken)
+    {
+        foreach (var seed in SupplementaryTenants)
+        {
+            var tenant = await context.Tenants.FirstOrDefaultAsync(t => t.Id == seed.Id, cancellationToken);
+
+            if (tenant is null)
+            {
+                tenant = new Tenant(seed.Id, seed.Name, seed.Domain, seed.DefaultTheme);
+                context.Tenants.Add(tenant);
+                continue;
+            }
+
+            tenant.UpdateDetails(seed.Name, seed.Domain, seed.DefaultTheme);
+        }
+    }
+
+    private record TenantSeed(Guid Id, string Name, string Domain, string DefaultTheme);
 
     private static async Task EnsureDefaultParametersAsync(AppDbContext context, Tenant tenant, Resource defaultResource, CancellationToken cancellationToken)
     {
