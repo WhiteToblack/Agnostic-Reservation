@@ -329,6 +329,16 @@ const App: React.FC = () => {
     setSelectedTenantId(tenantId);
   };
 
+  const handleToolbarTenantChange = (tenantId: string) => {
+    handleTenantSelect(tenantId);
+  };
+
+  const handleToolbarReset = () => {
+    handleTenantSelect(defaultTenantId);
+  };
+
+  const isTenantOverrideActive = selectedTenantId !== defaultTenantId;
+
   const handleGoToLocalization = () => {
     setSelectedDomain('admin');
     setActiveView('localization');
