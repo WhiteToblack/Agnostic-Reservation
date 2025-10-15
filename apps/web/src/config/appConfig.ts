@@ -1,3 +1,7 @@
+import { defaultApiBaseUrl, normalizeApiBaseUrl } from '@shared/config/api';
+
+const rawApiBaseUrl = (import.meta.env.VITE_API_URL as string | undefined) ?? defaultApiBaseUrl;
+
 export const appConfig = {
   /**
    * Default tenant identifier sourced from environment configuration.
@@ -9,4 +13,12 @@ export const appConfig = {
    * Storage key used by the test toolbar to persist tenant overrides between reloads.
    */
   testToolbarStorageKey: 'agnosticReservation.testToolbar.tenantId',
+  /**
+   * Base URL for API requests. Defaults to the local development backend when not provided.
+   */
+  apiBaseUrl: normalizeApiBaseUrl(rawApiBaseUrl),
 } as const;
+
+const ensureLeadingSlash = (path: string) => (path.startsWith('/') ? path : `/${path}`);
+
+export const buildApiUrl = (path: string) => `${appConfig.apiBaseUrl}${ensureLeadingSlash(path)}`;

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { buildApiUrl } from '../config/appConfig';
 import {
   LocalizationContext,
   fallbackTranslations,
@@ -35,7 +36,7 @@ export const LocalizationProvider: React.FC<LocalizationProviderProps> = ({ tena
 
       try {
         const response = await fetch(
-          `/api/localization?tenantId=${encodeURIComponent(tenantId)}&language=${encodeURIComponent(targetLanguage)}`,
+          buildApiUrl(`/localization?tenantId=${encodeURIComponent(tenantId)}&language=${encodeURIComponent(targetLanguage)}`),
           { signal: controller.signal }
         );
 

@@ -3,7 +3,7 @@ import { ScrollView, View, Text, StyleSheet, Switch, ActivityIndicator, Touchabl
 import { fetchParameters, invalidateCache, fetchAdminModules, type TenantParameter } from '../../services/api';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useLocalization } from '../../../../shared/localization';
-import { defaultTenantId } from '../../config/constants';
+import { appConfig } from '../../config/appConfig';
 import { loadSession } from '../../storage/sessionStorage';
 import type { AuthResult } from '../../../../shared/types/auth';
 import type { AdminModule } from '../../../../shared/types/admin';
@@ -24,7 +24,7 @@ const AdminScreen: FC = () => {
     });
   }, []);
 
-  const tenantId = session?.tenantId ?? defaultTenantId;
+  const tenantId = session?.tenantId ?? appConfig.defaultTenantId;
   const userId = session?.userId ?? 'demo-user';
 
   const load = async () => {

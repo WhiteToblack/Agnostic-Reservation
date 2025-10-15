@@ -7,6 +7,7 @@ import {
   formatTranslation,
 } from '../../../shared/localization';
 import type { LanguageCode, LocalizationContextValue, TranslationParams } from '../../../shared/localization';
+import { appConfig } from '../config/appConfig';
 
 type LocalizationProviderProps = {
   tenantId: string;
@@ -18,7 +19,7 @@ type LocalizationProviderProps = {
 const isSupportedLanguage = (language: string): language is LanguageCode =>
   supportedLanguages.includes(language as LanguageCode);
 
-const defaultApiBase = (process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:5243/api').replace(/\/$/, '');
+const defaultApiBase = appConfig.apiBaseUrl;
 
 export const LocalizationProvider = ({
   tenantId,

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { buildApiUrl } from '../config/appConfig';
 
 const PAGE_SIZE = 25;
 
@@ -72,7 +73,7 @@ export const LogsAdmin: React.FC<LogsAdminProps> = ({ tenantId }) => {
         params.set('errorsOnly', 'true');
       }
 
-      const response = await fetch(`/api/admin/logs?${params.toString()}`);
+      const response = await fetch(buildApiUrl(`/admin/logs?${params.toString()}`));
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);

@@ -2,9 +2,10 @@ import axios from 'axios';
 import type { AuthResult, SessionResume } from '../../../shared/types/auth';
 import type { DashboardInsights } from '../../../shared/types/insights';
 import type { AdminModule } from '../../../shared/types/admin';
+import { appConfig } from '../config/appConfig';
 
 const client = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:5243/api',
+  baseURL: appConfig.apiBaseUrl,
 });
 
 export type DashboardWidget = Record<string, unknown>;

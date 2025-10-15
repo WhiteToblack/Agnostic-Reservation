@@ -4,7 +4,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { getOrCreateDeviceId } from '../../utils/device';
 import { getSession } from '../../services/api';
 import { saveSession, clearSession } from '../../storage/sessionStorage';
-import { defaultTenantId } from '../../config/constants';
+import { appConfig } from '../../config/appConfig';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useLocalization } from '../../../../shared/localization';
 import type { RootStackParamList } from '../../navigation/types';
@@ -18,7 +18,7 @@ const BootstrapScreen: FC<NativeStackScreenProps<RootStackParamList, 'Bootstrap'
     (async () => {
       const deviceId = await getOrCreateDeviceId();
       try {
-        const session = await getSession(defaultTenantId, deviceId);
+        const session = await getSession(appConfig.defaultTenantId, deviceId);
         if (cancelled) {
           return;
         }

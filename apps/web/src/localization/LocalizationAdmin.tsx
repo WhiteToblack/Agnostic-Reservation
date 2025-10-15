@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { buildApiUrl } from '../config/appConfig';
 import { useLocalization, supportedLanguages } from '../../../shared/localization';
 
 type LocalizationKeyDto = {
@@ -47,7 +48,7 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
     setError(null);
 
     try {
-      const response = await fetch(`/api/admin/localization?tenantId=${encodeURIComponent(tenantId)}`);
+      const response = await fetch(buildApiUrl(`/admin/localization?tenantId=${encodeURIComponent(tenantId)}`));
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -93,7 +94,7 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
     setToast(null);
     setLoading(true);
     try {
-      const response = await fetch(`/api/admin/localization?tenantId=${encodeURIComponent(tenantId)}`, {
+      const response = await fetch(buildApiUrl(`/admin/localization?tenantId=${encodeURIComponent(tenantId)}`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -125,9 +126,9 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/admin/localization/${keyId}/translations/${encodeURIComponent(languageCode)}?tenantId=${encodeURIComponent(
-            tenantId
-          )}`,
+          buildApiUrl(
+            `/admin/localization/${keyId}/translations/${encodeURIComponent(languageCode)}?tenantId=${encodeURIComponent(tenantId)}`
+          ),
           { method: 'DELETE' }
         );
 
@@ -153,7 +154,7 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/admin/localization/${keyId}?tenantId=${encodeURIComponent(tenantId)}`,
+          buildApiUrl(`/admin/localization/${keyId}?tenantId=${encodeURIComponent(tenantId)}`),
           { method: 'DELETE' }
         );
 
@@ -180,7 +181,7 @@ export const LocalizationAdmin: React.FC<LocalizationAdminProps> = ({ tenantId }
     setError(null);
     setToast(null);
     try {
-      const response = await fetch(`/api/admin/localization/invalidate?tenantId=${encodeURIComponent(tenantId)}`, {
+      const response = await fetch(buildApiUrl(`/admin/localization/invalidate?tenantId=${encodeURIComponent(tenantId)}`), {
         method: 'POST',
       });
 
