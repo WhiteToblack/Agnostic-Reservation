@@ -50,7 +50,7 @@ const AppNavigator: FC = () => {
   const { mode } = useTheme();
   return (
     <NavigationContainer theme={mode === 'dark' ? DarkTheme : DefaultTheme}>
-      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+      <RootStack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Main">
         <RootStack.Screen name="SignIn" component={SignInScreen} />
         <RootStack.Screen name="SignUp" component={SignUpScreen} />
         <RootStack.Screen name="Main" component={AppTabs} />
