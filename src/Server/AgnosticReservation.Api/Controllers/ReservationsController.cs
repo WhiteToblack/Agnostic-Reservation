@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using AgnosticReservation.Application.Reservations;
 using AgnosticReservation.Application.Reservations.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -27,6 +30,14 @@ public class ReservationsController : ControllerBase
     {
         var reservation = await _service.CreateAsync(request, cancellationToken);
         return CreatedAtAction(nameof(GetAvailability), new { request.TenantId, request.ResourceId }, reservation);
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult> Update(Guid id, [FromBody] UpdateReservationRequest request, CancellationToken cancellationToken)
+    {
+        var normalizedRequest = request with { ReservationId = id };
+        var reservation = await _service.UpdateAsync(normalizedRequest, cancellationToken);
+        return Ok(reservation);
     }
 
     [HttpDelete("{id:guid}")]

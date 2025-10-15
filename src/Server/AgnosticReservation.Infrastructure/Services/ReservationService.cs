@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using AgnosticReservation.Application.Abstractions;
 using AgnosticReservation.Application.Notifications;
 using AgnosticReservation.Application.Reservations;
@@ -53,5 +57,49 @@ public class ReservationService : IReservationService
         reservation.Cancel();
         await _reservationRepository.UpdateAsync(reservation, cancellationToken);
         await _notificationService.SendAsync(tenantId, reservation.UserId, NotificationChannel.Email, "Reservation Cancelled", $"Reservation #{reservation.Id} cancelled", cancellationToken);
+    }
+
+    public async Task<Reservation> UpdateAsync(UpdateReservationRequest request, CancellationToken cancellationToken = default)
+    {
+        var reservation = await _reservationRepository.GetAsync(request.ReservationId, cancellationToken)
+            ?? throw new InvalidOperationException("Reservation not found");
+
+        if (reservation.TenantId != request.TenantId)
+        {
+            throw new InvalidOperationException("Reservation tenant mismatch");
+        }
+
+        if (request.StartUtc.HasValue != request.EndUtc.HasValue)
+        {
+            throw new InvalidOperationException("Both start and end times must be provided together");
+        }
+
+        if (request.StartUtc.HasValue && request.EndUtc.HasValue)
+        {
+            var range = DateRange.Create(request.StartUtc.Value, request.EndUtc.Value);
+            var conflicts = await _reservationRepository.ListAsync(
+                r =>
+                    r.TenantId == request.TenantId
+                    && r.ResourceId == reservation.ResourceId
+                    && r.Id != reservation.Id
+                    && r.StartUtc < range.EndUtc
+                    && r.EndUtc > range.StartUtc,
+                cancellationToken);
+
+            if (conflicts.Count > 0)
+            {
+                throw new InvalidOperationException("Reservation conflict detected");
+            }
+
+            reservation.UpdateSchedule(request.StartUtc.Value, request.EndUtc.Value);
+        }
+
+        if (request.Status.HasValue)
+        {
+            reservation.SetStatus(request.Status.Value);
+        }
+
+        await _reservationRepository.UpdateAsync(reservation, cancellationToken);
+        return reservation;
     }
 }

@@ -1,3 +1,6 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 using AgnosticReservation.Application.Auth;
 using AgnosticReservation.Application.Auth.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -41,5 +44,22 @@ public class AuthController : ControllerBase
     {
         await _authService.RefreshLanguageAsync(userId, language, cancellationToken);
         return NoContent();
+    }
+
+    [HttpGet("session")]
+    public async Task<ActionResult<SessionResume>> GetSession([FromQuery] Guid tenantId, [FromQuery] string deviceId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(deviceId))
+        {
+            return BadRequest("DeviceId is required");
+        }
+
+        var session = await _authService.GetSessionAsync(tenantId, deviceId, cancellationToken);
+        if (session is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(session);
     }
 }

@@ -1,3 +1,5 @@
+using System;
+
 namespace AgnosticReservation.Application.Auth.Models;
 
 public record SignUpRequest(
@@ -8,6 +10,7 @@ public record SignUpRequest(
     string PreferredTheme,
     string PreferredLanguage = "tr-TR",
     bool AcceptKvkk = false,
+    string? DeviceId = null,
     Guid? ShopId = null,
     string? ShopName = null,
     string? ShopTimeZone = null);

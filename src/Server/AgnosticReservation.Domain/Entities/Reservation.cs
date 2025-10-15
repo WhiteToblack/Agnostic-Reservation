@@ -1,3 +1,4 @@
+using System;
 using AgnosticReservation.Domain.Enums;
 
 namespace AgnosticReservation.Domain.Entities;
@@ -15,7 +16,14 @@ public class Reservation : BaseEntity
     {
     }
 
-    public Reservation(Guid tenantId, Guid resourceId, Guid userId, DateTime startUtc, DateTime endUtc)
+    public Reservation(
+        Guid tenantId,
+        Guid resourceId,
+        Guid userId,
+        DateTime startUtc,
+        DateTime endUtc,
+        ReservationStatus status = ReservationStatus.Confirmed,
+        DateTime? createdAt = null)
     {
         if (endUtc <= startUtc)
         {
@@ -27,8 +35,27 @@ public class Reservation : BaseEntity
         UserId = userId;
         StartUtc = startUtc;
         EndUtc = endUtc;
-        Status = ReservationStatus.Confirmed;
+        Status = status;
+        CreatedAt = createdAt ?? DateTime.UtcNow;
     }
 
-    public void Cancel() => Status = ReservationStatus.Cancelled;
+    public void UpdateSchedule(DateTime startUtc, DateTime endUtc)
+    {
+        if (endUtc <= startUtc)
+        {
+            throw new ArgumentException("End must be greater than start");
+        }
+
+        StartUtc = startUtc;
+        EndUtc = endUtc;
+        Touch();
+    }
+
+    public void SetStatus(ReservationStatus status)
+    {
+        Status = status;
+        Touch();
+    }
+
+    public void Cancel() => SetStatus(ReservationStatus.Cancelled);
 }

@@ -31,6 +31,9 @@ public static class DatabaseInitializer
 
         await EnsureAdminUsersAsync(context, defaultTenant, roles, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
+
+        await EnsureShopUsersAndSampleDataAsync(context, defaultTenant, roles, cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
     }
 
     private static async Task<Dictionary<string, Role>> EnsureRolesAsync(AppDbContext context, CancellationToken cancellationToken)
@@ -230,11 +233,11 @@ public static class DatabaseInitializer
         var superUserEmail = "super@agnostic.local";
         var tenantAdminEmail = "admin@agnostic.local";
 
-        await EnsureAdminUserAsync(context, tenant, roles["SuperUser"], superUserEmail, "Agnostic Super User", cancellationToken);
-        await EnsureAdminUserAsync(context, tenant, roles["TenantAdmin"], tenantAdminEmail, "Tenant Administrator", cancellationToken);
+        await EnsureUserAsync(context, tenant, roles["SuperUser"], superUserEmail, "Agnostic Super User", cancellationToken);
+        await EnsureUserAsync(context, tenant, roles["TenantAdmin"], tenantAdminEmail, "Tenant Administrator", cancellationToken);
     }
 
-    private static async Task EnsureAdminUserAsync(
+    private static async Task<User> EnsureUserAsync(
         AppDbContext context,
         Tenant tenant,
         Role role,
@@ -243,10 +246,11 @@ public static class DatabaseInitializer
         CancellationToken cancellationToken)
     {
         var user = await context.Users.Include(u => u.Preference)
+            .Include(u => u.Role)
             .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
         if (user is not null)
         {
-            return;
+            return user;
         }
 
         const string defaultPassword = "ChangeMe!123";
@@ -257,7 +261,142 @@ public static class DatabaseInitializer
 
         context.Users.Add(user);
         context.NotificationPreferences.Add(user.Preference);
+
+        return user;
     }
+
+    private static async Task EnsureShopUsersAndSampleDataAsync(
+        AppDbContext context,
+        Tenant tenant,
+        IReadOnlyDictionary<string, Role> roles,
+        CancellationToken cancellationToken)
+    {
+        var shopManager = await EnsureUserAsync(context, tenant, roles["ShopAdmin"], "store.manager@agnostic.local", "Mağaza Yöneticisi", cancellationToken);
+        var frontDesk = await EnsureUserAsync(context, tenant, roles["ShopStaff"], "frontdesk@agnostic.local", "Ön Büro Sorumlusu", cancellationToken);
+        var accountingUser = await EnsureUserAsync(context, tenant, roles["Accounting"], "accounting@agnostic.local", "Gelir Uzmanı", cancellationToken);
+
+        var resources = await EnsureDemoResourcesAsync(context, tenant, cancellationToken);
+        await EnsureSampleReservationsAsync(context, tenant, shopManager, frontDesk, resources, cancellationToken);
+        await EnsureSamplePaymentsAsync(context, tenant, cancellationToken);
+        await EnsureSampleSessionsAsync(context, tenant, new[] { shopManager, frontDesk, accountingUser }, cancellationToken);
+    }
+
+    private static async Task<IReadOnlyList<Resource>> EnsureDemoResourcesAsync(AppDbContext context, Tenant tenant, CancellationToken cancellationToken)
+    {
+        var desired = new (string Name, int Capacity)[]
+        {
+            ("Oda A", 12),
+            ("Oda B", 8),
+            ("Oda C", 16),
+        };
+
+        var resources = new List<Resource>();
+        foreach (var (name, capacity) in desired)
+        {
+            var resource = await context.Resources.FirstOrDefaultAsync(r => r.TenantId == tenant.Id && r.Name == name, cancellationToken);
+            if (resource is null)
+            {
+                resource = new Resource(tenant.Id, name, capacity);
+                context.Resources.Add(resource);
+            }
+
+            resources.Add(resource);
+        }
+
+        return resources;
+    }
+
+    private static async Task EnsureSampleReservationsAsync(
+        AppDbContext context,
+        Tenant tenant,
+        User shopManager,
+        User frontDesk,
+        IReadOnlyList<Resource> resources,
+        CancellationToken cancellationToken)
+    {
+        if (await context.Reservations.AnyAsync(r => r.TenantId == tenant.Id, cancellationToken))
+        {
+            return;
+        }
+
+        var baseDate = DateTime.UtcNow;
+        var roomA = resources.FirstOrDefault(r => r.Name == "Oda A") ?? resources.First();
+        var roomB = resources.FirstOrDefault(r => r.Name == "Oda B") ?? resources.First();
+        var roomC = resources.FirstOrDefault(r => r.Name == "Oda C") ?? resources.First();
+
+        var reservations = new List<Reservation>
+        {
+            new Reservation(tenant.Id, roomA.Id, shopManager.Id, baseDate.AddDays(-2).AddHours(8), baseDate.AddDays(-2).AddHours(12), ReservationStatus.Completed, baseDate.AddDays(-3)),
+            new Reservation(tenant.Id, roomB.Id, shopManager.Id, baseDate.AddDays(-1).AddHours(14), baseDate.AddDays(-1).AddHours(18), ReservationStatus.Completed, baseDate.AddDays(-2)),
+            new Reservation(tenant.Id, roomC.Id, frontDesk.Id, baseDate.AddHours(2), baseDate.AddHours(5), ReservationStatus.Confirmed, baseDate.AddHours(-1)),
+            new Reservation(tenant.Id, roomA.Id, frontDesk.Id, baseDate.AddDays(1).AddHours(9), baseDate.AddDays(1).AddHours(11), ReservationStatus.Confirmed, baseDate),
+            new Reservation(tenant.Id, roomB.Id, shopManager.Id, baseDate.AddDays(3).AddHours(13), baseDate.AddDays(3).AddHours(17), ReservationStatus.Pending, baseDate),
+            new Reservation(tenant.Id, roomC.Id, frontDesk.Id, baseDate.AddDays(7).AddHours(10), baseDate.AddDays(7).AddHours(15), ReservationStatus.Pending, baseDate),
+        };
+
+        context.Reservations.AddRange(reservations);
+    }
+
+    private static async Task EnsureSamplePaymentsAsync(AppDbContext context, Tenant tenant, CancellationToken cancellationToken)
+    {
+        if (await context.PaymentTransactions.AnyAsync(p => p.TenantId == tenant.Id, cancellationToken))
+        {
+            return;
+        }
+
+        var reservations = await context.Reservations.Where(r => r.TenantId == tenant.Id).ToListAsync(cancellationToken);
+        if (reservations.Count == 0)
+        {
+            return;
+        }
+
+        var primaryResourceId = reservations.First().ResourceId;
+        foreach (var reservation in reservations)
+        {
+            var amount = reservation.ResourceId == primaryResourceId ? 4200m : 3600m;
+            var provider = reservation.ResourceId == primaryResourceId ? "iyzico" : "stripe";
+            var payment = new PaymentTransaction(tenant.Id, reservation.Id, amount, "TRY", provider, "Pending", reservation.CreatedAt);
+
+            if (reservation.Status is ReservationStatus.Completed or ReservationStatus.Confirmed)
+            {
+                payment.MarkAsPaid(reservation.EndUtc);
+            }
+            else if (reservation.Status == ReservationStatus.Pending && reservation.StartUtc < DateTime.UtcNow)
+            {
+                payment.MarkAsFailed(reservation.EndUtc);
+            }
+
+            context.PaymentTransactions.Add(payment);
+        }
+    }
+
+    private static async Task EnsureSampleSessionsAsync(
+        AppDbContext context,
+        Tenant tenant,
+        IEnumerable<User> users,
+        CancellationToken cancellationToken)
+    {
+        if (await context.UserSessions.AnyAsync(s => s.TenantId == tenant.Id, cancellationToken))
+        {
+            return;
+        }
+
+        foreach (var user in users)
+        {
+            var deviceId = user.Role.Name switch
+            {
+                "ShopAdmin" => "mobile-store-manager",
+                "Accounting" => "backoffice-analytics",
+                _ => "mobile-frontdesk",
+            };
+
+            var session = new UserSession(tenant.Id, user.Id, deviceId, GenerateSampleToken(user.Id), GenerateSampleToken(user.Id, true));
+            context.UserSessions.Add(session);
+        }
+    }
+
+    private static string GenerateSampleToken(Guid userId, bool refresh = false)
+        => Convert.ToBase64String(Encoding.UTF8.GetBytes($"{userId}:{(refresh ? "refresh" : "access")}:seed"));
 
     private static string HashPassword(string password)
     {

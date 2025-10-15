@@ -31,6 +31,7 @@ public class AppDbContext : DbContext
     public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
     public DbSet<LocalizationKey> LocalizationKeys => Set<LocalizationKey>();
     public DbSet<LocalizationText> LocalizationTexts => Set<LocalizationText>();
+    public DbSet<UserSession> UserSessions => Set<UserSession>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

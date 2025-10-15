@@ -1,9 +1,12 @@
+using System;
+
 namespace AgnosticReservation.Application.Auth.Models;
 
 public record SignInRequest(
     string Email,
     string Password,
     Guid TenantId,
+    string DeviceId,
     Guid? ShopId = null,
     string? ShopName = null,
     string? ShopTimeZone = null);
