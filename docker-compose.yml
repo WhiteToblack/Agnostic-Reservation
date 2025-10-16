@@ -1,5 +1,5 @@
 services:
-  rootta:
+  agnostic-reservation:
     build:
       context: .
     depends_on:
@@ -13,8 +13,8 @@ services:
       MongoLogging__DatabaseName: agnostic_reservation_logs
       MongoLogging__GeneralCollectionName: general_request_logs
       MongoLogging__AccountingCollectionName: accounting_request_logs
-      MongoLogging__Username: ${MONGODB_ROOT_USERNAME:-rootta_admin}
-      MongoLogging__Password: ${MONGODB_ROOT_PASSWORD:-RoottaDev!123}
+      MongoLogging__Username: ${MONGODB_ROOT_USERNAME:-admin}
+      MongoLogging__Password: ${MONGODB_ROOT_PASSWORD:-Dev!123}
       MongoLogging__AuthenticationDatabase: admin
     ports:
       - "8080:8080"
@@ -24,8 +24,8 @@ services:
     image: mongo:6.0
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-rootta_admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-RoottaDev!123}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-Dev!123}
     ports:
       - "27017:27017"
     volumes:
@@ -40,10 +40,10 @@ services:
     environment:
       ME_CONFIG_MONGODB_SERVER: mongodb
       ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
-      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGODB_ROOT_USERNAME:-rootta_admin}
-      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGODB_ROOT_PASSWORD:-RoottaDev!123}
-      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME:-rootta_dash}
-      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-RoottaExpress!123}
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGODB_ROOT_USERNAME:-admin}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGODB_ROOT_PASSWORD:-Dev!123}
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME:-dash}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-Express!123}
     ports:
       - "8081:8081"
 
