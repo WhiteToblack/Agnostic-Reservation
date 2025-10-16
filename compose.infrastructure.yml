@@ -1,39 +1,51 @@
 services:
-  # sqlserver:
-  #   image: mcr.microsoft.com/mssql/server:2022-latest
-  #   environment:
-  #     ACCEPT_EULA: "Y"
-  #     MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
-  #   ports:
-  #     - "1433:1433"
-  #   volumes:
-  #     - sqlserver-data:/var/opt/mssql
-  #   healthcheck:
-  #     test: ["CMD", "/opt/mssql-tools/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourStrong!Passw0rd", "-Q", "SELECT 1"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 10
-  #     start_period: 20s
-  # sqlserver-seed:
-  #   image: mcr.microsoft.com/mssql/server:2022-latest
-  #   depends_on:
-  #     sqlserver:
-  #       condition: service_healthy
-  #   environment:
-  #     MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
-  #   volumes:
-  #     - ./docker/mssql/init.sql:/init.sql:ro
-  #   entrypoint: ["/bin/bash", "-c", "/opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P ${MSSQL_SA_PASSWORD} -i /init.sql"]
+  rootta:
+    build:
+      context: .
+    depends_on:
+      mongodb:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: ""
+      MongoLogging__IsEnabled: "true"
+      MongoLogging__ConnectionString: mongodb://mongodb:27017
+      MongoLogging__DatabaseName: agnostic_reservation_logs
+      MongoLogging__GeneralCollectionName: general_request_logs
+      MongoLogging__AccountingCollectionName: accounting_request_logs
+      MongoLogging__Username: ${MONGODB_ROOT_USERNAME:-rootta_admin}
+      MongoLogging__Password: ${MONGODB_ROOT_PASSWORD:-RoottaDev!123}
+      MongoLogging__AuthenticationDatabase: admin
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
   mongodb:
     image: mongo:6.0
     restart: unless-stopped
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME:-rootta_admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD:-RoottaDev!123}
     ports:
       - "27017:27017"
     volumes:
       - mongodb-data:/data/db
+
+  mongo-express:
+    image: mongo-express:1.0.0-18
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_started
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongodb
+      ME_CONFIG_MONGODB_ENABLE_ADMIN: "true"
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGODB_ROOT_USERNAME:-rootta_admin}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGODB_ROOT_PASSWORD:-RoottaDev!123}
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USERNAME:-rootta_dash}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD:-RoottaExpress!123}
+    ports:
+      - "8081:8081"
+
 volumes:
-  # sqlserver-data:
   mongodb-data:
