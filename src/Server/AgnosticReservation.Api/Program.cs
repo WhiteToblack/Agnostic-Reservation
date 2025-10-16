@@ -27,10 +27,8 @@ builder.Services.AddAgnosticReservationModules(builder.Configuration);
 
 var app = builder.Build();
 
-
-    app.UseSwagger();
-    app.UseSwaggerUI();
-
+app.UseSwagger();
+app.UseSwaggerUI();
 
 if (IsHttpsEndpointConfigured(builder))
 {
@@ -51,9 +49,11 @@ static bool IsHttpsEndpointConfigured(WebApplicationBuilder builder)
         return true;
     }
 
-    if (builder.Configuration.GetValue<string>(WebHostDefaults.ServerUrlsKey) is string urls &&
-        urls.Split(';', StringSplitOptions.RemoveEmptyEntries)
-            .Any(url => url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)))
+    if (
+        builder.Configuration.GetValue<string>(WebHostDefaults.ServerUrlsKey) is string urls
+        && urls.Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .Any(url => url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+    )
     {
         return true;
     }
@@ -62,8 +62,10 @@ static bool IsHttpsEndpointConfigured(WebApplicationBuilder builder)
 
     foreach (var endpoint in kestrelEndpoints.GetChildren())
     {
-        if (endpoint.GetValue<string>("Url") is string endpointUrl &&
-            endpointUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        if (
+            endpoint.GetValue<string>("Url") is string endpointUrl
+            && endpointUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+        )
         {
             return true;
         }
