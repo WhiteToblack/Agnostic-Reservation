@@ -72,16 +72,17 @@ React Native component tests can be added with Jest and React Native Testing Lib
 * **Schema**: Run `docs/sql/agnostic_reservation_mssql.sql` on your SQL Server instance to create all tables, foreign keys, and indexes that map to the domain entities.
 * **Localization seed**: After provisioning the schema, execute `docs/sql/agnostic_reservation_multilanguage_seed.sql` to preload sample multi-language keys and translations for every demo tenant.
 * **Connection string**: Update `ConnectionStrings:DefaultConnection` in `src/Server/AgnosticReservation.Api/appsettings.json` (or user secrets/environment variables) with your SQL Server credentials.
-* **Local development databases**: A ready-to-use Docker Compose file lives at the repository root. Start it before executing migrations or accessing MongoDB:
+* **Local development stack**: A ready-to-use Docker Compose file lives at the repository root. Start it before executing migrations or accessing MongoDB:
 
   ```bash
   docker compose -f compose.infrastructure.yml up -d
   ```
 
-  The compose stack now starts two containers:
+  The compose stack now starts three containers that cover the full local experience:
 
-  * **SQL Server 2022** with the `AgnosticReservation` database and the `wtb/Asd123*` login used by the default connection string.
-  * **MongoDB 6.0** with a root user (`root` / `example`) exposed on `localhost:27017` for document-centric scenarios (e.g., caching, audit logs, or prototype features).
+  * **RootTA API** (`rootta` service) running the ASP.NET Core backend on [http://localhost:8080](http://localhost:8080). The container builds from the root-level `Dockerfile`, uses the in-memory EF Core provider by default, and writes structured request logs to MongoDB.
+  * **MongoDB 6.0** with the default admin user `rootta_admin` and password `RoottaDev!123`, exposed on `localhost:27017` for request logging and experimentation.
+  * **Mongo Express** on [http://localhost:8081](http://localhost:8081) with basic auth credentials `rootta_dash` / `RoottaExpress!123` for browsing the logging collections. These defaults can be overridden by exporting `MONGODB_ROOT_USERNAME`, `MONGODB_ROOT_PASSWORD`, `MONGO_EXPRESS_USERNAME`, or `MONGO_EXPRESS_PASSWORD` before starting the stack.
 * **Local fallback**: If the connection string is omitted, the API will automatically fall back to the EF Core InMemory provider for lightweight testing.
 * **Migrations**: Because `AppDbContext` lives in the Infrastructure project, run EF Core CLI commands from the API directory while pointing the `--project` flag at the Infrastructure `.csproj`:
 
