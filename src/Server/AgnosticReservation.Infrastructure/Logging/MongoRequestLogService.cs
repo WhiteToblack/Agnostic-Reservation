@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using AgnosticReservation.Application.Logging;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -86,6 +87,8 @@ public class MongoRequestLogService : IRequestLogService, IRequestLogReader
             {
                 TenantId = context.TenantId,
                 UserId = context.UserId,
+                UserEmail = context.UserEmail,
+                UserName = context.UserName,
                 Method = context.Method,
                 Path = context.Path,
                 Query = context.Query,
@@ -163,6 +166,32 @@ public class MongoRequestLogService : IRequestLogService, IRequestLogReader
                 filters.Add(filterBuilder.Eq(document => document.HasError, query.ErrorsOnly.Value));
             }
 
+            if (query.CreatedFrom.HasValue)
+            {
+                var from = NormalizeToUtc(query.CreatedFrom.Value);
+                filters.Add(filterBuilder.Gte(document => document.CreatedAt, from));
+            }
+
+            if (query.CreatedTo.HasValue)
+            {
+                var to = NormalizeToUtc(query.CreatedTo.Value);
+                filters.Add(filterBuilder.Lte(document => document.CreatedAt, to));
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.User))
+            {
+                var pattern = $".*{Regex.Escape(query.User)}.*";
+                var regex = new BsonRegularExpression(pattern, "i");
+                filters.Add(filterBuilder.Or(
+                    filterBuilder.Regex(document => document.UserEmail, regex),
+                    filterBuilder.Regex(document => document.UserName, regex)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.SessionId))
+            {
+                filters.Add(filterBuilder.Eq(document => document.CorrelationId, query.SessionId));
+            }
+
             var filter = filters.Count > 0
                 ? filterBuilder.And(filters)
                 : filterBuilder.Empty;
@@ -189,6 +218,8 @@ public class MongoRequestLogService : IRequestLogService, IRequestLogReader
                     document.Id.ToString(),
                     document.TenantId,
                     document.UserId,
+                    document.UserEmail,
+                    document.UserName,
                     document.Method,
                     document.Path,
                     document.Query,
@@ -220,6 +251,14 @@ public class MongoRequestLogService : IRequestLogService, IRequestLogReader
         }
     }
 
+    private static DateTime NormalizeToUtc(DateTime value)
+        => value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
+
     private sealed class GeneralRequestLogDocument
     {
         [BsonId]
@@ -228,6 +267,10 @@ public class MongoRequestLogService : IRequestLogService, IRequestLogReader
         public Guid? TenantId { get; set; }
 
         public Guid? UserId { get; set; }
+
+        public string? UserEmail { get; set; }
+
+        public string? UserName { get; set; }
 
         public string Method { get; set; } = string.Empty;
 

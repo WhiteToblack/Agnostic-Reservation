@@ -61,6 +61,8 @@ public class RequestLoggingMiddleware
         var session = sessionContextAccessor.Current;
         var tenantId = session.Tenant?.Id;
         var user = session.User;
+        var userEmail = user?.Email;
+        var userName = user?.FullName;
         var cancellationToken = context.RequestAborted;
 
         var isAccountingRequest = IsAccountingRequest(context.Request);
@@ -100,6 +102,8 @@ public class RequestLoggingMiddleware
         var logContext = new RequestLogContext(
             tenantId,
             user?.Id,
+            userEmail,
+            userName,
             context.Request.Method,
             context.Request.Path,
             context.Request.QueryString.HasValue ? context.Request.QueryString.Value : null,

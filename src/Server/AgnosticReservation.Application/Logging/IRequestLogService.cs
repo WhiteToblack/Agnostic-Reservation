@@ -13,6 +13,8 @@ public interface IRequestLogReader
 public record RequestLogContext(
     Guid? TenantId,
     Guid? UserId,
+    string? UserEmail,
+    string? UserName,
     string Method,
     string Path,
     string? Query,
@@ -30,7 +32,15 @@ public record AccountingLogContext(string OperationKey, string? ReferenceCode);
 
 public record RequestErrorContext(string ExceptionType, string Message, string? StackTrace, DateTime OccurredAt);
 
-public record RequestLogQuery(Guid? TenantId, bool? ErrorsOnly, int Page, int PageSize);
+public record RequestLogQuery(
+    Guid? TenantId,
+    bool? ErrorsOnly,
+    int Page,
+    int PageSize,
+    DateTime? CreatedFrom,
+    DateTime? CreatedTo,
+    string? User,
+    string? SessionId);
 
 public record RequestLogPage(IReadOnlyList<RequestLogEntry> Items, long TotalCount, int Page, int PageSize);
 
@@ -38,6 +48,8 @@ public record RequestLogEntry(
     string Id,
     Guid? TenantId,
     Guid? UserId,
+    string? UserEmail,
+    string? UserName,
     string Method,
     string Path,
     string? Query,

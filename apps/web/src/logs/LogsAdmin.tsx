@@ -7,6 +7,8 @@ type RequestLogItem = {
   id: string;
   tenantId?: string | null;
   userId?: string | null;
+  userEmail?: string | null;
+  userName?: string | null;
   method: string;
   path: string;
   query?: string | null;
@@ -53,6 +55,10 @@ export const LogsAdmin: React.FC<LogsAdminProps> = ({ tenantId }) => {
   const [page, setPage] = useState(1);
   const [onlyErrors, setOnlyErrors] = useState(false);
   const [search, setSearch] = useState('');
+  const [createdFrom, setCreatedFrom] = useState('');
+  const [createdTo, setCreatedTo] = useState('');
+  const [userFilter, setUserFilter] = useState('');
+  const [sessionId, setSessionId] = useState('');
   const [pageData, setPageData] = useState<RequestLogPage | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +79,28 @@ export const LogsAdmin: React.FC<LogsAdminProps> = ({ tenantId }) => {
         params.set('errorsOnly', 'true');
       }
 
+      if (createdFrom) {
+        const parsed = new Date(createdFrom);
+        if (!Number.isNaN(parsed.getTime())) {
+          params.set('createdFrom', parsed.toISOString());
+        }
+      }
+
+      if (createdTo) {
+        const parsed = new Date(createdTo);
+        if (!Number.isNaN(parsed.getTime())) {
+          params.set('createdTo', parsed.toISOString());
+        }
+      }
+
+      if (userFilter.trim()) {
+        params.set('user', userFilter.trim());
+      }
+
+      if (sessionId.trim()) {
+        params.set('sessionId', sessionId.trim());
+      }
+
       const response = await fetch(buildApiUrl(`/admin/logs?${params.toString()}`));
 
       if (!response.ok) {
@@ -90,7 +118,7 @@ export const LogsAdmin: React.FC<LogsAdminProps> = ({ tenantId }) => {
     } finally {
       setLoading(false);
     }
-  }, [onlyErrors, page, tenantId]);
+  }, [createdFrom, createdTo, onlyErrors, page, sessionId, tenantId, userFilter]);
 
   useEffect(() => {
     void loadLogs();
@@ -120,6 +148,9 @@ export const LogsAdmin: React.FC<LogsAdminProps> = ({ tenantId }) => {
         item.uiComponent ?? '',
         item.endpointDisplayName ?? '',
         item.correlationId ?? '',
+        item.userId ?? '',
+        item.userEmail ?? '',
+        item.userName ?? '',
       ]
         .join(' ')
         .toLowerCase();
@@ -172,6 +203,54 @@ export const LogsAdmin: React.FC<LogsAdminProps> = ({ tenantId }) => {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
+        <div className="log-admin__filter-grid">
+          <label className="log-admin__filter-field">
+            <span>Başlangıç</span>
+            <input
+              type="datetime-local"
+              value={createdFrom}
+              onChange={(event) => {
+                setPage(1);
+                setCreatedFrom(event.target.value);
+              }}
+            />
+          </label>
+          <label className="log-admin__filter-field">
+            <span>Bitiş</span>
+            <input
+              type="datetime-local"
+              value={createdTo}
+              onChange={(event) => {
+                setPage(1);
+                setCreatedTo(event.target.value);
+              }}
+            />
+          </label>
+          <label className="log-admin__filter-field">
+            <span>Kullanıcı</span>
+            <input
+              type="text"
+              value={userFilter}
+              placeholder="Email veya isim"
+              onChange={(event) => {
+                setPage(1);
+                setUserFilter(event.target.value);
+              }}
+            />
+          </label>
+          <label className="log-admin__filter-field">
+            <span>Oturum ID</span>
+            <input
+              type="text"
+              value={sessionId}
+              placeholder="Session ID"
+              onChange={(event) => {
+                setPage(1);
+                setSessionId(event.target.value);
+              }}
+            />
+          </label>
+        </div>
         <div className="log-admin__pagination">
           <button
             className="log-admin__page"
@@ -218,8 +297,16 @@ export const LogsAdmin: React.FC<LogsAdminProps> = ({ tenantId }) => {
                   <span>{item.tenantId ?? '—'}</span>
                 </div>
                 <div>
-                  <span className="log-card__label">Kullanıcı</span>
+                  <span className="log-card__label">Kullanıcı ID</span>
                   <span>{item.userId ?? '—'}</span>
+                </div>
+                <div>
+                  <span className="log-card__label">Kullanıcı Adı</span>
+                  <span>{item.userName ?? '—'}</span>
+                </div>
+                <div>
+                  <span className="log-card__label">Kullanıcı Email</span>
+                  <span>{item.userEmail ?? '—'}</span>
                 </div>
                 <div>
                   <span className="log-card__label">Süre</span>

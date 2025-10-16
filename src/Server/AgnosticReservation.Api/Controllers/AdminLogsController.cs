@@ -23,7 +23,15 @@ public class AdminLogsController : ControllerBase
         var pageSize = request.PageSize < 1 ? DefaultPageSize : request.PageSize;
         pageSize = Math.Min(pageSize, MaxPageSize);
 
-        var query = new RequestLogQuery(request.TenantId, request.ErrorsOnly, page, pageSize);
+        var query = new RequestLogQuery(
+            request.TenantId,
+            request.ErrorsOnly,
+            page,
+            pageSize,
+            request.CreatedFrom,
+            request.CreatedTo,
+            request.User,
+            request.SessionId);
         var result = await _logReader.QueryAsync(query, cancellationToken).ConfigureAwait(false);
 
         var response = new RequestLogPageResponse
@@ -36,6 +44,8 @@ public class AdminLogsController : ControllerBase
                 Id = item.Id,
                 TenantId = item.TenantId,
                 UserId = item.UserId,
+                UserEmail = item.UserEmail,
+                UserName = item.UserName,
                 Method = item.Method,
                 Path = item.Path,
                 Query = item.Query,
@@ -64,6 +74,10 @@ public class AdminLogsController : ControllerBase
         public bool? ErrorsOnly { get; set; }
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = DefaultPageSize;
+        public DateTime? CreatedFrom { get; set; }
+        public DateTime? CreatedTo { get; set; }
+        public string? User { get; set; }
+        public string? SessionId { get; set; }
     }
 
     public sealed class RequestLogPageResponse
@@ -79,6 +93,8 @@ public class AdminLogsController : ControllerBase
         public string Id { get; set; } = string.Empty;
         public Guid? TenantId { get; set; }
         public Guid? UserId { get; set; }
+        public string? UserEmail { get; set; }
+        public string? UserName { get; set; }
         public string Method { get; set; } = string.Empty;
         public string Path { get; set; } = string.Empty;
         public string? Query { get; set; }
